@@ -2439,6 +2439,7 @@ Dashboard 预览
           sop_template_id TEXT,
           sop_template_version TEXT,
           sop_update_available INTEGER DEFAULT 0,
+          skill_md TEXT,
           created_by TEXT REFERENCES users(id) ON DELETE SET NULL,
           trust_status TEXT NOT NULL DEFAULT 'pending',
           is_sensitive INTEGER DEFAULT 0,
@@ -2501,6 +2502,11 @@ Dashboard 预览
       if (!skillColNames.includes('sop_update_available')) {
         console.log('[TeamClaw] Adding sop_update_available column to skills table...');
         sqlite.exec('ALTER TABLE skills ADD COLUMN sop_update_available INTEGER DEFAULT 0');
+      }
+      
+      if (!skillColNames.includes('skill_md')) {
+        console.log('[TeamClaw] Adding skill_md column to skills table...');
+        sqlite.exec('ALTER TABLE skills ADD COLUMN skill_md TEXT');
       }
     } catch (err) {
       console.error('[TeamClaw] Failed to migrate skills SOP columns:', err);

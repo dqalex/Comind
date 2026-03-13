@@ -1,6 +1,6 @@
 #!/bin/bash
 # TeamClaw 部署脚本
-# 用法: ./scripts/deploy.sh [--skip-build]
+# 用法: ./scripts/deploy.sh [--skip-build] [--init-db]
 #
 # 部署前请设置环境变量：
 #   DEPLOY_SERVER  - 服务器地址（如 user@your-server）
@@ -18,10 +18,15 @@ NVM_INIT="${DEPLOY_NVM_DIR:+source $DEPLOY_NVM_DIR/nvm.sh &&}"
 
 # 解析参数
 SKIP_BUILD=false
+INIT_DB=false
 for arg in "$@"; do
   case $arg in
     --skip-build)
       SKIP_BUILD=true
+      shift
+      ;;
+    --init-db)
+      INIT_DB=true
       shift
       ;;
   esac
@@ -33,7 +38,19 @@ echo "=========================================="
 echo "服务器: $SERVER"
 echo "远程路径: $REMOTE_PATH"
 echo "跳过构建: $SKIP_BUILD"
+echo "初始化数据库: $INIT_DB"
 echo ""
+
+# 数据库初始化确认（如果显式请求）
+if [ "$INIT_DB" = true ]; then
+  echo "⚠️  警告: 您选择了初始化数据库"
+  echo "    这将删除服务器上所有现有数据并重新创建空数据库！"
+  read -p "    确定要继续吗? (yes/no): " confirm
+  if [ "$confirm" != "yes" ]; then
+    echo "已取消数据库初始化"
+    INIT_DB=false
+  fi
+fi
 
 # 1. 本地构建
 if [ "$SKIP_BUILD" = false ]; then
@@ -104,6 +121,15 @@ echo "✓ 外部依赖复制完成"
 # 5. 确保 public 目录存在
 echo "[5/6] 复制 public 目录..."
 ssh $SERVER "cd $REMOTE_PATH && cp -r public .next/standalone/ 2>/dev/null || echo 'No public directory'"
+
+# 5.5 数据库初始化（如请求）
+if [ "$INIT_DB" = true ]; then
+  echo "[5.5/6] 重置数据库..."
+  ssh $SERVER "$NVM_INIT pm2 stop teamclaw 2>/dev/null || echo '服务未运行'"
+  ssh $SERVER "rm -f $REMOTE_PATH/.next/standalone/data/teamclaw.db $REMOTE_PATH/.next/standalone/data/teamclaw.db-* 2>/dev/null || echo 'standalone 数据库不存在'"
+  ssh $SERVER "rm -f $REMOTE_PATH/data/teamclaw.db $REMOTE_PATH/data/teamclaw.db-* 2>/dev/null || echo 'data 目录数据库不存在'"
+  echo "✓ 数据库已重置，将在服务启动时自动初始化"
+fi
 
 # 6. 重启服务
 echo "[6/6] 重启服务..."
