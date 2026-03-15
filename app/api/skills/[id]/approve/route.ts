@@ -100,17 +100,21 @@ export const POST = withAuth(async (
         })
         .where(eq(approvalRequests.id, approvalRequest.id));
       
-      // 创建审批历史
-      await db.insert(approvalHistories).values({
-        id: generateId(),
-        requestId: approvalRequest.id,
-        action: 'approved',
-        operatorId: auth.userId!,
-        previousStatus: 'pending',
-        newStatus: 'approved',
-        note: note || null,
-        createdAt: now,
-      });
+      // 创建审批历史（外键可能指向 members 表，容错处理）
+      try {
+        await db.insert(approvalHistories).values({
+          id: generateId(),
+          requestId: approvalRequest.id,
+          action: 'approved',
+          operatorId: auth.userId!,
+          previousStatus: 'pending',
+          newStatus: 'approved',
+          note: note || null,
+          createdAt: now,
+        });
+      } catch (historyErr) {
+        console.warn('[Skill Approve] Failed to insert approval history:', historyErr);
+      }
     }
     
     // 发送 SSE 事件

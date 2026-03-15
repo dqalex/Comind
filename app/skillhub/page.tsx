@@ -23,10 +23,11 @@ import { Button, Input, Badge } from '@/components/ui';
 import { useGatewayStore, useAuthStore } from '@/store';
 import type { Skill } from '@/types';
 import {
-  Zap, Search, Plus, Download, ToggleLeft, ToggleRight, 
+  Zap, Search, Plus, ToggleLeft, ToggleRight, 
   AlertTriangle, Loader2, RefreshCw, Settings2, CheckCircle, Shield,
 } from 'lucide-react';
 import clsx from 'clsx';
+import { toast } from 'sonner';
 
 // 数据库中的 Skill 信任状态
 interface DbSkillTrust {
@@ -42,7 +43,6 @@ export default function SkillHubPage() {
   const skills = useGatewayStore((s) => s.skills);
   const serverProxyConnected = useGatewayStore((s) => s.serverProxyConnected);
   const toggleSkill = useGatewayStore((s) => s.toggleSkill);
-  const installSkill = useGatewayStore((s) => s.installSkill);
   const refreshSkills = useGatewayStore((s) => s.refreshSkills);
   
   const user = useAuthStore((s) => s.user);
@@ -50,10 +50,6 @@ export default function SkillHubPage() {
   
   // 本地状态
   const [search, setSearch] = useState('');
-  const [showInstall, setShowInstall] = useState(false);
-  const [installName, setInstallName] = useState('');
-  const [installId, setInstallId] = useState('');
-  const [installing, setInstalling] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
   const [trusting, setTrusting] = useState<string | null>(null);
   
@@ -128,24 +124,15 @@ export default function SkillHubPage() {
     setToggling(skillKey);
     try {
       await toggleSkill(skillKey, enabled);
+      toast.success(enabled ? t('agents.enabled', '已启用') : t('agents.disabled', '已禁用'));
+    } catch {
+      toast.error(t('agents.toggleFailed', '操作失败'));
     } finally {
       setToggling(null);
     }
   };
   
-  // 安装技能
-  const handleInstall = async () => {
-    if (!installName.trim() || !installId.trim()) return;
-    setInstalling(true);
-    try {
-      await installSkill(installName.trim(), installId.trim());
-      setShowInstall(false);
-      setInstallName('');
-      setInstallId('');
-    } finally {
-      setInstalling(false);
-    }
-  };
+  // 安装技能（已移除内联安装对话框，统一使用 /skillhub/create 页面）
   
   // 审核技能（信任）
   const handleTrust = async (skill: Skill) => {
@@ -168,7 +155,12 @@ export default function SkillHubPage() {
           next.set(skill.skillKey, 'trusted');
           return next;
         });
+        toast.success(t('skillhub.trustSuccess', '已信任此技能'));
+      } else {
+        toast.error(t('skillhub.trustFailed', '信任操作失败'));
       }
+    } catch {
+      toast.error(t('skillhub.trustFailed', '信任操作失败'));
     } finally {
       setTrusting(null);
     }
@@ -244,14 +236,14 @@ export default function SkillHubPage() {
               // 已信任
               <Badge className="text-[10px] bg-green-50 text-green-600 dark:bg-green-950 dark:text-green-400 flex items-center gap-1">
                 <CheckCircle className="w-3 h-3" />
-                已信任
+                {t('skillhub.trust.trusted')}
               </Badge>
             ) : (
               // 待信任 + 信任按钮
               <div className="flex items-center gap-1">
                 <Badge className="text-[10px] bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400 flex items-center gap-1">
                   <AlertTriangle className="w-3 h-3" />
-                  待信任
+                  {t('skillhub.trust.pending')}
                 </Badge>
                 {isAdmin && (
                   <Button
@@ -260,14 +252,14 @@ export default function SkillHubPage() {
                     onClick={() => handleTrust(skill)}
                     disabled={isTrusting}
                     className="h-5 px-1.5 text-[10px]"
-                    title="信任此技能"
+                    title={t('skillhub.detail.trustSkill', 'Trust this skill')}
                   >
                     {isTrusting ? (
                       <Loader2 className="w-3 h-3 animate-spin" />
                     ) : (
                       <Shield className="w-3 h-3" />
                     )}
-                    信任
+                    {t('skillhub.detail.trust')}
                   </Button>
                 )}
               </div>
@@ -332,19 +324,11 @@ export default function SkillHubPage() {
 
               <Button
                 size="sm"
-                onClick={() => setShowInstall(true)}
-                className="flex items-center gap-1.5"
-              >
-                <Download className="w-4 h-4" />
-                {t('agents.install')}
-              </Button>
-              <Button
-                size="sm"
                 onClick={() => router.push('/skillhub/create')}
                 className="flex items-center gap-1.5"
               >
                 <Plus className="w-4 h-4" />
-                {t('skillhub.createSkill')}
+                {t('skillhub.install.discover', '发现并安装')}
               </Button>
             </div>
           }
@@ -352,7 +336,7 @@ export default function SkillHubPage() {
         
         <main className="flex-1 p-6 overflow-auto max-w-4xl mx-auto">
           {/* 统计卡片 */}
-          <div className="grid grid-cols-5 gap-4 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
             <div className="p-4 rounded-lg border text-center" style={{ borderColor: 'var(--border)' }}>
               <div className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
                 {stats.total}
@@ -382,7 +366,7 @@ export default function SkillHubPage() {
             <div className="p-4 rounded-lg border text-center" style={{ borderColor: 'var(--border)' }}>
               <div className="text-2xl font-bold text-amber-600">{stats.pending}</div>
               <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                待信任
+                {t('skillhub.trust.pending')}
               </div>
             </div>
           </div>
@@ -408,29 +392,6 @@ export default function SkillHubPage() {
               {t('common.refresh')}
             </Button>
           </div>
-          
-          {/* 安装对话框 */}
-          {showInstall && (
-            <div className="mb-4 rounded-lg border p-4 space-y-3" style={{ borderColor: 'var(--border)', background: 'var(--surface-hover)' }}>
-              <div className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>{t('agents.installNewSkill')}</div>
-              <div>
-                <label className="text-[11px] mb-0.5 block" style={{ color: 'var(--text-tertiary)' }}>{t('agents.skillName')}</label>
-                <Input value={installName} onChange={e => setInstallName(e.target.value)} className="text-xs" placeholder={t('agents.skillNamePlaceholder')} autoFocus />
-              </div>
-              <div>
-                <label className="text-[11px] mb-0.5 block" style={{ color: 'var(--text-tertiary)' }}>{t('agents.installId')}</label>
-                <Input value={installId} onChange={e => setInstallId(e.target.value)} className="text-xs" placeholder={t('agents.installIdPlaceholder')} />
-              </div>
-              <div className="flex items-center gap-2">
-                <Button size="sm" disabled={!installName.trim() || !installId.trim() || installing}
-                  className="disabled:opacity-50 flex items-center gap-1 text-xs" onClick={handleInstall}>
-                  {installing && <Loader2 className="w-3 h-3 animate-spin" />}
-                  {t('agents.install')}
-                </Button>
-                <Button size="sm" variant="secondary" className="text-xs" onClick={() => { setShowInstall(false); setInstallName(''); setInstallId(''); }}>{t('common.cancel')}</Button>
-              </div>
-            </div>
-          )}
           
           {/* 技能列表 */}
           {filteredSkills.length === 0 ? (

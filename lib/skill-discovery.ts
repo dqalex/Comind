@@ -32,6 +32,11 @@ export interface DiscoveredSkill {
   // 结构化内容
   skill?: SkillStructure;
   
+  // 本地记录状态（与数据库对比后填充）
+  localStatus?: 'not_recorded' | 'draft' | 'pending_approval' | 'active' | 'rejected';
+  localVersion?: string;
+  localId?: string;
+  
   // 安装状态（需要与数据库对比后填充）
   installStatus?: 'not_installed' | 'installed' | 'update_available';
   installedVersion?: string;

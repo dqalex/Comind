@@ -62,17 +62,21 @@ export const POST = withAuth(
         })
         .where(eq(approvalRequests.id, id));
 
-      // 记录历史
-      await db.insert(approvalHistories).values({
-        id: generateId(),
-        requestId: id,
-        action: 'rejected',
-        operatorId: auth.userId!,
-        previousStatus: 'pending',
-        newStatus: 'rejected',
-        note,
-        createdAt: now,
-      });
+      // 记录历史（外键可能指向 members 表，容错处理）
+      try {
+        await db.insert(approvalHistories).values({
+          id: generateId(),
+          requestId: id,
+          action: 'rejected',
+          operatorId: auth.userId!,
+          previousStatus: 'pending',
+          newStatus: 'rejected',
+          note,
+          createdAt: now,
+        });
+      } catch (historyErr) {
+        console.warn('[Approval API] Failed to insert rejection history:', historyErr);
+      }
 
       // 触发 SSE 事件
       eventBus.emit({

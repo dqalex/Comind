@@ -10,6 +10,7 @@
  * - 编辑技能信息（创建者/管理员）
  * - 提交审批/批准/拒绝
  * - 信任管理
+ * - 链路引导（提交审批后提示、审批通过后引导信任）
  */
 
 import { useState, useEffect, useMemo } from 'react';
@@ -27,6 +28,7 @@ import {
   Zap, Calendar, User, Tag, Info, ClipboardList, ExternalLink,
 } from 'lucide-react';
 import clsx from 'clsx';
+import { toast } from 'sonner';
 
 // 状态颜色映射
 const STATUS_COLORS: Record<string, string> = {
@@ -64,6 +66,11 @@ export default function SkillDetailPage() {
   const [loading, setLoading] = useState(true);
   const [skill, setSkill] = useState<Skill | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  // 拒绝对话框
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [rejectNote, setRejectNote] = useState('');
+  // 删除确认对话框
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   // 加载 SOP 模板数据（用于显示关联）
   useEffect(() => {
@@ -88,19 +95,20 @@ export default function SkillDetailPage() {
       if (localSkill) {
         setSkill(localSkill);
         setLoading(false);
-        return;
       }
       
-      // 从 API 加载
+      // 始终从 API 获取最新数据
       try {
         const { data, error } = await skillsApi.getById(skillId);
         if (data) {
           setSkill(data);
-        } else {
+        } else if (!localSkill) {
           console.error('Failed to load skill:', error);
         }
       } catch (err) {
-        console.error('Error loading skill:', err);
+        if (!localSkill) {
+          console.error('Error loading skill:', err);
+        }
       } finally {
         setLoading(false);
       }
@@ -123,84 +131,111 @@ export default function SkillDetailPage() {
     };
   }, [skill, user, isAdmin]);
   
-  // 操作处理
+  // 操作处理：提交审批
   const handleSubmitApproval = async () => {
     if (!skill) return;
     setActionLoading('submit');
     try {
       const { error } = await skillsApi.submitForApproval(skill.id);
       if (error) {
-        alert(error);
+        toast.error(t('skillhub.detail.submitFailed', error));
       } else {
         await fetchSkills();
-        router.push('/skillhub');
+        setSkill({ ...skill, status: 'pending_approval' });
+        toast.success(t('skillhub.detail.submitSuccess'), {
+          action: {
+            label: t('approvals.title'),
+            onClick: () => router.push('/approvals'),
+          },
+        });
       }
     } finally {
       setActionLoading(null);
     }
   };
   
+  // 操作处理：通过
   const handleApprove = async () => {
     if (!skill) return;
     setActionLoading('approve');
     try {
       const { error } = await skillsApi.approve(skill.id);
       if (error) {
-        alert(error);
+        toast.error(error);
       } else {
         await fetchSkills();
         setSkill({ ...skill, status: 'active' });
+        // 审批通过后引导信任
+        if (skill.trustStatus !== 'trusted') {
+          toast.success(t('skillhub.detail.approveSuccess'), {
+            duration: 5000,
+            action: {
+              label: t('skillhub.detail.trustNow'),
+              onClick: () => handleTrust(),
+            },
+          });
+        } else {
+          toast.success(t('skillhub.detail.approveSuccess'));
+        }
       }
     } finally {
       setActionLoading(null);
     }
   };
   
+  // 操作处理：拒绝（通过对话框）
   const handleReject = async () => {
     if (!skill) return;
-    const note = prompt('拒绝原因：');
     setActionLoading('reject');
     try {
-      const { error } = await skillsApi.reject(skill.id, note || undefined);
+      const { error } = await skillsApi.reject(skill.id, rejectNote || undefined);
       if (error) {
-        alert(error);
+        toast.error(error);
       } else {
         await fetchSkills();
         setSkill({ ...skill, status: 'rejected' });
+        setShowRejectDialog(false);
+        setRejectNote('');
+        toast.success(t('skillhub.detail.rejectSuccess'));
       }
     } finally {
       setActionLoading(null);
     }
   };
   
+  // 操作处理：信任
   const handleTrust = async () => {
     if (!skill) return;
     setActionLoading('trust');
     try {
       const { error } = await skillsApi.trust(skill.id);
       if (error) {
-        alert(error);
+        toast.error(error);
       } else {
         await fetchSkills();
         setSkill({ ...skill, trustStatus: 'trusted' });
+        toast.success(t('skillhub.detail.trustSuccess'));
       }
     } finally {
       setActionLoading(null);
     }
   };
   
+  // 操作处理：删除
   const handleDelete = async () => {
     if (!skill) return;
-    if (!confirm(t('common.confirmDelete'))) return;
-    
     setActionLoading('delete');
     try {
       const success = await deleteSkillAsync(skill.id);
       if (success) {
+        toast.success(t('skillhub.detail.deleteSuccess'));
         router.push('/skillhub');
+      } else {
+        toast.error(t('skillhub.detail.deleteFailed'));
       }
     } finally {
       setActionLoading(null);
+      setShowDeleteConfirm(false);
     }
   };
   
@@ -305,7 +340,7 @@ export default function SkillDetailPage() {
                     ) : (
                       <Send className="w-4 h-4" />
                     )}
-                    提交审批
+                    {t('skillhub.detail.submitApproval', '提交审批')}
                   </Button>
                 )}
                 
@@ -319,17 +354,17 @@ export default function SkillDetailPage() {
                       className="flex items-center gap-1.5"
                     >
                       <Check className="w-4 h-4" />
-                      通过
+                      {t('common.approve')}
                     </Button>
                     <Button
                       size="sm"
                       variant="danger"
-                      onClick={handleReject}
+                      onClick={() => setShowRejectDialog(true)}
                       disabled={actionLoading !== null}
                       className="flex items-center gap-1.5"
                     >
                       <X className="w-4 h-4" />
-                      拒绝
+                      {t('common.reject')}
                     </Button>
                   </>
                 )}
@@ -344,7 +379,7 @@ export default function SkillDetailPage() {
                     className="flex items-center gap-1.5"
                   >
                     <Shield className="w-4 h-4" />
-                    信任此技能
+                    {t('skillhub.detail.trustSkill')}
                   </Button>
                 )}
                 
@@ -366,7 +401,7 @@ export default function SkillDetailPage() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={handleDelete}
+                    onClick={() => setShowDeleteConfirm(true)}
                     disabled={actionLoading !== null}
                     className="flex items-center gap-1.5 text-red-500 hover:text-red-600"
                   >
@@ -378,6 +413,53 @@ export default function SkillDetailPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* 状态引导提示 */}
+        {skill.status === 'active' && skill.trustStatus !== 'trusted' && isAdmin && (
+          <div className="mb-6 p-4 rounded-lg border-2 border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/30">
+            <div className="flex items-center gap-3">
+              <Shield className="w-5 h-5 text-amber-600 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                  {t('skillhub.detail.trustHint')}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                onClick={handleTrust}
+                disabled={actionLoading !== null}
+                className="flex items-center gap-1.5 flex-shrink-0"
+              >
+                <Shield className="w-4 h-4" />
+                {t('skillhub.detail.trustNow')}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {skill.status === 'pending_approval' && (
+          <div className="mb-6 p-4 rounded-lg border-2 border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/30">
+            <div className="flex items-center gap-3">
+              <Clock className="w-5 h-5 text-amber-600 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                  {t('skillhub.detail.pendingHint')}
+                </p>
+              </div>
+              {isAdmin && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => router.push('/approvals')}
+                  className="flex items-center gap-1.5 flex-shrink-0"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  {t('approvals.title')}
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
         
         {/* 基本信息 */}
         <Card className="mb-6">
@@ -515,6 +597,93 @@ export default function SkillDetailPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* 拒绝对话框 */}
+        {showRejectDialog && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowRejectDialog(false)}>
+            <div className="w-full max-w-md mx-4 rounded-xl shadow-xl" style={{ background: 'var(--surface)' }} onClick={e => e.stopPropagation()}>
+              <div className="p-6">
+                <h3 className="text-lg font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>
+                  {t('skillhub.detail.rejectTitle')}
+                </h3>
+                <p className="text-sm mb-4" style={{ color: 'var(--text-tertiary)' }}>
+                  {t('skillhub.detail.rejectDesc')}
+                </p>
+                <textarea
+                  value={rejectNote}
+                  onChange={(e) => setRejectNote(e.target.value)}
+                  placeholder={t('approvals.rejectNotePlaceholder')}
+                  className="w-full p-3 text-sm border rounded-lg resize-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  style={{
+                    backgroundColor: 'var(--input-bg)',
+                    borderColor: 'var(--border)',
+                    color: 'var(--text-primary)',
+                  }}
+                  rows={3}
+                  autoFocus
+                />
+              </div>
+              <div className="flex justify-end gap-2 px-6 pb-6">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => { setShowRejectDialog(false); setRejectNote(''); }}
+                >
+                  {t('common.cancel')}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="danger"
+                  onClick={handleReject}
+                  disabled={actionLoading === 'reject'}
+                  className="flex items-center gap-1.5"
+                >
+                  {actionLoading === 'reject' ? (
+                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                  ) : (
+                    <X className="w-4 h-4" />
+                  )}
+                  {t('approvals.confirmReject')}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 删除确认对话框 */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowDeleteConfirm(false)}>
+            <div className="w-full max-w-sm mx-4 rounded-xl shadow-xl" style={{ background: 'var(--surface)' }} onClick={e => e.stopPropagation()}>
+              <div className="p-6">
+                <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
+                  {t('common.confirmDelete')}
+                </h3>
+                <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
+                  {t('skillhub.detail.deleteConfirmDesc')}
+                </p>
+              </div>
+              <div className="flex justify-end gap-2 px-6 pb-6">
+                <Button size="sm" variant="ghost" onClick={() => setShowDeleteConfirm(false)}>
+                  {t('common.cancel')}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="danger"
+                  onClick={handleDelete}
+                  disabled={actionLoading === 'delete'}
+                  className="flex items-center gap-1.5"
+                >
+                  {actionLoading === 'delete' ? (
+                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
+                  {t('common.delete')}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </AppShell>
   );

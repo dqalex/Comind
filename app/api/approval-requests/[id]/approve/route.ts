@@ -64,17 +64,22 @@ export const POST = withAuth(
         })
         .where(eq(approvalRequests.id, id));
 
-      // 记录历史
-      await db.insert(approvalHistories).values({
-        id: generateId(),
-        requestId: id,
-        action: 'approved',
-        operatorId: auth.userId!,
-        previousStatus: 'pending',
-        newStatus: 'approved',
-        note,
-        createdAt: now,
-      });
+      // 记录历史（外键可能指向 members 表，容错处理）
+      try {
+        await db.insert(approvalHistories).values({
+          id: generateId(),
+          requestId: id,
+          action: 'approved',
+          operatorId: auth.userId!,
+          previousStatus: 'pending',
+          newStatus: 'approved',
+          note,
+          createdAt: now,
+        });
+      } catch (historyErr) {
+        // 历史记录插入失败（如外键约束）不应阻断主流程
+        console.warn('[Approval API] Failed to insert approval history:', historyErr);
+      }
 
       // 执行审批通过后的业务逻辑
       await executeApprovalAction(approvalRequest);

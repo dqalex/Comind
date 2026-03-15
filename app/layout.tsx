@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/ThemeProvider';
 import { DataProvider } from '@/components/DataProvider';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import dynamic from 'next/dynamic';
+import { Toaster } from 'sonner';
 
 const ChatOverlay = dynamic(() => import('@/components/ChatOverlay'), { ssr: false });
 
@@ -23,6 +24,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <DataProvider>
                 {children}
                 <ChatOverlay />
+                <Toaster
+                  position="top-center"
+                  richColors
+                  closeButton
+                  toastOptions={{
+                    duration: 3000,
+                    style: {
+                      fontSize: '14px',
+                    },
+                  }}
+                />
               </DataProvider>
             </ErrorBoundary>
           </ThemeProvider>

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'next/navigation';
 import {
   ClipboardCheck,
   Clock,
@@ -12,13 +13,15 @@ import {
   Package,
   UserPlus,
   Shield,
+  ExternalLink,
 } from 'lucide-react';
-import { Button, Badge, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
+import { Button, Badge, Card, CardContent } from '@/components/ui';
 import AppShell from '@/components/AppShell';
 import Header from '@/components/Header';
 import { useApprovalStore } from '@/store/approval';
 import { useAuthStore } from '@/store';
 import clsx from 'clsx';
+import { toast } from 'sonner';
 
 // 审批类型配置
 const APPROVAL_TYPE_CONFIG = {
@@ -30,15 +33,16 @@ const APPROVAL_TYPE_CONFIG = {
 
 // 状态配置
 const STATUS_CONFIG = {
-  pending: { icon: Clock, color: 'text-amber-500', bgColor: 'bg-amber-50 dark:bg-amber-950', label: '待审批' },
-  approved: { icon: CheckCircle, color: 'text-green-500', bgColor: 'bg-green-50 dark:bg-green-950', label: '已通过' },
-  rejected: { icon: XCircle, color: 'text-red-500', bgColor: 'bg-red-50 dark:bg-red-950', label: '已拒绝' },
-  cancelled: { icon: AlertCircle, color: 'text-gray-500', bgColor: 'bg-gray-50 dark:bg-gray-950', label: '已取消' },
-  expired: { icon: AlertCircle, color: 'text-gray-500', bgColor: 'bg-gray-50 dark:bg-gray-950', label: '已过期' },
+  pending: { icon: Clock, color: 'text-amber-500', bgColor: 'bg-amber-50 dark:bg-amber-950' },
+  approved: { icon: CheckCircle, color: 'text-green-500', bgColor: 'bg-green-50 dark:bg-green-950' },
+  rejected: { icon: XCircle, color: 'text-red-500', bgColor: 'bg-red-50 dark:bg-red-950' },
+  cancelled: { icon: AlertCircle, color: 'text-gray-500', bgColor: 'bg-gray-50 dark:bg-gray-950' },
+  expired: { icon: AlertCircle, color: 'text-gray-500', bgColor: 'bg-gray-50 dark:bg-gray-950' },
 };
 
 export default function ApprovalsPage() {
   const { t } = useTranslation();
+  const router = useRouter();
   const { requests, isLoading, error, fetchRequests, approveRequest, rejectRequest, cancelRequest } = useApprovalStore();
   const user = useAuthStore((s) => s.user);
   const isAdmin = user?.role === 'admin';
@@ -46,13 +50,15 @@ export default function ApprovalsPage() {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [rejectNote, setRejectNote] = useState<string>('');
   const [showRejectDialog, setShowRejectDialog] = useState<string | null>(null);
+  // 记录刚审批通过的请求，用于显示快捷操作
+  const [justApproved, setJustApproved] = useState<Set<string>>(new Set());
 
   // 加载数据
   useEffect(() => {
     fetchRequests(statusFilter === 'all' ? undefined : { status: statusFilter });
   }, [statusFilter, fetchRequests]);
 
-  // 统计
+  // 统计（始终基于全量数据，不受过滤影响）
   const stats = useMemo(() => ({
     total: requests.length,
     pending: requests.filter(r => r.status === 'pending').length,
@@ -60,39 +66,64 @@ export default function ApprovalsPage() {
     rejected: requests.filter(r => r.status === 'rejected').length,
   }), [requests]);
 
-  // 处理审批
-  const handleApprove = async (id: string) => {
+  // 处理审批通过
+  const handleApprove = async (id: string, resourceId?: string) => {
     if (processingId) return;
     setProcessingId(id);
     try {
       await approveRequest(id);
+      setJustApproved(prev => new Set(prev).add(id));
+      
+      // 带引导的 toast
+      if (resourceId) {
+        toast.success(t('approvals.approveSuccess', '审批已通过'), {
+          duration: 5000,
+          action: {
+            label: t('approvals.goToTrust', '前往信任'),
+            onClick: () => router.push(`/skillhub/${resourceId}`),
+          },
+        });
+      } else {
+        toast.success(t('approvals.approveSuccess', '审批已通过'));
+      }
     } catch (err) {
+      toast.error(t('approvals.approveFailed', '审批失败，请重试'));
       console.error('Approve failed:', err);
     } finally {
       setProcessingId(null);
     }
   };
 
+  // 处理拒绝
   const handleReject = async (id: string) => {
     if (processingId) return;
+    if (!rejectNote.trim()) {
+      toast.warning(t('approvals.rejectNoteRequired', '请填写拒绝原因'));
+      return;
+    }
     setProcessingId(id);
     try {
       await rejectRequest(id, rejectNote);
       setShowRejectDialog(null);
       setRejectNote('');
+      toast.success(t('approvals.rejectSuccess', '已拒绝'));
     } catch (err) {
+      toast.error(t('approvals.rejectFailed', '拒绝失败，请重试'));
       console.error('Reject failed:', err);
     } finally {
       setProcessingId(null);
     }
   };
 
+  // 处理取消
   const handleCancel = async (id: string) => {
     if (processingId) return;
     setProcessingId(id);
     try {
       await cancelRequest(id);
+      toast.success(t('approvals.cancelSuccess', '已取消'));
     } catch (err) {
+      toast.error(t('approvals.cancelFailed', '取消失败，请重试'));
       console.error('Cancel failed:', err);
     } finally {
       setProcessingId(null);
@@ -140,7 +171,7 @@ export default function ApprovalsPage() {
                   )}
                   style={statusFilter !== status ? { color: 'var(--text-tertiary)' } : undefined}
                 >
-                  {t(`approvals.status.${status}`, status === 'all' ? '全部' : STATUS_CONFIG[status]?.label || status)}
+                  {t(`approvals.status.${status}`, status === 'all' ? t('approvals.status.all') : t(`approvals.status.${status}`))}
                   <span className="ml-1 text-[10px] opacity-60">
                     {status === 'all' ? stats.total : stats[status]}
                   </span>
@@ -174,6 +205,7 @@ export default function ApprovalsPage() {
               const statusConfig = getStatusConfig(request.status);
               const payload = request.payload as Record<string, unknown> | null;
               const isProcessing = processingId === request.id;
+              const isJustApproved = justApproved.has(request.id);
 
               return (
                 <Card key={request.id} className="overflow-hidden">
@@ -198,7 +230,7 @@ export default function ApprovalsPage() {
                             className={clsx('text-[10px]', statusConfig.bgColor, statusConfig.color)}
                           >
                             <statusConfig.icon className="w-3 h-3 mr-1" />
-                            {t(`approvals.status.${request.status}`, statusConfig.label)}
+                            {t(`approvals.status.${request.status}`)}
                           </Badge>
                         </div>
 
@@ -215,14 +247,14 @@ export default function ApprovalsPage() {
                       </div>
 
                       {/* 操作按钮 */}
-                      {request.status === 'pending' && (
-                        <div className="flex items-center gap-2">
-                          {isAdmin ? (
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {request.status === 'pending' && (
+                          isAdmin ? (
                             <>
                               <Button
                                 size="sm"
                                 variant="primary"
-                                onClick={() => handleApprove(request.id)}
+                                onClick={() => handleApprove(request.id, request.resourceId || undefined)}
                                 disabled={isProcessing}
                               >
                                 {isProcessing ? (
@@ -251,9 +283,22 @@ export default function ApprovalsPage() {
                             >
                               {t('common.cancel', '取消')}
                             </Button>
-                          )}
-                        </div>
-                      )}
+                          )
+                        )}
+
+                        {/* 已通过的审批：显示快捷操作 */}
+                        {(request.status === 'approved' || isJustApproved) && request.resourceId && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => router.push(`/skillhub/${request.resourceId}`)}
+                            className="flex items-center gap-1.5"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            {t('approvals.viewSkill', '查看技能')}
+                          </Button>
+                        )}
+                      </div>
                     </div>
 
                     {/* 拒绝对话框 */}
@@ -262,7 +307,7 @@ export default function ApprovalsPage() {
                         <textarea
                           value={rejectNote}
                           onChange={(e) => setRejectNote(e.target.value)}
-                          placeholder={t('approvals.rejectNotePlaceholder', '请输入拒绝原因...')}
+                          placeholder={t('approvals.rejectNotePlaceholder', '请输入拒绝原因（必填）...')}
                           className="w-full p-2 text-sm border rounded-md resize-none"
                           style={{ 
                             backgroundColor: 'var(--input-bg)',
@@ -270,6 +315,7 @@ export default function ApprovalsPage() {
                             color: 'var(--text-primary)'
                           }}
                           rows={2}
+                          autoFocus
                         />
                         <div className="flex justify-end gap-2 mt-2">
                           <Button
@@ -286,9 +332,10 @@ export default function ApprovalsPage() {
                             size="sm"
                             variant="danger"
                             onClick={() => handleReject(request.id)}
-                            disabled={isProcessing}
+                            disabled={isProcessing || !rejectNote.trim()}
                           >
-                            {t('common.confirm', '确认')}
+                            <XCircle className="w-4 h-4 mr-1" />
+                            {t('approvals.confirmReject', '确认拒绝')}
                           </Button>
                         </div>
                       </div>
