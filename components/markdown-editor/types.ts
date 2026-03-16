@@ -84,6 +84,7 @@ export interface HtmlPreviewProps {
   elementSelection: ElementSelection | null;
   htmlContainerRef: React.RefObject<HTMLDivElement>;
   htmlIframeRef: React.RefObject<HTMLIFrameElement>;
+  srcDoc: string;  // 添加 srcDoc 属性
   onToggleEditMode: () => void;
   onDeviceModeChange: (mode: DeviceMode) => void;
   onScaleChange: (scale: number) => void;

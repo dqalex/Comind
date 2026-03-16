@@ -921,6 +921,10 @@ export function htmlToSimpleMd(html: string): string {
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'");
 
+  // 清理污染：解码后可能再次出现 <p> 标签（来自被转义的内容），需要再次移除
+  md = md.replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n');
+  md = md.replace(/<[^>]+>/g, '');
+
   // 清理多余空行（最多保留 2 个连续换行）
   md = md.replace(/\n{3,}/g, '\n\n');
 
@@ -1031,7 +1035,8 @@ export function generateIframeScript(): string {
     e.stopPropagation();
     const el = e.currentTarget;
 
-    if (editMode) return;
+    // 如果当前元素正在编辑中，不处理点击（避免干扰编辑）
+    if (el.getAttribute('contenteditable') === 'true') return;
 
     // 取消之前的选中
     deselectElement();

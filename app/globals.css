@@ -479,15 +479,19 @@ h1, h2, h3, h4, h5, h6 {
 .dark .md-highlight-layer {
   color: var(--tw-prose-invert-body, #d6d3d1);
 }
+/* 高亮样式 - 只改变颜色，不改变布局（避免 padding/margin/background 导致与 textarea 错位）
+ * 所有样式必须保证：不增加元素宽度、不改变行高、不改变字体大小
+ */
 .md-heading-marker { color: #7c3aed; opacity: 0.6; }
 .md-heading { color: #7c3aed; font-weight: 700; }
 .md-bold { color: #ea580c; font-weight: 700; }
 .md-italic { color: #0891b2; font-style: italic; }
-.md-inline-code { color: #dc2626; background: rgba(220, 38, 38, 0.06); border-radius: 6px; padding: 0.1em 0.4em; }
-.md-code-block { color: #059669; background: rgba(5, 150, 105, 0.04); }
+/* 注意：不要给 md-inline-code 添加 padding 或 background，会导致与 textarea 字符宽度不一致 */
+.md-inline-code { color: #dc2626; }
+.md-code-block { color: #059669; }
 .md-code-fence { color: #059669; }
-.md-link { color: #4f46e5; text-decoration: underline; text-underline-offset: 2px; }
-.md-wiki-link { color: #7c3aed; background: rgba(124, 58, 237, 0.06); border-radius: 6px; padding: 0.1em 0.4em; }
+.md-link { color: #4f46e5; text-decoration: underline; }
+.md-wiki-link { color: #7c3aed; }
 .md-image { color: #0d9488; }
 .md-list { color: #d97706; font-weight: 600; }
 .md-blockquote { color: #6b7280; font-style: italic; }
@@ -498,11 +502,11 @@ h1, h2, h3, h4, h5, h6 {
 .dark .md-heading { color: #a78bfa; }
 .dark .md-bold { color: #fb923c; }
 .dark .md-italic { color: #22d3ee; }
-.dark .md-inline-code { color: #f87171; background: rgba(248, 113, 113, 0.1); }
-.dark .md-code-block { color: #34d399; background: rgba(52, 211, 153, 0.06); }
+.dark .md-inline-code { color: #f87171; }
+.dark .md-code-block { color: #34d399; }
 .dark .md-code-fence { color: #34d399; }
 .dark .md-link { color: #818cf8; }
-.dark .md-wiki-link { color: #a78bfa; background: rgba(167, 139, 250, 0.1); }
+.dark .md-wiki-link { color: #a78bfa; }
 .dark .md-image { color: #2dd4bf; }
 .dark .md-list { color: #fbbf24; }
 .dark .md-blockquote { color: #9ca3af; }

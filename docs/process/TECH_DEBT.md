@@ -29,6 +29,7 @@
 | TD-019 | 双模式兼容性检查（5 处直接使用 connected/client） | P2 | open | Gateway 兼容性 |
 | TD-020 | 安全审计日志系统集成 | P1 | resolved | 安全合规 |
 | TD-021 | 登录限流机制 | P1 | resolved | 安全合规 |
+| TD-022 | HTML 模板可视化编辑功能缺陷 | P2 | open | 模板编辑 |
 
 ---
 
@@ -873,6 +874,67 @@ const isConnected = connectionMode === 'server_proxy'
 ### 更新记录
 
 - 2026-03-07：初始记录，全量 Review 发现
+
+---
+
+## TD-022: HTML 模板可视化编辑功能缺陷
+
+**优先级**：P2
+**状态**：open
+**创建时间**：2026-03-16
+**影响范围**：模板编辑、可视化编辑
+
+### 问题描述
+
+Markdown 编辑器的 HTML 模板可视化编辑功能存在多个未解决的问题：
+
+1. **MD 内容污染**：`simpleMdToHtml` 会为文本内容包装 `<p>` 标签，`htmlToSimpleMd` 解码 HTML 实体后这些标签会变成真实的 `<p>` 标签并污染 MD 源内容
+2. **iframe sandbox 脚本执行问题**：编辑模式切换时 `Blocked script execution in 'about:srcdoc'` 错误
+3. **React setState 警告**：`handleToggleEditMode` 在 `setState` 回调中调用 `onChange` 导致渲染期间更新组件
+
+### 已尝试的修复
+
+1. 将 `srcDoc` 从 useEffect DOM 操作改为 React prop（解决 sandbox 同步问题）
+2. 移动 `onChange` 调用到 `setState` 外部（解决 React 警告）
+3. 在 `htmlToSimpleMd` 中添加二次清理（缓解污染但未根治）
+
+### 根本原因
+
+TeamClaw 的 slot 同步方案 (`lib/slot-sync.ts`) 使用 `simpleMdToHtml` 将 MD 转换为 HTML 进行渲染，编辑后再通过 `htmlToSimpleMd` 转回 MD。这个双向转换过程存在信息丢失和污染问题。
+
+对比 AIcase-editor 的方案：直接使用 `textContent` 处理文本 slot，不做 MD↔HTML 转换。这种方案更简单但无法在编辑时渲染 MD 语法（如加粗、链接等）。
+
+### 当前状态
+
+功能按钮已隐藏，代码保留但不可用。
+
+### 建议方案
+
+**方案 A（推荐）**：参考 AIcase-editor 简化实现
+- 文本 slot 使用 `textContent`，不转换 MD
+- 图片 slot 直接操作 `src` 属性
+- 放弃编辑时的 MD 语法渲染
+
+**方案 B**：重构 slot 同步机制
+- 使用 AST 解析而非正则替换
+- 建立精确的位置映射关系
+- 避免不必要的 HTML 实体编解码
+
+**方案 C**：使用成熟的可视化编辑器
+- 集成 ProseMirror 或 TipTap
+- 自定义 MD schema 扩展
+- 依赖社区维护的编辑器核心
+
+### 相关代码
+
+- `components/markdown-editor/HtmlPreview.tsx` - 可视化编辑入口（按钮已注释）
+- `components/markdown-editor/MarkdownEditor.tsx` - 编辑器主组件
+- `lib/slot-sync.ts` - slot 同步核心逻辑
+- `components/markdown-editor/types.ts` - 类型定义
+
+### 更新记录
+
+- 2026-03-16：初始记录，隐藏功能按钮
 
 ---
 

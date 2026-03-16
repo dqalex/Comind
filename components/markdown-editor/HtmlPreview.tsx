@@ -20,6 +20,7 @@ function HtmlPreview({
   elementSelection,
   htmlContainerRef,
   htmlIframeRef,
+  srcDoc,
   onToggleEditMode,
   onDeviceModeChange,
   onScaleChange,
@@ -36,9 +37,9 @@ function HtmlPreview({
   // 这里只渲染工具栏和设备控制
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full w-full min-w-0">
       {/* 设备模式工具栏 */}
-      <div className="flex items-center gap-2 px-3 py-1.5 border-b border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900">
+      <div className="flex items-center gap-2 px-3 py-1.5 flex-shrink-0 border-b border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900">
         <div className="flex items-center gap-0.5 bg-slate-200/60 dark:bg-slate-700/60 rounded p-0.5">
           <button
             onClick={() => onDeviceModeChange('responsive')}
@@ -84,8 +85,8 @@ function HtmlPreview({
           </button>
         </div>
 
-        {/* 可视化编辑切换 */}
-        <button
+        {/* 可视化编辑切换 - TD-022: 功能有问题，暂时隐藏 */}
+        {/* <button
           onClick={onToggleEditMode}
           className={clsx(
             'flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium transition-colors',
@@ -98,7 +99,7 @@ function HtmlPreview({
         >
           <Edit3 size={12} />
           {t('studio.visualEdit')}
-        </button>
+        </button> */}
 
         <div className="flex-1" />
 
@@ -156,7 +157,7 @@ function HtmlPreview({
         <div
           ref={htmlContainerRef}
           className={clsx(
-            'flex-1 overflow-auto',
+            'flex-1 min-w-0 overflow-auto',
             device ? 'flex items-center justify-center p-2 bg-slate-100 dark:bg-slate-900' : ''
           )}
         >
@@ -179,6 +180,7 @@ function HtmlPreview({
                   transform: `scale(${htmlScale})`,
                   transformOrigin: 'top left',
                 }}
+                srcDoc={srcDoc}
                 sandbox={htmlEditMode ? 'allow-scripts allow-same-origin' : 'allow-same-origin'}
                 title="template-visual-preview"
               />
@@ -187,8 +189,9 @@ function HtmlPreview({
             <iframe
               key={`responsive-${htmlEditMode ? 'edit' : 'view'}`}
               ref={htmlIframeRef}
-              className="w-full h-full"
+              className="block w-full h-full"
               style={{ border: 'none' }}
+              srcDoc={srcDoc}
               sandbox={htmlEditMode ? 'allow-scripts allow-same-origin' : 'allow-same-origin'}
               title="template-visual-preview"
             />

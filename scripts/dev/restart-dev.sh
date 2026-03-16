@@ -3,8 +3,9 @@
 # 快速 3 步流程：关闭 → 清理缓存 → 启动
 
 # 获取脚本所在目录的绝对路径，然后定位到项目根目录
+# 脚本位于 scripts/dev/，需要往上走两层才能到项目根目录
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 
 echo "=========================================="
 echo "TeamClaw 开发服务器重启"

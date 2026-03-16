@@ -3,12 +3,15 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { generateIframeScript, updateMdSlots, syncMdToHtml, MD_RICHTEXT_STYLES } from '@/lib/slot-sync';
+import CodeMirror from '@uiw/react-codemirror';
+import { EditorView } from '@codemirror/view';
+import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
+import { languages } from '@codemirror/language-data';
+import { generateIframeScript, updateMdSlots, syncMdToHtml, MD_RICHTEXT_STYLES, htmlToSimpleMd } from '@/lib/slot-sync';
 import { renderIconsInHtml } from '@/lib/icon-render';
 import CollapsibleMarkdown from './CollapsibleMarkdown';
 import MarkdownToolbar from './MarkdownToolbar';
 import HtmlPreview from './HtmlPreview';
-import { escapeHtml } from './parsers';
 import type { MarkdownEditorProps, ViewMode, DeviceMode, EditorTextSelection } from './types';
 
 export type { EditorTextSelection };
@@ -27,9 +30,8 @@ export default function MarkdownEditor({
   const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<ViewMode>(editOnly ? 'edit' : (readOnly ? 'preview' : 'split'));
   const [previewSubMode, setPreviewSubMode] = useState<'md' | 'html'>('md');
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editorViewRef = useRef<EditorView | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
-  const highlightRef = useRef<HTMLDivElement>(null);
 
   // 属性面板
   const [elementSelection, setElementSelection] = useState<{ slotName: string; slotType: string; styles: Record<string, string>; content: string } | null>(null);
@@ -46,47 +48,51 @@ export default function MarkdownEditor({
 
   // 退出编辑模式前同步 slot 值
   const handleToggleEditMode = useCallback(() => {
-    setHtmlEditMode(prev => {
-      if (prev) {
-        const iframe = htmlIframeRef.current;
-        if (iframe?.contentWindow) {
-          try {
-            const doc = iframe.contentWindow.document;
-            const slotElements = doc.querySelectorAll('[data-slot]');
-            if (slotElements.length > 0) {
-              const slotValues: Record<string, string> = {};
-              slotElements.forEach((el: Element) => {
-                const slotName = el.getAttribute('data-slot') || '';
-                const slotType = el.getAttribute('data-slot-type') || 'content';
-                let content = '';
-                switch (slotType) {
-                  case 'image': {
-                    const img = el.querySelector('img');
-                    content = img?.getAttribute('src') || '';
-                    break;
-                  }
-                  case 'data':
-                    content = el.textContent || '';
-                    break;
-                  default:
-                    content = el.innerHTML;
-                    break;
+    if (htmlEditMode) {
+      // 退出编辑模式：先收集数据，再关闭编辑模式
+      const iframe = htmlIframeRef.current;
+      if (iframe?.contentWindow) {
+        try {
+          const doc = iframe.contentWindow.document;
+          const slotElements = doc.querySelectorAll('[data-slot]');
+          if (slotElements.length > 0) {
+            const slotValues: Record<string, string> = {};
+            slotElements.forEach((el: Element) => {
+              const slotName = el.getAttribute('data-slot') || '';
+              const slotType = el.getAttribute('data-slot-type') || 'content';
+              let content = '';
+              switch (slotType) {
+                case 'image': {
+                  const img = el.querySelector('img');
+                  content = img?.getAttribute('src') || '';
+                  break;
                 }
-                slotValues[slotName] = content;
-              });
-              const newContent = updateMdSlots(value, slotValues);
-              if (newContent !== value) {
-                onChange(newContent);
+                case 'data':
+                  content = el.textContent || '';
+                  break;
+                default:
+                  // 将 HTML 内容转换回简单 MD 格式
+                  content = htmlToSimpleMd(el.innerHTML);
+                  break;
               }
+              slotValues[slotName] = content;
+            });
+            const newContent = updateMdSlots(value, slotValues);
+            if (newContent !== value) {
+              onChange(newContent);
             }
-          } catch {
-            // iframe 跨域或已卸载，忽略
           }
+        } catch {
+          // iframe 跨域或已卸载，忽略
         }
       }
-      return !prev;
-    });
-  }, [value, onChange]);
+      // 最后关闭编辑模式
+      setHtmlEditMode(false);
+    } else {
+      // 进入编辑模式：直接切换
+      setHtmlEditMode(true);
+    }
+  }, [htmlEditMode, value, onChange]);
 
   // 自适应缩放
   const updateAutoScale = useCallback(() => {
@@ -186,13 +192,13 @@ export default function MarkdownEditor({
     return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{margin:0;padding:0;overflow:auto;}${MD_RICHTEXT_STYLES}${renderCss || ''}</style></head><body>${processedBaseHtml}${selectScript}</body></html>`;
   }, [renderHtml, renderCss, filledRenderHtml]);
 
-  // 分屏 HTML 点击定位到 MD
+  // 分屏 HTML 点击定位到 MD (CodeMirror 版本)
   useEffect(() => {
     if (viewMode !== 'split' || previewSubMode !== 'html') return;
     const handleMessage = (e: MessageEvent) => {
       if (splitHtmlIframeRef.current && e.source !== splitHtmlIframeRef.current.contentWindow) return;
       const { type, slotName } = e.data || {};
-      if (type === 'splitElementSelected' && slotName && textareaRef.current) {
+      if (type === 'splitElementSelected' && slotName && editorViewRef.current) {
         const lines = value.split('\n');
         const slotPattern = `<!-- @slot:${slotName} -->`;
         let targetLine = -1;
@@ -203,16 +209,15 @@ export default function MarkdownEditor({
           }
         }
         if (targetLine >= 0) {
-          const textarea = textareaRef.current;
-          let charOffset = 0;
-          for (let i = 0; i < targetLine; i++) {
-            charOffset += lines[i].length + 1;
-          }
-          textarea.focus();
-          textarea.setSelectionRange(charOffset, charOffset + lines[targetLine].length);
-          const lineHeight = 24;
-          const scrollTop = targetLine * lineHeight - textarea.clientHeight / 3;
-          textarea.scrollTop = Math.max(0, scrollTop);
+          const view = editorViewRef.current;
+          // 定位到对应行
+          const lineInfo = view.state.doc.line(targetLine + 1); // CodeMirror 行号从 1 开始
+          view.dispatch({
+            selection: { anchor: lineInfo.from, head: lineInfo.to },
+            scrollIntoView: true,
+            effects: EditorView.scrollIntoView(lineInfo.from, { y: 'center' }),
+          });
+          view.focus();
         }
       }
     };
@@ -315,66 +320,7 @@ export default function MarkdownEditor({
     onSelectionChange({ text: selectedText, lineIndex: contentLineIndex });
   }, [onSelectionChange, value]);
 
-  const handleEditorScroll = useCallback(() => {
-    if (!textareaRef.current || !highlightRef.current) return;
-    highlightRef.current.scrollTop = textareaRef.current.scrollTop;
-    highlightRef.current.scrollLeft = textareaRef.current.scrollLeft;
-    if (viewMode === 'split' && previewRef.current) {
-      const textarea = textareaRef.current;
-      const ratio = textarea.scrollTop / (textarea.scrollHeight - textarea.clientHeight || 1);
-      const preview = previewRef.current;
-      preview.scrollTop = ratio * (preview.scrollHeight - preview.clientHeight);
-    }
-  }, [viewMode]);
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Tab') {
-      e.preventDefault();
-      const textarea = e.currentTarget;
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const newValue = value.substring(0, start) + '  ' + value.substring(end);
-      onChange(newValue);
-      requestAnimationFrame(() => {
-        textarea.selectionStart = textarea.selectionEnd = start + 2;
-      });
-    }
-  }, [value, onChange]);
-
-  // 语法高亮
-  const highlightedContent = useMemo(() => {
-    if (!value) return '';
-    let html = escapeHtml(value);
-    const codeBlocks: string[] = [];
-    html = html.replace(/```[\s\S]*?```/g, (match) => {
-      codeBlocks.push(`<span class="md-code-block">${match}</span>`);
-      return `__CODE_BLOCK_${codeBlocks.length - 1}__`;
-    });
-    html = html.replace(/`([^`\n]+)`/g, '<span class="md-inline-code">`$1`</span>');
-    html = html.replace(/^(#{1,6}\s)(.*)$/gm, '<span class="md-heading-marker">$1</span><span class="md-heading">$2</span>');
-    html = html.replace(/(\*\*|__)(.+?)\1/g, '<span class="md-bold">$1$2$1</span>');
-    html = html.replace(/(?<!\*)(\*)(?!\*)(.+?)(?<!\*)\1(?!\*)/g, '<span class="md-italic">$1$2$1</span>');
-    html = html.replace(/(\[\[.*?\]\])/g, '<span class="md-wiki-link">$1</span>');
-    html = html.replace(/(\[.*?\]\(.*?\))/g, '<span class="md-link">$1</span>');
-    html = html.replace(/(!\[.*?\]\(.*?\))/g, '<span class="md-image">$1</span>');
-    html = html.replace(/^(\s*[-*+]\s)/gm, '<span class="md-list">$1</span>');
-    html = html.replace(/^(\s*\d+\.\s)/gm, '<span class="md-list">$1</span>');
-    html = html.replace(/^(&gt;\s)/gm, '<span class="md-blockquote">$1</span>');
-    html = html.replace(/(~~.*?~~)/g, '<span class="md-strikethrough">$1</span>');
-    html = html.replace(/^(---|___|(\*\s*){3,})\s*$/gm, '<span class="md-hr">$1</span>');
-    codeBlocks.forEach((block, i) => {
-      html = html.replace(`__CODE_BLOCK_${i}__`, block);
-    });
-    return html;
-  }, [value]);
-
-  // 更新 iframe srcDoc
-  useEffect(() => {
-    if (htmlIframeRef.current && viewMode === 'html') {
-      htmlIframeRef.current.srcdoc = htmlEditMode && htmlWithEditScript ? htmlWithEditScript : previewSrcDoc;
-    }
-  }, [viewMode, htmlEditMode, htmlWithEditScript, previewSrcDoc]);
-
+  // 分屏 HTML 预览更新（保留 useEffect 因为 Split 模式下的 iframe 还是通过 ref 操作）
   useEffect(() => {
     if (splitHtmlIframeRef.current && viewMode === 'split' && previewSubMode === 'html') {
       splitHtmlIframeRef.current.srcdoc = splitHtmlWithSelectScript;
@@ -408,6 +354,7 @@ export default function MarkdownEditor({
             elementSelection={elementSelection}
             htmlContainerRef={htmlContainerRef}
             htmlIframeRef={htmlIframeRef}
+            srcDoc={htmlEditMode && htmlWithEditScript ? htmlWithEditScript : previewSrcDoc}
             onToggleEditMode={handleToggleEditMode}
             onDeviceModeChange={setDeviceMode}
             onScaleChange={setHtmlScale}
@@ -429,40 +376,37 @@ export default function MarkdownEditor({
                     <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">{t('common.edit')}</span>
                   </div>
                 )}
-                <div
-                  ref={highlightRef}
-                  className={clsx(
-                    'absolute inset-0 p-6 overflow-auto pointer-events-none font-mono text-sm leading-relaxed whitespace-pre-wrap break-words md-highlight-layer',
-                    viewMode === 'split' && 'pt-12'
-                  )}
-                  dangerouslySetInnerHTML={{ __html: highlightedContent }}
-                />
-                <textarea
-                  ref={textareaRef}
-                  value={value}
-                  onChange={(e) => onChange(e.target.value)}
-                  onScroll={handleEditorScroll}
-                  onKeyDown={handleKeyDown}
-                  placeholder={placeholder}
-                  spellCheck={false}
-                  className={clsx(
-                    'absolute inset-0 w-full h-full p-6 resize-none focus:outline-none bg-transparent font-mono text-sm leading-relaxed text-transparent caret-slate-700 dark:caret-slate-200 z-[1]',
-                    viewMode === 'split' && 'pt-12'
-                  )}
-                />
+                <div className={clsx('h-full', viewMode === 'split' && 'pt-8')}>
+                  <CodeMirror
+                    value={value}
+                    height="100%"
+                    theme="dark"
+                    placeholder={placeholder}
+                    editable={!readOnly}
+                    extensions={[
+                      markdown({ base: markdownLanguage, codeLanguages: languages }),
+                      EditorView.lineWrapping,
+                    ]}
+                    onChange={(val) => onChange(val)}
+                    className="h-full text-sm [&>.cm-editor]:h-full [&>.cm-editor]:bg-slate-900 [&_.cm-content]:px-6 [&_.cm-content]:py-4 [&_.cm-content]:font-mono"
+                    onCreateEditor={(view) => {
+                      editorViewRef.current = view;
+                    }}
+                  />
+                </div>
               </div>
             )}
 
             {(viewMode === 'preview' || viewMode === 'split') && (
               <div
                 className={clsx(
-                  'overflow-y-auto',
+                  'flex flex-col h-full min-w-0',
                   viewMode === 'split' ? 'w-1/2' : 'w-full'
                 )}
                 onMouseUp={handlePreviewMouseUp}
               >
                 {viewMode === 'split' && (
-                  <div className="sticky top-0 px-3 py-1 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 z-10 flex items-center justify-between">
+                  <div className="flex-shrink-0 px-3 py-1 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 z-10 flex items-center justify-between">
                     {renderHtml ? (
                       <div className="flex items-center gap-0.5 bg-slate-200/60 dark:bg-slate-700/60 rounded p-0.5">
                         <button
@@ -496,10 +440,10 @@ export default function MarkdownEditor({
                   </div>
                 )}
                 {viewMode === 'split' && previewSubMode === 'html' && renderHtml ? (
-                  <div className="w-full h-full">
+                  <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
                     <iframe
                       ref={splitHtmlIframeRef}
-                      className="w-full h-full"
+                      className="block w-full h-full"
                       style={{ border: 'none' }}
                       sandbox="allow-scripts allow-same-origin"
                       title="html-render-preview-split"
@@ -508,7 +452,7 @@ export default function MarkdownEditor({
                 ) : (
                   <div
                     ref={previewRef}
-                    className="p-6 prose prose-stone dark:prose-invert prose-sm max-w-none md-preview"
+                    className="flex-1 min-h-0 overflow-y-auto p-6 prose prose-stone dark:prose-invert prose-sm max-w-none md-preview"
                   >
                     {value ? (
                       <CollapsibleMarkdown content={value} />
