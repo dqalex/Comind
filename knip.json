@@ -15,13 +15,7 @@
     "**/__mocks__/**",
     "lib/chat-channel/**",
     "lib/api-route-factory.ts",
-    "lib/api-utils.ts",
-    "components/ui/dropdown.tsx",
-    "components/ui/spinner.tsx",
-    "components/ui/progress.tsx",
-    "components/ui/table.tsx",
-    "components/ui/tabs.tsx",
-    "components/markdown-editor/parsers.ts"
+    "lib/api-utils.ts"
   ],
   "ignoreDependencies": [
     "@types/*",
