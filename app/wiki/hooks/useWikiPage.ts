@@ -514,7 +514,7 @@ export function useWikiPage() {
       const res = await fetch('/api/task-push', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ taskId: task.id }),
+        body: JSON.stringify({ taskId: task.id, sessionKey: userSessionKey || undefined }),
       });
       
       if (res.ok) {

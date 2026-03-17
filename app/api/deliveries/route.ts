@@ -12,6 +12,7 @@ import { validateEnum, VALID_DELIVERY_STATUS, VALID_DELIVERY_PLATFORM } from '@/
 import { triggerMarkdownSync } from '@/lib/markdown-sync';
 import { withAuth } from '@/lib/with-auth';
 import { errorResponse, createdResponse, ApiErrors } from '@/lib/api-route-factory';
+import { createDeliverySchema, validate } from '@/lib/validation';
 
 // GET - 获取所有交付记录（支持分页）
 // v3.0: 需要登录才能访问
@@ -72,39 +73,47 @@ export const POST = withAuth(async (request: NextRequest) => {
   try {
     const body = await request.json();
 
-    if (!body.memberId || !body.title || !body.platform) {
-      return errorResponse(ApiErrors.badRequest('Missing required fields: memberId, title, platform'), requestId);
+    // Zod schema validation
+    const validation = validate(createDeliverySchema, body);
+    if (!validation.success) {
+      return errorResponse(ApiErrors.badRequest(validation.error), requestId);
     }
 
-    if (!validateEnum(body.platform, VALID_DELIVERY_PLATFORM)) {
-      return errorResponse(ApiErrors.badRequest(`platform must be one of ${VALID_DELIVERY_PLATFORM.join('/')}`), requestId);
-    }
+    const data = validation.data;
 
-    if (body.platform === 'local' && !body.documentId) {
+    // 业务逻辑验证：local 平台需要 documentId
+    if (data.platform === 'local' && !data.documentId) {
       return errorResponse(ApiErrors.badRequest('Local document delivery requires a documentId'), requestId);
     }
-    if (body.platform !== 'local' && !body.externalUrl) {
+    // 业务逻辑验证：外部平台需要 externalUrl
+    if (data.platform !== 'local' && !data.externalUrl) {
       return errorResponse(ApiErrors.badRequest('External document delivery requires an externalUrl'), requestId);
     }
 
-    if (body.status !== undefined && !validateEnum(body.status, VALID_DELIVERY_STATUS)) {
-      return errorResponse(ApiErrors.badRequest(`status must be one of ${VALID_DELIVERY_STATUS.join('/')}`), requestId);
-    }
-
     const now = new Date();
-    const allowedFields = [
-      'memberId', 'taskId', 'documentId', 'title', 'description', 'platform',
-      'externalUrl', 'externalId', 'status', 'reviewerId',
-      'reviewedAt', 'reviewComment', 'version', 'previousDeliveryId'
-    ];
-    const values: Record<string, unknown> = { id: generateDeliveryId(), createdAt: now, updatedAt: now };
-    for (const field of allowedFields) {
-      if (body[field] !== undefined) values[field] = body[field];
-    }
+    const newDelivery = {
+      id: generateDeliveryId(),
+      memberId: data.memberId,
+      taskId: data.taskId || null,
+      documentId: data.documentId || null,
+      title: data.title,
+      description: data.description || null,
+      platform: data.platform,
+      externalUrl: data.externalUrl || null,
+      externalId: data.externalId || null,
+      status: data.status,
+      reviewerId: data.reviewerId || null,
+      reviewedAt: data.reviewedAt || null,
+      reviewComment: data.reviewComment || null,
+      version: data.version,
+      previousDeliveryId: data.previousDeliveryId || null,
+      createdAt: now,
+      updatedAt: now,
+    };
 
     const [delivery] = await db
       .insert(deliveries)
-      .values(values as any)
+      .values(newDelivery as any)
       .returning();
 
     eventBus.emit({ type: 'delivery_update', resourceId: delivery.id });

@@ -23,28 +23,11 @@ export { Switch } from './switch';
 export type { SwitchProps } from './switch';
 
 // Dialog
-export { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './dialog';
+export { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './dialog';
 
 // Card
-export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './card';
+export { Card, CardHeader, CardTitle, CardContent } from './card';
 
 // Badge
 export { Badge } from './badge';
 export type { BadgeProps } from './badge';
-
-// Spinner
-export { Spinner, Loading, LoadingOverlay } from './spinner';
-export type { SpinnerProps, LoadingProps } from './spinner';
-
-// Dropdown
-export { Dropdown, DropdownItem, DropdownSeparator } from './dropdown';
-
-// Table
-export { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './table';
-
-// Tabs
-export { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs';
-
-// Progress
-export { Progress } from './progress';
-export type { ProgressProps } from './progress';

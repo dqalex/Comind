@@ -12,6 +12,7 @@ import { syncMdToHtml as directSyncMdToHtml, generatePreviewHtml } from '@/lib/s
 import { typeColors, typeOrder } from '../hooks/useWikiPage';
 import type { RenderTemplate } from '@/db/schema';
 import { Rss } from 'lucide-react';
+import { useInlineEdit } from '@/hooks/useInlineEdit';
 
 const typeIcons: Record<string, typeof FileText> = {
   guide: BookOpen, reference: FileText, report: ClipboardList, note: BookOpen,
@@ -50,6 +51,15 @@ export default function WikiCreateDocDialog({
 }: WikiCreateDocDialogProps) {
   const { t } = useTranslation();
 
+  // 使用 useInlineEdit Hook 处理标题输入的 Enter/Blur 双重提交问题
+  const { handleKeyDown, handleBlur, isSaving } = useInlineEdit({
+    onSave: async () => {
+      if (newDocTitle.trim()) {
+        onSubmit();
+      }
+    },
+  });
+
   const selectedRt = newDocRenderTemplateId ? renderTemplates.find(tpl => tpl.id === newDocRenderTemplateId) : null;
   const hasTemplate = !!selectedRt?.htmlTemplate;
 
@@ -77,7 +87,8 @@ export default function WikiCreateDocDialog({
             <div>
               <label className="text-xs mb-1 block" style={{ color: 'var(--text-tertiary)' }}>{t('wiki.docTitle')}</label>
               <Input value={newDocTitle} onChange={e => setNewDocTitle(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && onSubmit()} placeholder={t('wiki.docTitlePlaceholder')} autoFocus />
+                onKeyDown={e => handleKeyDown(e, newDocTitle)} onBlur={() => handleBlur(newDocTitle)}
+                placeholder={t('wiki.docTitlePlaceholder')} autoFocus disabled={isSaving.current} />
             </div>
             <div>
               <label className="text-xs mb-1 block" style={{ color: 'var(--text-tertiary)' }}>{t('wiki.source')}</label>

@@ -16,6 +16,7 @@ import {
 import clsx from 'clsx';
 import { tagColors, typeOrder } from '../hooks/useWikiPage';
 import WikiKnowledgeGraph from './WikiKnowledgeGraph';
+import { useInlineEdit } from '@/hooks/useInlineEdit';
 
 const MarkdownEditor = dynamic(() => import('@/components/MarkdownEditor'), {
   ssr: false,
@@ -87,6 +88,13 @@ export default function WikiDocEditor({
 }: WikiDocEditorProps) {
   const { t } = useTranslation();
 
+  // 使用 useInlineEdit Hook 处理标题编辑的 Enter/Blur 双重提交问题
+  const { handleKeyDown, handleBlur, isSaving } = useInlineEdit({
+    onSave: async () => {
+      await onTitleSave();
+    },
+  });
+
   // 判断是否为博客类型文档且用户非管理员（只读模式）
   const isBlogReadOnly = selectedDoc?.type === 'blog' && !isAdmin;
 
@@ -110,9 +118,9 @@ export default function WikiDocEditor({
       <div className="px-6 py-3 border-b flex items-center justify-between gap-3 flex-shrink-0" style={{ borderColor: 'var(--border)' }}>
         <div className="flex items-center gap-2 flex-1">
           <Input value={editTitle} onChange={e => setEditTitle(e.target.value)}
-            onBlur={onTitleSave} onKeyDown={e => e.key === 'Enter' && onTitleSave()}
+            onBlur={() => handleBlur(editTitle)} onKeyDown={e => handleKeyDown(e, editTitle)}
             className="text-lg font-display font-bold bg-transparent border-none outline-none flex-1"
-            disabled={isBlogReadOnly} />
+            disabled={isBlogReadOnly || isSaving.current} />
           {isBlogReadOnly && (
             <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
               <Eye className="w-3 h-3" /> {t('wiki.readOnly')}

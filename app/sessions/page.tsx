@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useEscapeKey } from '@/hooks/useEscapeKey';
 import { useConfirmAction } from '@/hooks/useConfirmAction';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { useGatewayStore } from '@/store/gateway.store';
@@ -10,10 +9,11 @@ import AppShell from '@/components/AppShell';
 import Header from '@/components/Header';
 import GatewayRequired from '@/components/GatewayRequired';
 import { Button, Input, Select, Badge } from '@/components/ui';
+import { useFilteredList } from '@/hooks/useFilteredList';
 import type { Session, ThinkingLevel, VerboseLevel, ReasoningLevel, SessionKind } from '@/types';
 import {
-  MessageSquare, Clock, User, Trash2, Edit2, X, Save,
-  Search, Wifi, Hash, Globe, HelpCircle, RefreshCw,
+  MessageSquare, User, Trash2, Edit2, X, Save,
+  Search, Hash, Globe, HelpCircle, RefreshCw,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -42,8 +42,6 @@ export default function SessionsPage() {
   const patchSession = useGatewayStore((s) => s.patchSession);
   const deleteSession = useGatewayStore((s) => s.deleteSession);
   const refreshSessions = useGatewayStore((s) => s.refreshSessions);
-  const [search, setSearch] = useState('');
-  const [kindFilter, setKindFilter] = useState<SessionKind | 'all'>('all');
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
     label: '',
@@ -53,23 +51,37 @@ export default function SessionsPage() {
   });
   const deleteAction = useConfirmAction<string>();
 
-  const filteredSessions = useMemo(() => {
-    let result = sessions;
-    if (kindFilter !== 'all') {
-      result = result.filter(s => s.kind === kindFilter);
+  // 使用 useFilteredList 统一筛选逻辑
+  const {
+    filteredItems: filteredSessions,
+    searchQuery: search,
+    setSearchQuery: setSearch,
+    activeFilters,
+    toggleFilter,
+  } = useFilteredList({
+    items: sessions,
+    config: {
+      searchFields: ['key', 'label', 'displayName', 'derivedTitle', 'channel'],
+      filters: {
+        direct: (s) => s.kind === 'direct',
+        group: (s) => s.kind === 'group',
+        global: (s) => s.kind === 'global',
+        unknown: (s) => s.kind === 'unknown',
+      },
+    },
+  });
+
+  // 将 activeFilters 转换为 kindFilter 用于 UI 显示
+  const kindFilter: SessionKind | 'all' = activeFilters.length === 1 
+    ? (activeFilters[0] as SessionKind) 
+    : 'all';
+  const setKindFilter = (kind: SessionKind | 'all') => {
+    // 清除所有筛选并设置新的
+    activeFilters.forEach(f => toggleFilter(f as string));
+    if (kind !== 'all') {
+      toggleFilter(kind);
     }
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter(s =>
-        s.key?.toLowerCase().includes(q) ||
-        s.label?.toLowerCase().includes(q) ||
-        s.displayName?.toLowerCase().includes(q) ||
-        s.derivedTitle?.toLowerCase().includes(q) ||
-        s.channel?.toLowerCase().includes(q)
-      );
-    }
-    return result;
-  }, [sessions, kindFilter, search]);
+  };
 
   const handleStartEdit = (session: Session) => {
     setEditingKey(session.key);

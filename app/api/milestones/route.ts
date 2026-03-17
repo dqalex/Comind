@@ -9,9 +9,10 @@ import { eq, sql, desc } from 'drizzle-orm';
 import { generateMilestoneId, generateId } from '@/lib/id';
 import { eventBus } from '@/lib/event-bus';
 import { validateEnumWithDefault, VALID_MILESTONE_STATUS } from '@/lib/validators';
-import { sanitizeString, isValidId } from '@/lib/security';
+import { isValidId } from '@/lib/security';
 import { withAuth } from '@/lib/with-auth';
 import { errorResponse, createdResponse, ApiErrors } from '@/lib/api-route-factory';
+import { createMilestoneSchema, validate } from '@/lib/validation';
 
 // 分页配置
 const DEFAULT_LIMIT = 20;
@@ -90,23 +91,22 @@ export const POST = withAuth(async (request: NextRequest) => {
   try {
     const body = await request.json();
 
-    const title = sanitizeString(body.title, 500);
-    if (!title || !title.trim()) {
-      return errorResponse(ApiErrors.badRequest('Missing required field: title (1-500 characters)'), requestId);
+    // Zod schema validation
+    const validation = validate(createMilestoneSchema, body);
+    if (!validation.success) {
+      return errorResponse(ApiErrors.badRequest(validation.error), requestId);
     }
 
-    if (!body.projectId) {
-      return errorResponse(ApiErrors.badRequest('Missing required field: projectId'), requestId);
-    }
+    const data = validation.data;
 
     const newMilestone: NewMilestone = {
       id: generateMilestoneId(),
-      title: title.trim(),
-      description: body.description ? sanitizeString(body.description, 5000) : null,
-      projectId: body.projectId,
-      status: validateEnumWithDefault(body.status, VALID_MILESTONE_STATUS, 'open'),
-      dueDate: body.dueDate ? new Date(body.dueDate) : null,
-      sortOrder: typeof body.sortOrder === 'number' ? body.sortOrder : 0,
+      title: data.title,
+      description: data.description || null,
+      projectId: data.projectId,
+      status: data.status,
+      dueDate: data.dueDate || null,
+      sortOrder: data.sortOrder,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

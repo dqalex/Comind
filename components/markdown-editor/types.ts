@@ -3,7 +3,14 @@
  */
 
 import type { SlotDef } from '@/lib';
-import type { ElementSelection } from '@/components/studio/HtmlPreview';
+
+// 元素选区类型（原从 @/components/studio/HtmlPreview 导入）
+interface ElementSelection {
+  slotName: string;
+  slotType: string;
+  styles: Record<string, string>;
+  content: string;
+}
 
 // 选中文本信息
 export interface EditorTextSelection {

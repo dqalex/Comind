@@ -18,6 +18,7 @@ import {
   errorResponse,
   ApiErrors,
 } from '@/lib/api-route-factory';
+import { createDocumentSchema, validate } from '@/lib/validation';
 
 // GET /api/documents - 获取所有文档（列表模式不返回 content，支持分页）
 // v3.0: 文档权限 - 继承项目权限，projectId=null 的文档为系统公开
@@ -136,19 +137,18 @@ export const POST = withAuth(async (request: NextRequest, auth: AuthResult) => {
   
   try {
     const body = await request.json();
-    const { 
-      title, content, projectId, projectTags, source, type,
-      externalPlatform, externalId, externalUrl, mcpServer, syncMode,
-      renderTemplateId, renderMode
-    } = body;
 
-    if (!title) {
-      return errorResponse(ApiErrors.badRequest('Title is required'), requestId);
+    // Zod schema validation
+    const validation = validate(createDocumentSchema, body);
+    if (!validation.success) {
+      return errorResponse(ApiErrors.badRequest(validation.error), requestId);
     }
 
+    const data = validation.data;
+
     // 如果指定了 projectId，需要校验项目编辑权限
-    if (projectId) {
-      const access = await checkProjectAccess(projectId, auth.userId!, auth.userRole!);
+    if (data.projectId) {
+      const access = await checkProjectAccess(data.projectId, auth.userId!, auth.userRole!);
       if (!access.hasAccess) {
         return errorResponse(ApiErrors.notFound('Project'), requestId);
       }
@@ -157,33 +157,32 @@ export const POST = withAuth(async (request: NextRequest, auth: AuthResult) => {
       }
     }
 
-    const validSource = validateEnumWithDefault(source, VALID_DOC_SOURCE, 'local');
-    const validType = validateEnumWithDefault(type, VALID_DOC_TYPE, 'note');
-    if (externalPlatform && !validateEnum(externalPlatform, VALID_EXTERNAL_PLATFORM)) {
+    // 验证外部平台字段
+    if (body.externalPlatform && !validateEnum(body.externalPlatform, VALID_EXTERNAL_PLATFORM)) {
       return errorResponse(ApiErrors.badRequest(`externalPlatform must be one of: ${VALID_EXTERNAL_PLATFORM.join('/')}`), requestId);
     }
-    if (syncMode && !validateEnum(syncMode, VALID_SYNC_MODE)) {
+    if (body.syncMode && !validateEnum(body.syncMode, VALID_SYNC_MODE)) {
       return errorResponse(ApiErrors.badRequest(`syncMode must be one of: ${VALID_SYNC_MODE.join('/')}`), requestId);
     }
 
     const newDocument: NewDocument = {
       id: generateDocId(),
-      title,
-      content: content || null,
-      projectId: projectId || null,
-      projectTags: projectTags || [],
-      source: validSource,
-      type: validType,
-      externalPlatform: externalPlatform || null,
-      externalId: externalId || null,
-      externalUrl: externalUrl || null,
-      mcpServer: mcpServer || null,
-      syncMode: syncMode || null,
+      title: data.title,
+      content: data.content || null,
+      projectId: data.projectId || null,
+      projectTags: data.projectTags || [],
+      source: data.source,
+      type: data.type,
+      externalPlatform: body.externalPlatform || null,
+      externalId: body.externalId || null,
+      externalUrl: body.externalUrl || null,
+      mcpServer: body.mcpServer || null,
+      syncMode: body.syncMode || null,
       lastSync: null,
       links: [],
       backlinks: [],
-      renderTemplateId: renderTemplateId || null,
-      renderMode: renderMode || 'markdown',
+      renderTemplateId: data.renderTemplateId || null,
+      renderMode: data.renderMode,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

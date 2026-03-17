@@ -9,7 +9,7 @@ import { eq, sql } from 'drizzle-orm';
 import { generateMemberId, generateId } from '@/lib/id';
 import { sanitizeMember } from '@/lib/sanitize';
 import { validateEnumWithDefault, validateEnum, VALID_MEMBER_TYPE, VALID_DEPLOY_MODE } from '@/lib/validators';
-import { encryptToken, sanitizeString } from '@/lib/security';
+import { encryptToken } from '@/lib/security';
 import { invalidateMemberCache } from '@/lib/markdown-sync';
 import { withRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import { eventBus } from '@/lib/event-bus';
@@ -20,6 +20,7 @@ import {
   errorResponse,
   ApiErrors,
 } from '@/lib/api-route-factory';
+import { createMemberSchema, validate } from '@/lib/validation';
 
 // GET /api/members - 获取所有成员（包含关联用户的角色信息）
 // v3.0: 需要登录才能访问（AI 成员是系统级共享，所有用户可见）
@@ -72,40 +73,39 @@ export const GET = withAuth(async (request: NextRequest) => {
 async function handlePost(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, type, email, openclawName, openclawDeployMode, openclawEndpoint, 
-            openclawGatewayUrl, openclawAgentId, openclawApiToken, openclawModel, 
-            openclawEnableWebSearch, openclawTemperature } = body;
 
-    // 输入验证
-    const sanitizedName = sanitizeString(name, 100);
-    if (!sanitizedName) {
-      return NextResponse.json({ error: 'Name is required' }, { status: 400 });
+    // Zod schema validation
+    const validation = validate(createMemberSchema, body);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    const validType = validateEnumWithDefault(type, VALID_MEMBER_TYPE, 'human');
-    if (openclawDeployMode && !validateEnum(openclawDeployMode, VALID_DEPLOY_MODE)) {
+    const data = validation.data;
+
+    // 验证部署模式
+    if (body.openclawDeployMode && !validateEnum(body.openclawDeployMode, VALID_DEPLOY_MODE)) {
       return NextResponse.json({ error: `openclawDeployMode must be one of ${VALID_DEPLOY_MODE.join('/')}` }, { status: 400 });
     }
 
     // 加密 Token 存储
-    const encryptedToken = openclawApiToken ? encryptToken(openclawApiToken) : null;
+    const encryptedToken = body.openclawApiToken ? encryptToken(body.openclawApiToken) : null;
 
     const newMember: NewMember = {
       id: generateMemberId(),
-      name: sanitizedName,
-      type: validType,
-      email: sanitizeString(email, 200) || null,
+      name: data.name,
+      type: data.type,
+      email: data.email || null,
       online: false,
-      openclawName: sanitizeString(openclawName, 100) || null,
-      openclawDeployMode: openclawDeployMode || null,
-      openclawEndpoint: sanitizeString(openclawEndpoint, 500) || null,
-      openclawGatewayUrl: sanitizeString(openclawGatewayUrl, 500) || null,
+      openclawName: data.openclawName || null,
+      openclawDeployMode: data.openclawDeployMode || null,
+      openclawEndpoint: data.openclawEndpoint || null,
+      openclawGatewayUrl: body.openclawGatewayUrl || null,
       openclawConnectionStatus: 'disconnected',
-      openclawAgentId: sanitizeString(openclawAgentId, 100) || null,
+      openclawAgentId: body.openclawAgentId || null,
       openclawApiToken: encryptedToken,
-      openclawModel: sanitizeString(openclawModel, 50) || null,
-      openclawEnableWebSearch: openclawEnableWebSearch ?? false,
-      openclawTemperature: typeof openclawTemperature === 'number' ? Math.min(2.0, Math.max(0, openclawTemperature)) : null,
+      openclawModel: data.openclawModel || null,
+      openclawEnableWebSearch: data.openclawEnableWebSearch ?? false,
+      openclawTemperature: typeof body.openclawTemperature === 'number' ? Math.min(2.0, Math.max(0, body.openclawTemperature)) : null,
       experienceTaskCount: 0,
       experienceTaskTypes: [],
       experienceTools: [],

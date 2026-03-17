@@ -1,49 +1,37 @@
+/**
+ * 可折叠 Markdown 渲染组件
+ */
+
 'use client';
 
-import { useMemo, memo } from 'react';
-import { parseFrontmatter, parseCollapsibleSections } from './parsers';
-import CollapsibleSection from './CollapsibleSection';
+import { useState } from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+import clsx from 'clsx';
 import MarkdownContent from './MarkdownContent';
-import FrontmatterBadges from './FrontmatterBadges';
-import type { Section } from './types';
-
-function renderSection(section: Section, key: number): React.ReactNode {
-  if (section.type === 'content') {
-    return (
-      <div key={key} data-source-line={section.startLine ?? 0}>
-        <MarkdownContent content={section.rawContent} />
-      </div>
-    );
-  }
-
-  return (
-    <div key={key} data-source-line={section.startLine ?? 0}>
-      <CollapsibleSection title={section.title!} level={section.level!} defaultOpen={true}>
-        {section.children.map((child, idx) => renderSection(child, idx))}
-      </CollapsibleSection>
-    </div>
-  );
-}
 
 interface CollapsibleMarkdownProps {
   content: string;
+  className?: string;
 }
 
-/**
- * 可折叠 Markdown 渲染组件
- * 支持 frontmatter 标签和可折叠章节
- */
-function CollapsibleMarkdown({ content }: CollapsibleMarkdownProps) {
-  const parsed = useMemo(() => parseFrontmatter(content), [content]);
-  const bodyContent = parsed ? parsed.body : content;
-  const sections = useMemo(() => parseCollapsibleSections(bodyContent), [bodyContent]);
+export default function CollapsibleMarkdown({ content, className }: CollapsibleMarkdownProps) {
+  const [isOpen, setIsOpen] = useState(true);
 
   return (
-    <div className="md-preview-content">
-      {parsed && <FrontmatterBadges meta={parsed.meta} />}
-      {sections.map((section, idx) => renderSection(section, idx))}
+    <div className={clsx('border rounded-lg overflow-hidden', className)} style={{ borderColor: 'var(--border)' }}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center gap-2 px-4 py-2 text-sm font-medium hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+        style={{ color: 'var(--text-primary)' }}
+      >
+        {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+        <span>预览</span>
+      </button>
+      {isOpen && (
+        <div className="p-4 border-t" style={{ borderColor: 'var(--border)' }}>
+          <MarkdownContent content={content} />
+        </div>
+      )}
     </div>
   );
 }
-
-export default memo(CollapsibleMarkdown);

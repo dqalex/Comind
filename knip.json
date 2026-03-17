@@ -12,7 +12,10 @@
     "**/*.d.ts",
     "**/*.config.{ts,js}",
     "**/generated/**",
-    "**/__mocks__/**"
+    "**/__mocks__/**",
+    "lib/chat-channel/**",
+    "lib/api-route-factory.ts",
+    "lib/api-utils.ts"
   ],
   "ignoreDependencies": [
     "@types/*",
@@ -20,6 +23,7 @@
     "vitest",
     "@playwright/test"
   ],
+  "ignoreExportsUsedInFile": true,
   "rules": {
     "files": "warn",
     "dependencies": "warn",

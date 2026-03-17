@@ -7,6 +7,7 @@ import { useEscapeKey } from '@/hooks/useEscapeKey';
 import { useConfirmAction } from '@/hooks/useConfirmAction';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { ProjectEditDialog } from '@/components/projects/ProjectEditDialog';
+import { useInlineEdit } from '@/hooks/useInlineEdit';
 import { useProjectStore, useTaskStore, useDocumentStore } from '@/store';
 import type { KnowledgeConfig } from '@/db/schema';
 import { useGatewayStore } from '@/store/gateway.store';
@@ -79,6 +80,15 @@ export default function ProjectsPage() {
   const [newName, setNewName] = useState('');
   const [newDesc, setNewDesc] = useState('');
   const deleteAction = useConfirmAction<string>();
+
+  // 使用 useInlineEdit Hook 处理新建项目名称的 Enter/Blur 双重提交问题
+  const { handleKeyDown: handleNewNameKeyDown, handleBlur: handleNewNameBlur, isSaving: isCreatingProject } = useInlineEdit({
+    onSave: async () => {
+      if (newName.trim()) {
+        await handleCreate();
+      }
+    },
+  });
 
   // 从 URL 参数打开编辑弹窗
   useEffect(() => {
@@ -290,15 +300,17 @@ export default function ProjectsPage() {
             {/* 新建表单卡片 */}
             {showNew && (
               <Card className="p-5 border-2 border-dashed" style={{ borderColor: 'var(--primary-500)' }}>
-                <div className="space-y-3">
-                  <Input
-                    value={newName}
-                    onChange={e => setNewName(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && handleCreate()}
-                    placeholder={t('projects.projectNamePlaceholder')}
-                    className="text-sm font-medium"
-                    autoFocus
-                  />
+              <div className="space-y-3">
+                <Input
+                  value={newName}
+                  onChange={e => setNewName(e.target.value)}
+                  onKeyDown={e => handleNewNameKeyDown(e, newName)}
+                  onBlur={() => handleNewNameBlur(newName)}
+                  placeholder={t('projects.projectNamePlaceholder')}
+                  className="text-sm font-medium"
+                  autoFocus
+                  disabled={isCreatingProject.current}
+                />
                   <Textarea
                     value={newDesc}
                     onChange={e => setNewDesc(e.target.value)}
@@ -308,9 +320,9 @@ export default function ProjectsPage() {
                   />
                   <div className="flex justify-end gap-2">
                     <Button variant="secondary" onClick={() => setShowNew(false)}>{t('common.cancel')}</Button>
-                    <Button onClick={handleCreate} disabled={!newName.trim()}>
-                      <Save className="w-3.5 h-3.5" /> {t('common.create')}
-                    </Button>
+            <Button onClick={handleCreate} disabled={!newName.trim() || isCreatingProject.current}>
+              <Save className="w-3.5 h-3.5" /> {t('common.create')}
+            </Button>
                   </div>
                 </div>
               </Card>

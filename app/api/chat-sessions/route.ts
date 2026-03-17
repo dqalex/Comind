@@ -8,6 +8,7 @@ import { eventBus } from '@/lib/event-bus';
 import { withAuth } from '@/lib/with-auth';
 import type { AuthResult } from '@/lib/api-auth';
 import { errorResponse, createdResponse, ApiErrors } from '@/lib/api-route-factory';
+import { createChatSessionSchema, validate } from '@/lib/validation';
 
 // GET /api/chat-sessions - 获取所有会话（支持分页）
 // v3.0: 严格用户隔离 - 只返回当前用户的聊天记录
@@ -52,24 +53,27 @@ export const POST = withAuth(async (request: NextRequest, auth: AuthResult) => {
   
   try {
     const body = await request.json();
-    const { memberId, memberName, title, entity } = body;
 
-    if (!memberId || !memberName) {
-      return errorResponse(ApiErrors.badRequest('Missing memberId or memberName'), requestId);
+    // Zod schema validation
+    const validation = validate(createChatSessionSchema, body);
+    if (!validation.success) {
+      return errorResponse(ApiErrors.badRequest(validation.error), requestId);
     }
+
+    const data = validation.data;
 
     const now = new Date();
     const id = generateSessionId();
 
     await db.insert(chatSessions).values({
       id,
-      memberId,
-      memberName,
+      memberId: data.memberId,
+      memberName: data.memberName,
       userId: auth.userId!, // 强制绑定当前用户
-      title: title || '新对话',
-      entityType: entity?.type ? (validateEnum(entity.type, VALID_ENTITY_TYPE) || null) : null,
-      entityId: entity?.id || null,
-      entityTitle: entity?.title || null,
+      title: data.title || '新对话',
+      entityType: data.entity?.type ? (validateEnum(data.entity.type, VALID_ENTITY_TYPE) || null) : null,
+      entityId: data.entity?.id || null,
+      entityTitle: data.entity?.title || null,
       createdAt: now,
       updatedAt: now,
     });

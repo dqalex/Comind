@@ -22,4 +22,4 @@ const ChatMarkdown = dynamic(
 export default ChatMarkdown;
 
 // 重新导出工具函数（这些是轻量的，不需要懒加载）
-export { extractThinking, ThinkingBlock } from './ChatMarkdown';
+export { extractThinking } from './ChatMarkdown';

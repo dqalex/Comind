@@ -8,6 +8,7 @@ import { useGatewayStore } from '@/store/gateway.store';
 import { useAuthStore } from '@/store/auth.store';
 import { useConfirmAction } from '@/hooks/useConfirmAction';
 import { useTaskSOP } from '@/hooks/useTaskSOP';
+import { useInlineEdit } from '@/hooks/useInlineEdit';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import TaskComments from '@/components/TaskComments';
 import TaskLogs from '@/components/TaskLogs';
@@ -86,6 +87,15 @@ export default function TaskDrawer({ task, onClose, onDelete }: TaskDrawerProps)
   const [description, setDescription] = useState(task.description || '');
   const deleteConfirm = useConfirmAction<boolean>();
   const [newCheckItem, setNewCheckItem] = useState('');
+
+  // 使用 useInlineEdit Hook 处理检查项添加的 Enter/Blur 双重提交问题
+  const { handleKeyDown: handleCheckItemKeyDown, handleBlur: handleCheckItemBlur, isSaving: isAddingCheckItem } = useInlineEdit({
+    onSave: async () => {
+      if (newCheckItem.trim()) {
+        await handleAddCheckItem();
+      }
+    },
+  });
   const [showDocPicker, setShowDocPicker] = useState(false);
   const [pushing, setPushing] = useState(false);
   const [pushResult, setPushResult] = useState<{ ok: boolean; msg: string } | null>(null);
@@ -624,13 +634,15 @@ export default function TaskDrawer({ task, onClose, onDelete }: TaskDrawerProps)
                   <Input
                     value={newCheckItem}
                     onChange={e => setNewCheckItem(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && handleAddCheckItem()}
+                    onKeyDown={e => handleCheckItemKeyDown(e, newCheckItem)}
+                    onBlur={() => handleCheckItemBlur(newCheckItem)}
                     placeholder={t('tasks.addCheckItem')}
                     className="text-xs flex-1"
+                    disabled={isAddingCheckItem.current}
                   />
                   <button
                     onClick={handleAddCheckItem}
-                    disabled={!newCheckItem.trim()}
+                    disabled={!newCheckItem.trim() || isAddingCheckItem.current}
                     className="p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 disabled:opacity-30"
                   >
                     <Plus className="w-3.5 h-3.5" style={{ color: 'var(--text-tertiary)' }} />

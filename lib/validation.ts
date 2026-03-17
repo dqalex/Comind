@@ -214,6 +214,186 @@ export const paginationSchema = z.object({
 });
 
 // ============================================================
+// 里程碑验证
+// ============================================================
+
+// 里程碑状态
+export const milestoneStatusSchema = z.enum(['open', 'in_progress', 'completed', 'cancelled']);
+
+// 里程碑创建验证
+export const createMilestoneSchema = z.object({
+  title: z.string().min(1).max(500).transform(sanitizeText),
+  description: z.string().max(5000).transform(sanitizeText).optional(),
+  projectId: idSchema,
+  status: milestoneStatusSchema.default('open'),
+  dueDate: z.union([z.number().int().positive(), z.string().datetime()]).optional()
+    .transform(val => val ? new Date(val) : undefined),
+  sortOrder: z.number().int().default(0),
+});
+
+// 里程碑更新验证
+export const updateMilestoneSchema = z.object({
+  title: z.string().min(1).max(500).transform(sanitizeText).optional(),
+  description: z.string().max(5000).transform(sanitizeText).optional(),
+  status: milestoneStatusSchema.optional(),
+  dueDate: z.union([z.number().int().positive(), z.string().datetime()]).optional()
+    .transform(val => val ? new Date(val) : undefined),
+  sortOrder: z.number().int().optional(),
+});
+
+// ============================================================
+// 交付物验证
+// ============================================================
+
+// 交付物平台
+export const deliveryPlatformSchema = z.enum(['tencent-doc', 'feishu', 'notion', 'local', 'other']);
+
+// 交付物状态
+export const deliveryStatusSchema = z.enum(['pending', 'approved', 'rejected', 'revision_needed']);
+
+// 交付物创建验证
+export const createDeliverySchema = z.object({
+  memberId: idSchema,
+  taskId: idSchema.optional(),
+  documentId: idSchema.optional(),
+  title: z.string().min(1).max(500).transform(sanitizeText),
+  description: z.string().max(5000).transform(sanitizeText).optional(),
+  platform: deliveryPlatformSchema,
+  externalUrl: urlSchema.optional(),
+  externalId: z.string().max(200).optional(),
+  status: deliveryStatusSchema.default('pending'),
+  reviewerId: idSchema.optional(),
+  reviewedAt: z.union([z.number().int().positive(), z.string().datetime()]).optional()
+    .transform(val => val ? new Date(val) : undefined),
+  reviewComment: z.string().max(2000).transform(sanitizeText).optional(),
+  version: z.number().int().min(1).default(1),
+  previousDeliveryId: idSchema.optional(),
+});
+
+// ============================================================
+// SOP 模板验证
+// ============================================================
+
+// SOP 阶段输入定义验证
+export const inputDefSchema = z.object({
+  id: idSchema,
+  label: z.string().min(1).max(200).transform(sanitizeText),
+  type: z.enum(['text', 'textarea', 'file', 'select']),
+  required: z.boolean().default(false),
+  placeholder: z.string().max(500).optional(),
+  options: z.array(z.string().max(100)).max(50).optional(),
+});
+
+// SOP 阶段验证
+export const sopStageSchema = z.object({
+  id: idSchema,
+  label: z.string().min(1).max(200).transform(sanitizeText),
+  description: z.string().max(1000).transform(sanitizeText).optional(),
+  type: stageTypeSchema,
+  promptTemplate: z.string().max(10000).optional(),
+  requiredInputs: z.array(inputDefSchema).max(20).optional(),
+  confirmMessage: z.string().max(500).optional(),
+  outputType: z.enum(['text', 'markdown', 'html', 'data', 'file']).optional(),
+  outputLabel: z.string().max(200).optional(),
+  knowledgeLayers: z.array(z.enum(['L1', 'L2', 'L3', 'L4', 'L5'])).max(5).optional(),
+  renderTemplateId: idSchema.optional(),
+  optional: z.boolean().default(false),
+  estimatedMinutes: z.number().int().min(1).max(10080).optional(), // max 1 week
+  rollbackStageId: idSchema.optional(),
+});
+
+// 知识库配置验证
+export const knowledgeConfigSchema = z.object({
+  documentId: idSchema.optional(),
+  layers: z.array(z.enum(['L1', 'L2', 'L3', 'L4', 'L5'])).max(5).optional(),
+}).optional();
+
+// 输出配置验证
+export const outputConfigSchema = z.object({
+  type: z.enum(['markdown', 'html', 'both']),
+  renderTemplateId: idSchema.optional(),
+}).optional();
+
+// 参考文件验证
+export const referenceFileSchema = z.object({
+  id: idSchema,
+  filename: z.string().min(1).max(200),
+  title: z.string().min(1).max(200).transform(sanitizeText),
+  description: z.string().max(500).transform(sanitizeText).optional(),
+  content: z.string().max(100000),
+  type: z.enum(['template', 'guide', 'example', 'doc']),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+// 脚本文件验证
+export const scriptFileSchema = z.object({
+  id: idSchema,
+  filename: z.string().min(1).max(200),
+  description: z.string().max(500).transform(sanitizeText).optional(),
+  content: z.string().max(50000),
+  type: z.enum(['bash', 'python', 'node', 'other']),
+  executable: z.boolean().default(false),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+// SOP 模板创建验证
+export const createSopTemplateSchema = z.object({
+  name: z.string().min(1).max(200).transform(sanitizeText),
+  description: z.string().max(2000).transform(sanitizeText).default(''),
+  category: sopCategorySchema.default('custom'),
+  icon: z.string().max(50).default('clipboard-list'),
+  status: z.enum(['draft', 'active', 'archived']).default('active'),
+  stages: z.array(sopStageSchema).max(50).default([]),
+  requiredTools: z.array(z.string().max(100)).max(50).default([]),
+  systemPrompt: z.string().max(50000).default(''),
+  knowledgeConfig: knowledgeConfigSchema,
+  outputConfig: outputConfigSchema,
+  qualityChecklist: z.array(z.string().max(500)).max(100).default([]),
+  references: z.array(referenceFileSchema).max(50).default([]),
+  scripts: z.array(scriptFileSchema).max(20).default([]),
+  projectId: idSchema.optional(),
+  createdBy: z.string().max(100).default('system'),
+});
+
+// SOP 模板更新验证
+export const updateSopTemplateSchema = z.object({
+  name: z.string().min(1).max(200).transform(sanitizeText).optional(),
+  description: z.string().max(2000).transform(sanitizeText).optional(),
+  category: sopCategorySchema.optional(),
+  icon: z.string().max(50).optional(),
+  status: z.enum(['draft', 'active', 'archived']).optional(),
+  stages: z.array(sopStageSchema).max(50).optional(),
+  requiredTools: z.array(z.string().max(100)).max(50).optional(),
+  systemPrompt: z.string().max(50000).optional(),
+  knowledgeConfig: knowledgeConfigSchema,
+  outputConfig: outputConfigSchema,
+  qualityChecklist: z.array(z.string().max(500)).max(100).optional(),
+  references: z.array(referenceFileSchema).max(50).optional(),
+  scripts: z.array(scriptFileSchema).max(20).optional(),
+});
+
+// ============================================================
+// 聊天会话验证
+// ============================================================
+
+// 实体类型
+export const entityTypeSchema = z.enum(['task', 'scheduled_task', 'project']);
+
+// 聊天会话创建验证
+export const createChatSessionSchema = z.object({
+  memberId: idSchema,
+  memberName: z.string().min(1).max(100).transform(sanitizeText),
+  title: z.string().max(200).transform(sanitizeText).optional(),
+  entity: z.object({
+    type: entityTypeSchema,
+    id: idSchema,
+    title: z.string().max(200).transform(sanitizeText),
+  }).optional(),
+});
+
+// ============================================================
 // 工具函数
 // ============================================================
 
@@ -285,3 +465,9 @@ export type RegisterUserInput = z.infer<typeof registerUserSchema>;
 export type LoginUserInput = z.infer<typeof loginUserSchema>;
 export type CreateChatMessageInput = z.infer<typeof createChatMessageSchema>;
 export type PaginationInput = z.infer<typeof paginationSchema>;
+export type CreateMilestoneInput = z.infer<typeof createMilestoneSchema>;
+export type UpdateMilestoneInput = z.infer<typeof updateMilestoneSchema>;
+export type CreateDeliveryInput = z.infer<typeof createDeliverySchema>;
+export type CreateSopTemplateInput = z.infer<typeof createSopTemplateSchema>;
+export type UpdateSopTemplateInput = z.infer<typeof updateSopTemplateSchema>;
+export type CreateChatSessionInput = z.infer<typeof createChatSessionSchema>;

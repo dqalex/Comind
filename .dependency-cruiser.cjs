@@ -41,13 +41,40 @@ module.exports = {
       from: { path: '^store' },
       to: { path: '^db', pathNot: '^db/schema' }
     },
-    // 禁止组件直接访问 lib 内部
+    // 禁止组件直接访问 lib 内部（必须通过 lib/index）
+    {
+      name: 'no-direct-lib-internal',
+      severity: 'error',
+      comment: '禁止直接访问 lib 内部模块，请通过 lib/index 导入',
+      from: { path: '^components' },
+      to: { 
+        path: '^lib/(slot-sync|icon-render|sop-config|sse-events|logger|tool-policy|gateway-client|chat-channel)',
+        pathNot: '^lib/index'
+      }
+    },
+    // 禁止层间跳跃（components 直接访问 db）
+    {
+      name: 'no-layer-skip',
+      severity: 'error',
+      comment: '禁止跳过层级访问（如 components 直接访问 db）',
+      from: { path: '^components' },
+      to: { path: '^db' }
+    },
+    // 禁止反向依赖（低层依赖高层）
+    {
+      name: 'no-reverse-dependency',
+      severity: 'error',
+      comment: '禁止反向依赖（lib 不应该依赖 components）',
+      from: { path: '^lib' },
+      to: { path: '^components' }
+    },
+    // 信息级：components 访问模式建议
     {
       name: 'components-access-pattern',
       severity: 'info',
       comment: 'components 应该通过 lib/index 访问工具函数',
       from: { path: '^components' },
-      to: { path: '^lib/.*', pathNot: '^lib/(auth|i18n|data-service|gateway-proxy|id|sanitize|event-bus)' }
+      to: { path: '^lib/.*', pathNot: '^lib/(auth|i18n|data-service|gateway-proxy|id|sanitize|event-bus|index)' }
     }
   ],
   options: {

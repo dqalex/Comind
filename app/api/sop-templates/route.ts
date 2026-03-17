@@ -10,6 +10,7 @@ import { generateIdWithPrefix, generateId } from '@/lib/id';
 import { eventBus } from '@/lib/event-bus';
 import { withAuth } from '@/lib/with-auth';
 import { errorResponse, createdResponse, ApiErrors } from '@/lib/api-route-factory';
+import { createSopTemplateSchema, validate } from '@/lib/validation';
 
 // 有效的 SOP 分类
 const VALID_SOP_CATEGORY = ['content', 'analysis', 'research', 'development', 'operations', 'media', 'custom'] as const;
@@ -85,69 +86,34 @@ export const POST = withAuth(async (request: NextRequest) => {
   
   try {
     const body = await request.json();
-    const {
-      name,
-      description,
-      category,
-      icon,
-      status,
-      stages,
-      requiredTools,
-      systemPrompt,
-      knowledgeConfig,
-      outputConfig,
-      qualityChecklist,
-      projectId,
-      createdBy,
-      references,   // v3.1 新增
-      scripts,      // v3.1 新增
-    } = body;
 
-    // 必填字段校验
-    if (!name) {
-      return errorResponse(ApiErrors.badRequest('name is a required field'), requestId);
+    // Zod schema validation
+    const validation = validate(createSopTemplateSchema, body);
+    if (!validation.success) {
+      return errorResponse(ApiErrors.badRequest(validation.error), requestId);
     }
 
-    // 枚举校验
-    if (category && !VALID_SOP_CATEGORY.includes(category)) {
-      return errorResponse(ApiErrors.badRequest(`category must be one of ${VALID_SOP_CATEGORY.join('/')}`), requestId);
-    }
-    if (status && !VALID_SOP_STATUS.includes(status)) {
-      return errorResponse(ApiErrors.badRequest(`status must be one of ${VALID_SOP_STATUS.join('/')}`), requestId);
-    }
-
-    // stages 校验（如果提供）
-    if (stages && !Array.isArray(stages)) {
-      return errorResponse(ApiErrors.badRequest('stages must be an array'), requestId);
-    }
-
-    // v3.1: references 和 scripts 校验
-    if (references && !Array.isArray(references)) {
-      return errorResponse(ApiErrors.badRequest('references must be an array'), requestId);
-    }
-    if (scripts && !Array.isArray(scripts)) {
-      return errorResponse(ApiErrors.badRequest('scripts must be an array'), requestId);
-    }
+    const data = validation.data;
 
     const now = new Date();
     const newTemplate: NewSOPTemplate = {
       id: generateIdWithPrefix('sop'),
-      name,
-      description: description || '',
-      category: category || 'custom',
-      icon: icon || 'clipboard-list',
-      status: status || 'active',
-      stages: stages || [],
-      requiredTools: requiredTools || [],
-      systemPrompt: systemPrompt || '',
-      knowledgeConfig: knowledgeConfig || null,
-      outputConfig: outputConfig || null,
-      qualityChecklist: qualityChecklist || [],
-      references: references || [],      // v3.1 新增
-      scripts: scripts || [],            // v3.1 新增
+      name: data.name,
+      description: data.description,
+      category: data.category,
+      icon: data.icon,
+      status: data.status,
+      stages: data.stages,
+      requiredTools: data.requiredTools,
+      systemPrompt: data.systemPrompt,
+      knowledgeConfig: data.knowledgeConfig || null,
+      outputConfig: data.outputConfig || null,
+      qualityChecklist: data.qualityChecklist,
+      references: data.references,
+      scripts: data.scripts,
       isBuiltin: false,
-      projectId: projectId || null,
-      createdBy: createdBy || 'system',
+      projectId: data.projectId || null,
+      createdBy: data.createdBy,
       createdAt: now,
       updatedAt: now,
     };

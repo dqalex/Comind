@@ -14,7 +14,13 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Type, Palette, Bold, AlignLeft, AlignCenter, AlignRight, Image, RotateCcw } from 'lucide-react';
 import clsx from 'clsx';
-import type { ElementSelection } from './HtmlPreview';
+// 元素选区类型（原从 ./HtmlPreview 导入）
+interface ElementSelection {
+  slotName: string;
+  slotType: string;
+  styles: Record<string, string>;
+  content: string;
+}
 
 export interface PropertyPanelProps {
   selection: ElementSelection | null;

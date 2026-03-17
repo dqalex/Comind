@@ -6,6 +6,7 @@ import { useConfirmAction } from '@/hooks/useConfirmAction';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { useMilestoneStore, useProjectStore, useTaskStore, useDocumentStore } from '@/store';
 import { Button, Input, Select, Card } from '@/components/ui';
+import { useInlineEdit } from '@/hooks/useInlineEdit';
 import {
   Plus, Trash2, Edit2, X, Calendar,
   Milestone as MilestoneIcon,
@@ -50,6 +51,17 @@ export default function MilestoneManager({ projectId, onClose }: MilestoneManage
     sortOrder: 0,
     knowledgeDocId: '',
     knowledgeLayers: ['L1'] as string[],
+  });
+
+  // 使用 useInlineEdit Hook 处理里程碑名称编辑的 Enter/Blur 双重提交问题
+  const { handleKeyDown: handleTitleKeyDown, handleBlur: handleTitleBlur, isSaving: isTitleSaving } = useInlineEdit({
+    onSave: async () => {
+      if (editingId) {
+        await handleUpdate();
+      } else {
+        await handleCreate();
+      }
+    },
   });
 
   // 过滤出 guide 类型的文档作为知识库候选
@@ -144,8 +156,10 @@ export default function MilestoneManager({ projectId, onClose }: MilestoneManage
           value={formData.title}
           onChange={e => setFormData({ ...formData, title: e.target.value })}
           placeholder={t('milestones.milestoneNamePlaceholder')}
-          onKeyDown={e => e.key === 'Enter' && (isEdit ? handleUpdate() : handleCreate())}
+          onKeyDown={e => handleTitleKeyDown(e, formData.title)}
+          onBlur={() => handleTitleBlur(formData.title)}
           autoFocus
+          disabled={isTitleSaving.current}
         />
       </div>
       <div>
