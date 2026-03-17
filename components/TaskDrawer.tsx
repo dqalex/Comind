@@ -213,6 +213,9 @@ export default function TaskDrawer({ task, onClose, onDelete }: TaskDrawerProps)
   };
 
   const handleChatAboutTask = () => {
+    // v3.0 多用户：在函数内部实时计算用户专用会话键（确保 agentsDefaultId 已加载）
+    const userSessionKey = currentUserId ? getUserSessionKey(currentUserId) : null;
+
     // 获取项目信息
     const project = task.projectId ? projects.find(p => p.id === task.projectId) : null;
 
@@ -330,7 +333,8 @@ export default function TaskDrawer({ task, onClose, onDelete }: TaskDrawerProps)
       '**请分析这个任务，给出你的建议和执行方案，但暂时不要执行任何修改操作。**'
     );
 
-    openChatWithMessage(lines.join('\n'));
+    // v3.0 多用户：传入用户专用会话键
+    openChatWithMessage(lines.join('\n'), { sessionKey: userSessionKey || undefined });
   };
 
   const handlePushToAI = async () => {

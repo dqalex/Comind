@@ -55,10 +55,9 @@ export function useWikiPage() {
   const { openChatWithMessage } = useChatStore();
   const { templates: renderTemplates } = useRenderTemplateStore();
   
-  // v3.0 多用户：获取用户专用会话键
+  // v3.0 多用户：获取用户专用会话键（注意：不在组件级别缓存，而是在函数调用时实时计算）
   const authUser = useAuthStore((s) => s.user);
   const getUserSessionKey = useGatewayStore((s) => s.getUserSessionKey);
-  const userSessionKey = authUser?.id ? getUserSessionKey(authUser.id) : null;
 
   // 文档选择/搜索/过滤
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
@@ -364,6 +363,10 @@ export function useWikiPage() {
 
   const handleChatAboutDoc = useCallback(() => {
     if (!selectedDoc) return;
+
+    // v3.0 多用户：在函数内部实时计算用户专用会话键（确保 agentsDefaultId 已加载）
+    const userSessionKey = authUser?.id ? getUserSessionKey(authUser.id) : null;
+
     const project = selectedDoc.projectId ? projects.find(p => p.id === selectedDoc.projectId) : null;
     const contentPreview = editContent ? editContent.slice(0, 500) + (editContent.length > 500 ? '\n...(内容已截断)' : '') : '';
     const lines = [
@@ -382,7 +385,7 @@ export function useWikiPage() {
     lines.push('---', '', '## 访问方式', '- 文档: `get_document` 或 `list_documents`', '- 任务: `get_task` 或 `list_tasks`', '', '**请分析这篇文档，给出你的建议，但暂时不要执行任何修改操作。**');
     // v3.0 多用户：传入用户专用会话键
     openChatWithMessage(lines.join('\n'), { sessionKey: userSessionKey || undefined });
-  }, [selectedDoc, editContent, projects, typeLabels, openChatWithMessage, userSessionKey]);
+  }, [selectedDoc, editContent, projects, typeLabels, openChatWithMessage, authUser, getUserSessionKey]);
 
   const handleToggleProjectTag = useCallback(async (projectName: string) => {
     if (!selectedDoc) return;
@@ -472,7 +475,10 @@ export function useWikiPage() {
   // 套模板：创建任务并推送给 AI
   const handleApplyTemplate = useCallback(async (data: { templateId: string; projectId: string }) => {
     if (!selectedDoc) return;
-    
+
+    // v3.0 多用户：在函数内部实时计算用户专用会话键（确保 agentsDefaultId 已加载）
+    const userSessionKey = authUser?.id ? getUserSessionKey(authUser.id) : null;
+
     // 获取当前用户及其关联的成员
     const { useAuthStore } = await import('@/store/auth.store');
     const currentUser = useAuthStore.getState().user;
@@ -520,7 +526,7 @@ export function useWikiPage() {
         }
       }
     }
-  }, [selectedDoc, openChatWithMessage, userSessionKey]);
+  }, [selectedDoc, openChatWithMessage, authUser, getUserSessionKey]);
 
   return {
     t, typeLabels,

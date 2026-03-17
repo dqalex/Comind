@@ -19,11 +19,10 @@ export function useTasksPage() {
   const { members } = useMemberStore();
   const { milestones } = useMilestoneStore();
   const { templates: sopTemplates } = useSOPTemplateStore();
-  // v3.0 多用户：获取用户专用会话键
+  // v3.0 多用户：获取用户专用会话键（注意：不在组件级别缓存，而是在函数调用时实时计算）
   const { connected, connectionMode, serverProxyConnected, getUserSessionKey } = useGatewayStore();
   const gwConnected = connectionMode === 'server_proxy' ? serverProxyConnected : connected;
   const authUser = useAuthStore((s) => s.user);
-  const userSessionKey = authUser?.id ? getUserSessionKey(authUser.id) : null;
   
   const { openChatWithMessage } = useChatStore();
   const { createLog } = useTaskLogStore();
@@ -299,6 +298,9 @@ export function useTasksPage() {
 
   // v3.0 多用户：批量推送使用用户专用会话键
   const handleBatchPush = useCallback(async () => {
+    // v3.0 多用户：在函数内部实时计算用户专用会话键（确保 agentsDefaultId 已加载）
+    const userSessionKey = authUser?.id ? getUserSessionKey(authUser.id) : null;
+
     if (!gwConnected || !userSessionKey || selectedTaskIds.size === 0) return;
     setPushing(true);
     try {
@@ -321,7 +323,7 @@ export function useTasksPage() {
       if (pushErrorTimerRef.current) clearTimeout(pushErrorTimerRef.current);
       pushErrorTimerRef.current = setTimeout(() => setPushError(null), 5000);
     }
-  }, [gwConnected, userSessionKey, selectedTaskIds, openChatWithMessage, clearSelection]);
+  }, [gwConnected, authUser, getUserSessionKey, selectedTaskIds, openChatWithMessage, clearSelection]);
 
   const handleBatchStatusChange = useCallback(async (newStatus: StatusColumn) => {
     if (selectedTaskIds.size === 0) return;

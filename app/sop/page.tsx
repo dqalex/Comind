@@ -8,7 +8,7 @@ import ConfirmDialog from '@/components/ConfirmDialog';
 import AppShell from '@/components/AppShell';
 import Header from '@/components/Header';
 import { Button, Input, Badge } from '@/components/ui';
-import { useSOPTemplateStore, useProjectStore, useChatStore } from '@/store';
+import { useSOPTemplateStore, useProjectStore, useChatStore, useAuthStore, useGatewayStore } from '@/store';
 import { useRenderTemplateStore } from '@/store/render-template.store';
 import type { SOPTemplate, SOPCategory, SOPStage, RenderTemplate, NewRenderTemplate, ReferenceFile, ScriptFile } from '@/db/schema';
 import clsx from 'clsx';
@@ -404,6 +404,10 @@ export default function SOPPage() {
   const [aiCreateRtSending, setAiCreateRtSending] = useState(false);
   const aiCreateRtTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const openChatWithMessage = useChatStore((s) => s.openChatWithMessage);
+
+  // v3.0 多用户：获取用户专用会话键（注意：不在组件级别缓存，而是在函数调用时实时计算）
+  const authUser = useAuthStore((s) => s.user);
+  const getUserSessionKey = useGatewayStore((s) => s.getUserSessionKey);
   
   const selectedRt = useMemo(() => 
     renderTemplates.find(t => t.id === selectedRtId) || null,
@@ -566,6 +570,10 @@ export default function SOPPage() {
   const handleAiCreateRt = useCallback(() => {
     if (!aiCreateRtPrompt.trim() || aiCreateRtSending) return;
     setAiCreateRtSending(true);
+
+    // v3.0 多用户：在函数内部实时计算用户专用会话键（确保 agentsDefaultId 已加载）
+    const userSessionKey = authUser?.id ? getUserSessionKey(authUser.id) : null;
+
     const message = `请为 TeamClaw 创建一个 HTML 渲染模板，需求如下：
 
 ${aiCreateRtPrompt.trim()}
@@ -585,14 +593,15 @@ ${aiCreateRtPrompt.trim()}
 
 请使用 MCP 工具 \`create_render_template\` 创建模板。创建后模板为 draft 状态。`;
 
-    openChatWithMessage(message);
+    // v3.0 多用户：传入用户专用会话键
+    openChatWithMessage(message, { sessionKey: userSessionKey || undefined });
     if (aiCreateRtTimerRef.current) clearTimeout(aiCreateRtTimerRef.current);
     aiCreateRtTimerRef.current = setTimeout(() => {
       setAiCreateRtSending(false);
       setAiCreateRtPrompt('');
       setShowAiCreateRt(false);
     }, 500);
-  }, [aiCreateRtPrompt, aiCreateRtSending, openChatWithMessage]);
+  }, [aiCreateRtPrompt, aiCreateRtSending, openChatWithMessage, authUser, getUserSessionKey]);
 
   // 渲染模板分类颜色
   const rtCategoryColors: Record<string, string> = useMemo(() => ({
