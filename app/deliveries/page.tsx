@@ -73,10 +73,9 @@ export default function DeliveriesPage() {
   const projects = useProjectStore((s) => s.projects);
   const openChatWithMessage = useChatStore((s) => s.openChatWithMessage);
   
-  // v3.0 多用户：获取用户专用会话键
+  // v3.0 多用户：获取用户专用会话键（注意：不在组件级别缓存，而是在函数调用时实时计算）
   const authUser = useAuthStore((s) => s.user);
   const getUserSessionKey = useGatewayStore((s) => s.getUserSessionKey);
-  const userSessionKey = authUser?.id ? getUserSessionKey(authUser.id) : null;
   
   const aiMembers = useMemo(() => getAIMembers(), [members]);
   const humanMembers = useMemo(() => getHumanMembers(), [members]);
@@ -166,6 +165,9 @@ export default function DeliveriesPage() {
     const member = members.find(m => m.id === delivery.memberId);
     const linkedDoc = delivery.documentId ? documents.find(d => d.id === delivery.documentId) : null;
 
+    // v3.0 多用户：在函数内部实时计算用户专用会话键（确保 agentsDefaultId 已加载）
+    const userSessionKey = authUser?.id ? getUserSessionKey(authUser.id) : null;
+
     const lines = [
       '**这是一条引用讨论消息，请先不要执行任何操作，我们只需要讨论方案。**',
       '',
@@ -222,7 +224,7 @@ export default function DeliveriesPage() {
 
     // v3.0 多用户：传入用户专用会话键
     openChatWithMessage(lines.join('\n'), { sessionKey: userSessionKey || undefined });
-  }, [getDeliveryContext, members, documents, getStatusDisplay, getPlatformName, openChatWithMessage, userSessionKey]);
+  }, [getDeliveryContext, members, documents, getStatusDisplay, getPlatformName, openChatWithMessage, authUser, getUserSessionKey]);
 
   return (
     <AppShell>
