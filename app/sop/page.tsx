@@ -11,6 +11,7 @@ import { Button, Input, Badge } from '@/components/ui';
 import { useSOPTemplateStore, useProjectStore, useChatStore, useAuthStore, useGatewayStore } from '@/store';
 import { useRenderTemplateStore } from '@/store/render-template.store';
 import type { SOPTemplate, SOPCategory, SOPStage, RenderTemplate, NewRenderTemplate, ReferenceFile, ScriptFile } from '@/db/schema';
+import { useFilteredList } from '@/hooks/useFilteredList';
 import clsx from 'clsx';
 import JSZip from 'jszip';
 import {
@@ -67,9 +68,6 @@ export default function SOPPage() {
   const fetchRenderTemplates = useRenderTemplateStore((s) => s.fetchTemplates);
   
   const [pageTab, setPageTab] = useState<PageTab>('sop');
-  const [search, setSearch] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [showEditor, setShowEditor] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<SOPTemplate | null>(null);
@@ -336,31 +334,57 @@ export default function SOPPage() {
     { key: 'archived', label: t('sop.archived') },
   ], [t]);
   
-  // 过滤模板
-  const filteredTemplates = useMemo(() => {
-    let result = templates;
-    
-    // 分类过滤
-    if (categoryFilter !== 'all') {
-      result = result.filter(t => t.category === categoryFilter);
-    }
-    
-    // 状态过滤
-    if (statusFilter !== 'all') {
-      result = result.filter(t => t.status === statusFilter);
-    }
-    
-    // 搜索过滤
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter(t =>
-        t.name.toLowerCase().includes(q) ||
-        t.description?.toLowerCase().includes(q)
-      );
-    }
-    
-    return result;
-  }, [templates, categoryFilter, statusFilter, search]);
+  // 使用 useFilteredList 替代手动筛选
+  const {
+    filteredItems: filteredTemplates,
+    searchQuery: search,
+    setSearchQuery: setSearch,
+    activeFilters,
+    toggleFilter,
+  } = useFilteredList<SOPTemplate>({
+    items: templates,
+    config: {
+      searchFields: ['name', 'description'],
+      filters: {
+        content: (t) => t.category === 'content',
+        analysis: (t) => t.category === 'analysis',
+        research: (t) => t.category === 'research',
+        development: (t) => t.category === 'development',
+        operations: (t) => t.category === 'operations',
+        media: (t) => t.category === 'media',
+        custom: (t) => t.category === 'custom',
+        draft: (t) => t.status === 'draft',
+        active: (t) => t.status === 'active',
+        archived: (t) => t.status === 'archived',
+      },
+    },
+  });
+
+  // 计算当前筛选状态用于 UI 显示
+  const categoryFilter: CategoryFilter = (activeFilters.find(f =>
+    ['content', 'analysis', 'research', 'development', 'operations', 'media', 'custom'].includes(f)
+  ) as CategoryFilter) || 'all';
+
+  const statusFilter: StatusFilter = (activeFilters.find(f =>
+    ['draft', 'active', 'archived'].includes(f)
+  ) as StatusFilter) || 'all';
+
+  // 设置筛选器（兼容原有 UI）
+  const setCategoryFilter = (filter: CategoryFilter) => {
+    // 清除现有分类筛选
+    ['content', 'analysis', 'research', 'development', 'operations', 'media', 'custom'].forEach(f => {
+      if (activeFilters.includes(f)) toggleFilter(f);
+    });
+    if (filter !== 'all') toggleFilter(filter);
+  };
+
+  const setStatusFilter = (filter: StatusFilter) => {
+    // 清除现有状态筛选
+    ['draft', 'active', 'archived'].forEach(f => {
+      if (activeFilters.includes(f)) toggleFilter(f);
+    });
+    if (filter !== 'all') toggleFilter(filter);
+  };
   
   // 获取项目名称
   const getProjectName = useCallback((projectId: string | null) => {

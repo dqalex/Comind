@@ -8,6 +8,7 @@ import Header from '@/components/Header';
 import GatewayRequired from '@/components/GatewayRequired';
 import { Button, Input, Badge } from '@/components/ui';
 import type { Skill } from '@/types';
+import { useFilteredList } from '@/hooks/useFilteredList';
 import {
   Zap, ToggleLeft, ToggleRight, Search, Download, AlertTriangle,
   CheckCircle2, XCircle, Wifi, ChevronDown, ChevronRight, RefreshCw,
@@ -23,28 +24,42 @@ export default function SkillsPage() {
   const toggleSkill = useGatewayStore((s) => s.toggleSkill);
   const refreshSkills = useGatewayStore((s) => s.refreshSkills);
   const installSkill = useGatewayStore((s) => s.installSkill);
-  const [search, setSearch] = useState('');
-  const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all');
   const [expandedSkill, setExpandedSkill] = useState<string | null>(null);
   const [installing, setInstalling] = useState<string | null>(null);
 
-  const filteredSkills = useMemo(() => {
-    let result = skills;
-    if (sourceFilter === 'bundled') {
-      result = result.filter(s => s.bundled);
-    } else if (sourceFilter === 'external') {
-      result = result.filter(s => !s.bundled);
-    }
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter(s =>
-        s.name?.toLowerCase().includes(q) ||
-        s.description?.toLowerCase().includes(q) ||
-        s.skillKey?.toLowerCase().includes(q)
-      );
-    }
-    return result;
-  }, [skills, sourceFilter, search]);
+  // 使用 useFilteredList 替代手动筛选
+  const {
+    filteredItems: filteredSkills,
+    searchQuery,
+    setSearchQuery,
+    activeFilters,
+    toggleFilter,
+  } = useFilteredList<Skill>({
+    items: skills,
+    config: {
+      searchFields: ['name', 'description', 'skillKey'],
+      filters: {
+        bundled: (s) => s.bundled,
+        external: (s) => !s.bundled,
+      },
+    },
+  });
+
+  // 计算当前 sourceFilter 用于 UI 显示
+  const sourceFilter: SourceFilter = activeFilters.includes('bundled')
+    ? 'bundled'
+    : activeFilters.includes('external')
+      ? 'external'
+      : 'all';
+
+  // 设置 sourceFilter（兼容原有 UI）
+  const setSourceFilter = (filter: SourceFilter) => {
+    // 清除现有筛选
+    if (activeFilters.includes('bundled')) toggleFilter('bundled');
+    if (activeFilters.includes('external')) toggleFilter('external');
+    // 添加新筛选
+    if (filter !== 'all') toggleFilter(filter);
+  };
 
   const grouped = useMemo(() => {
     const external = filteredSkills.filter(s => !s.bundled);
@@ -246,8 +261,8 @@ export default function SkillsPage() {
               <div className="flex-1 min-w-[200px]">
                 <Input
                   icon={<Search className="w-4 h-4" />}
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
                   placeholder={t('skillsPage.search')}
                   className="text-sm"
                 />

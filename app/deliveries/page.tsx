@@ -12,6 +12,7 @@ import { useConfirmAction } from '@/hooks/useConfirmAction';
 import type { Delivery } from '@/db/schema';
 import { useTranslation } from 'react-i18next';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
+import { useFilteredList } from '@/hooks/useFilteredList';
 import {
   FileText,
   Clock,
@@ -80,7 +81,6 @@ export default function DeliveriesPage() {
   const aiMembers = useMemo(() => getAIMembers(), [members]);
   const humanMembers = useMemo(() => getHumanMembers(), [members]);
 
-  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected' | 'revision_needed'>('all');
   const [selectedDelivery, setSelectedDelivery] = useState<Delivery | null>(null);
   const [reviewComment, setReviewComment] = useState('');
   const [collapsedLanes, setCollapsedLanes] = useState<Set<string>>(new Set());
@@ -89,11 +89,41 @@ export default function DeliveriesPage() {
   // Escape key support for dialogs
   useEscapeKey(!!selectedDelivery, useCallback(() => setSelectedDelivery(null), []));
 
-  const filteredDeliveries = useMemo(() => {
-    if (filterStatus === 'all') return deliveries;
-    return deliveries.filter(d => d.status === filterStatus);
-  }, [deliveries, filterStatus]);
+  // 使用 useFilteredList 替代手动筛选
+  const {
+    filteredItems: filteredDeliveries,
+    activeFilters,
+    toggleFilter,
+  } = useFilteredList<Delivery>({
+    items: deliveries,
+    config: {
+      filters: {
+        pending: (d) => d.status === 'pending',
+        approved: (d) => d.status === 'approved',
+        rejected: (d) => d.status === 'rejected',
+        revision_needed: (d) => d.status === 'revision_needed',
+      },
+    },
+  });
 
+  // 计算当前 filterStatus 用于 UI 显示
+  const filterStatus: 'all' | 'pending' | 'approved' | 'rejected' | 'revision_needed' =
+    activeFilters.includes('pending') ? 'pending' :
+    activeFilters.includes('approved') ? 'approved' :
+    activeFilters.includes('rejected') ? 'rejected' :
+    activeFilters.includes('revision_needed') ? 'revision_needed' : 'all';
+
+  // 设置 filterStatus（兼容原有 UI）
+  const setFilterStatus = (status: typeof filterStatus) => {
+    // 清除现有筛选
+    ['pending', 'approved', 'rejected', 'revision_needed'].forEach(f => {
+      if (activeFilters.includes(f)) toggleFilter(f);
+    });
+    // 添加新筛选
+    if (status !== 'all') toggleFilter(status);
+  };
+
+  // 状态计数
   const statusCounts = useMemo(() => ({
     all: deliveries.length,
     pending: deliveries.filter(d => d.status === 'pending').length,
