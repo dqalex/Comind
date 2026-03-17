@@ -2,7 +2,7 @@
 
 import { useState, useRef, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useMemberStore, useCommentStore } from '@/store';
+import { useMemberStore, useCommentStore } from '@/domains';
 import { Textarea, Button } from '@/components/ui';
 import { Bot, User, MessageSquare } from 'lucide-react';
 import clsx from 'clsx';

@@ -18,8 +18,8 @@ import {
 import { Button, Badge, Card, CardContent } from '@/components/ui';
 import AppShell from '@/components/AppShell';
 import Header from '@/components/Header';
-import { useApprovalStore } from '@/store/approval';
-import { useAuthStore } from '@/store';
+import { useApprovalStore } from '@/domains/approval';
+import { useAuthStore } from '@/domains';
 import clsx from 'clsx';
 import { toast } from 'sonner';
 

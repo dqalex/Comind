@@ -6,7 +6,7 @@ import Header from '@/components/Header';
 import { Button } from '@/components/ui';
 import { Plus } from 'lucide-react';
 import { useWikiPage } from './hooks/useWikiPage';
-import { useAuthStore } from '@/store';
+import { useAuthStore } from '@/domains';
 import WikiSidebar from './components/WikiSidebar';
 import WikiDocEditor from './components/WikiDocEditor';
 import WikiCreateDocDialog from './components/WikiCreateDocDialog';

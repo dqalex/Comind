@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Input, Textarea, Select, Card } from '@/components/ui';
 import { X, Save, Users, Settings, Crown, Shield, User, Eye, Plus, Trash2, BookOpen } from 'lucide-react';
-import { useDocumentStore } from '@/store';
+import { useDocumentStore } from '@/domains';
 import type { KnowledgeConfig } from '@/db/schema';
 import clsx from 'clsx';
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useGatewayStore } from '@/store/gateway.store';
+import { useGatewayStore } from '@/core/gateway/store';
 import { getGatewayProxyClient } from '@/lib/gateway-proxy';
 import { Button } from '@/components/ui';
 import clsx from 'clsx';

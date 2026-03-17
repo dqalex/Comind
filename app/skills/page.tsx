@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useGatewayStore } from '@/store/gateway.store';
+import { useGatewayStore } from '@/core/gateway/store';
 import AppShell from '@/components/AppShell';
 import Header from '@/components/Header';
 import GatewayRequired from '@/components/GatewayRequired';

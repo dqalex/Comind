@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import type { ChatSession } from '@/store/chat.store';
+import type { ChatSession } from '@/domains/chat';
 import { X, Plus, Trash2, Bot, MessageSquare, Wifi } from 'lucide-react';
 import clsx from 'clsx';
 

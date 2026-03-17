@@ -19,7 +19,7 @@ import { useRouter } from 'next/navigation';
 import AppShell from '@/components/AppShell';
 import Header from '@/components/Header';
 import { Button, Input, Card, CardContent, CardHeader, CardTitle, Label, Badge, Select } from '@/components/ui';
-import { useAuthStore } from '@/store';
+import { useAuthStore } from '@/domains';
 import {
   ArrowLeft, Settings, Globe, Shield, Zap, Save, AlertTriangle,
   Loader2, RefreshCw, CheckCircle2, XCircle,

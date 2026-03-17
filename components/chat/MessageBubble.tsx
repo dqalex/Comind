@@ -11,7 +11,7 @@
 import { memo } from 'react';
 import { Bot, User, AlertCircle } from 'lucide-react';
 import clsx from 'clsx';
-import type { ChatMessage } from '@/store/chat.store';
+import type { ChatMessage } from '@/domains/chat';
 import ChatMarkdown, { extractThinking } from './ChatMarkdownLazy';
 import { normalizeContent } from './chat-utils';
 

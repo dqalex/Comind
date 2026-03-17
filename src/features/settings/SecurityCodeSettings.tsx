@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuthStore } from '@/store';
+import { useAuthStore } from '@/domains';
 import { Button, Input } from '@/components/ui';
 import { Shield, Check, X, Loader2, AlertCircle } from 'lucide-react';
 

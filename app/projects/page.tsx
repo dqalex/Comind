@@ -8,9 +8,9 @@ import { useConfirmAction } from '@/hooks/useConfirmAction';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { ProjectEditDialog } from '@/components/projects/ProjectEditDialog';
 import { useInlineEdit } from '@/hooks/useInlineEdit';
-import { useProjectStore, useTaskStore, useDocumentStore } from '@/store';
+import { useProjectStore, useTaskStore, useDocumentStore } from '@/domains';
 import type { KnowledgeConfig } from '@/db/schema';
-import { useGatewayStore } from '@/store/gateway.store';
+import { useGatewayStore } from '@/core/gateway/store';
 import AppShell from '@/components/AppShell';
 import Header from '@/components/Header';
 import {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useUIStore } from '@/store';
+import { useUIStore } from '@/domains';
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // 精确 selector 订阅

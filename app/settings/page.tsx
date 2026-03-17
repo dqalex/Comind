@@ -1,7 +1,7 @@
 'use client';
 
-import { useUIStore } from '@/store';
-import { useOpenClawWorkspaceStore } from '@/store/openclaw-workspace.store';
+import { useUIStore } from '@/domains';
+import { useOpenClawWorkspaceStore } from '@/core/gateway/openclaw-workspace.store';
 import AppShell from '@/components/AppShell';
 import Header from '@/components/Header';
 import { Button, Switch } from '@/components/ui';

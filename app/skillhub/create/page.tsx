@@ -18,7 +18,7 @@ import { useRouter } from 'next/navigation';
 import AppShell from '@/components/AppShell';
 import Header from '@/components/Header';
 import { Button, Input, Card, CardContent, CardHeader, CardTitle, Label, Badge } from '@/components/ui';
-import { useSkillStore, useAuthStore } from '@/store';
+import { useSkillStore, useAuthStore } from '@/domains';
 import { skillsApi } from '@/lib/data-service';
 import {
   ArrowLeft, Zap, AlertCircle, RefreshCw, Download, Upload, Check, X, Folder, ExternalLink,

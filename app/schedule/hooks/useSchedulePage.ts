@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
-import { useGatewayStore } from '@/store/gateway.store';
-import { useDocumentStore } from '@/store';
+import { useGatewayStore } from '@/core/gateway/store';
+import { useDocumentStore } from '@/domains';
 import { useConfirmAction } from '@/hooks/useConfirmAction';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
 import type { CronJob, CronSchedule, CronPayload, CronDelivery } from '@/types';

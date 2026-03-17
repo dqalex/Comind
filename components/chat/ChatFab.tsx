@@ -1,9 +1,9 @@
 'use client';
 
 import { MessageSquare } from 'lucide-react';
-import { useUIStore } from '@/store/ui.store';
-import { useMemberStore } from '@/store/member.store';
-import { useOpenClawStatusStore } from '@/store/openclaw.store';
+import { useUIStore } from '@/domains/ui';
+import { useMemberStore } from '@/domains/member';
+import { useOpenClawStatusStore } from '@/core/gateway/openclaw.store';
 
 export default function ChatFab() {
   const toggleChat = useUIStore((s) => s.toggleChat);

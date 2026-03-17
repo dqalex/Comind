@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { initI18n } from '@/lib/i18n';
-import { useOpenClawWorkspaceStore } from '@/store/openclaw-workspace.store';
+import { useOpenClawWorkspaceStore } from '@/core/gateway/openclaw-workspace.store';
 import { WorkspaceCard } from '@/components/openclaw/WorkspaceCard';
 import { WorkspaceForm } from '@/components/openclaw/WorkspaceForm';
 import { GatewayConfigPanel } from '@/components/settings/GatewayConfigPanel';

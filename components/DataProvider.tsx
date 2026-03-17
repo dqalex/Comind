@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useCallback } from 'react';
-import { useDataInitializer } from '@/store';
+import { useDataInitializer } from '@/domains';
 import {
   useOpenClawStatusStore,
   useTaskStore,
@@ -15,9 +15,9 @@ import {
   useRenderTemplateStore,
   useSkillStore,
   useCommentStore,
-} from '@/store';
-import { useGatewayStore } from '@/store/gateway.store';
-import { useChatStore } from '@/store/chat.store';
+} from '@/domains';
+import { useGatewayStore } from '@/core/gateway/store';
+import { useChatStore } from '@/domains/chat';
 import { sseHandlerRegistry, dataLogger } from '@/lib';
 import type { ChatEventPayload } from '@/types';
 import { useSSEConnection } from '@/hooks/useSSEConnection';

@@ -1,7 +1,7 @@
 'use client';
 
 import { ChatFab, ChatDrawer } from '@/components/chat';
-import { useAuthStore } from '@/store';
+import { useAuthStore } from '@/domains';
 
 export default function ChatOverlay() {
   const user = useAuthStore((s) => s.user);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useUIStore } from '@/store/ui.store';
+import { useUIStore } from '@/domains/ui';
 import ChatPanel from './ChatPanel';
 import clsx from 'clsx';
 

@@ -86,16 +86,16 @@ import {
 } from '@/app/api/mcp/handlers/skill.handler';
 
 // 导入 Store 刷新
-import { useTaskStore } from '@/store/task.store';
-import { useDocumentStore } from '@/store/document.store';
-import { useProjectStore } from '@/store/project.store';
-import { useMemberStore } from '@/store/member.store';
-import { useOpenClawStatusStore } from '@/store/openclaw.store';
-import { useScheduledTaskStore } from '@/store/schedule.store';
-import { useDeliveryStore } from '@/store/delivery.store';
-import { useSOPTemplateStore } from '@/store/sop-template.store';
-import { useRenderTemplateStore } from '@/store/render-template.store';
-import { useMilestoneStore } from '@/store/milestone.store';
+import { useTaskStore } from '@/domains/task';
+import { useDocumentStore } from '@/domains/document';
+import { useProjectStore } from '@/domains/project';
+import { useMemberStore } from '@/domains/member';
+import { useOpenClawStatusStore } from '@/core/gateway/openclaw.store';
+import { useScheduledTaskStore } from '@/domains/schedule';
+import { useDeliveryStore } from '@/domains/delivery';
+import { useSOPTemplateStore } from '@/domains/sop';
+import { useRenderTemplateStore } from '@/domains/render-template';
+import { useMilestoneStore } from '@/domains/milestone';
 
 // ============================================================================
 // 执行器

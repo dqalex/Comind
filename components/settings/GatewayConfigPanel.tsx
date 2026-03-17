@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { initI18n } from '@/lib/i18n';
 import { Button, Input } from '@/components/ui';
 import clsx from 'clsx';
-import { useAuthStore } from '@/store';
+import { useAuthStore } from '@/domains';
 import { useSecurityCode } from '@/hooks/useSecurityCode';
 import { SecurityCodeDialog } from '@/components/SecurityCodeDialog';
 import { Wifi, Server, AlertCircle, CheckCircle2, Loader2, Lock } from 'lucide-react';

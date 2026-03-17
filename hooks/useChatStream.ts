@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useCallback } from 'react';
-import { useGatewayStore } from '@/store/gateway.store';
+import { useGatewayStore } from '@/core/gateway/store';
 import type { ChatEventPayload } from '@/types';
 import { normalizeContent } from '@/components/chat/chat-utils';
 import { parseChatActions, hasChatActions } from '@/lib/chat-channel/client';

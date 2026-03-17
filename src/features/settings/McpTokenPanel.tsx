@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useUserMcpTokenStore } from '@/store/user-mcp-token.store';
-import { useAuthStore } from '@/store/auth.store';
+import { useUserMcpTokenStore } from '@/core/mcp/user-mcp-token.store';
+import { useAuthStore } from '@/domains/auth';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
 import { Button, Input, Badge } from '@/components/ui';
 import {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useAuthStore } from '@/store';
+import { useAuthStore } from '@/domains';
 import AppShell from '@/components/AppShell';
 import Header from '@/components/Header';
 import { Button, Input, Badge, Dialog } from '@/components/ui';

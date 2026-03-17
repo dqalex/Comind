@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { useAuthStore } from '@/store/auth.store';
+import { useAuthStore } from '@/domains/auth';
 import { useClickOutside } from '@/hooks/useClickOutside';
 import { LogOut, Key, User, Settings, ChevronDown, Shield } from 'lucide-react';
 import clsx from 'clsx';

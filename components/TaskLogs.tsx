@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useTaskLogStore } from '@/store';
+import { useTaskLogStore } from '@/domains';
 import { Clock } from 'lucide-react';
 import { formatRelativeTime } from '@/hooks/useRelativeTime';
 

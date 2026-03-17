@@ -7,7 +7,7 @@
 import { create } from 'zustand';
 import type { OpenClawWorkspace, OpenClawFile } from '@/db/schema';
 import { openclawWorkspacesApi, openclawFilesApi } from '@/lib/data-service';
-import { useDocumentStore } from '@/store/document.store';
+import { useDocumentStore } from '@/domains/document.store';
 
 interface WorkspaceState {
   workspaces: OpenClawWorkspace[];

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useGatewayStore } from '@/store/gateway.store';
+import { useGatewayStore } from '@/core/gateway/store';
 import { WifiOff, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';

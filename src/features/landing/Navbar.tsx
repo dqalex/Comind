@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { TeamClawLogo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/store';
+import { useAuthStore } from '@/domains';
 import { useEffect, useState } from 'react';
 import { Globe } from 'lucide-react';
 import { LoginModal } from './LoginModal';

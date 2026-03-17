@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { useProjectStore, useUIStore, useTaskStore, useDocumentStore, useMemberStore, useOpenClawStatusStore } from '@/store';
+import { useProjectStore, useUIStore, useTaskStore, useDocumentStore, useMemberStore, useOpenClawStatusStore } from '@/domains';
 import { CreateProjectDialog } from '@/components/projects/CreateProjectDialog';
 import {
   LayoutDashboard, 

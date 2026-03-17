@@ -16,7 +16,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useAuthStore } from '@/store';
+import { useAuthStore } from '@/domains';
 
 interface AuthGuardProps {
   children: React.ReactNode;

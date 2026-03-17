@@ -20,7 +20,7 @@ import AppShell from '@/components/AppShell';
 import Header from '@/components/Header';
 import GatewayRequired from '@/components/GatewayRequired';
 import { Button, Input, Badge } from '@/components/ui';
-import { useGatewayStore, useAuthStore } from '@/store';
+import { useGatewayStore, useAuthStore } from '@/domains';
 import type { Skill } from '@/types';
 import {
   Zap, Search, Plus, ToggleLeft, ToggleRight, 

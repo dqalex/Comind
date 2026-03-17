@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useProjectStore } from '@/store';
+import { useProjectStore } from '@/domains';
 import { ChevronDown, Check, Folder, Bell } from 'lucide-react';
 import clsx from 'clsx';
 import { useClickOutside } from '@/hooks/useClickOutside';

@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useMemberStore } from '@/store';
+import { useMemberStore } from '@/domains';
 import { MessageSquarePlus, Trash2, ChevronRight, ChevronLeft, StickyNote, User, Clock, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui';
 import clsx from 'clsx';

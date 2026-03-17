@@ -17,7 +17,7 @@ import { useRouter, useParams } from 'next/navigation';
 import AppShell from '@/components/AppShell';
 import Header from '@/components/Header';
 import { Button, Input, Badge, Card, CardContent, CardHeader, CardTitle, Label, Textarea, Select } from '@/components/ui';
-import { useSkillStore, useAuthStore } from '@/store';
+import { useSkillStore, useAuthStore } from '@/domains';
 import { skillsApi } from '@/lib/data-service';
 import type { Skill } from '@/db/schema';
 import {

@@ -9,7 +9,7 @@ import AppShell from '@/components/AppShell';
 import Header from '@/components/Header';
 import GatewayRequired from '@/components/GatewayRequired';
 import { Button, Badge } from '@/components/ui';
-import { useGatewayStore } from '@/store/gateway.store';
+import { useGatewayStore } from '@/core/gateway/store';
 import clsx from 'clsx';
 import {
   Bot, Eye, FolderOpen, Zap, Radio, Clock,

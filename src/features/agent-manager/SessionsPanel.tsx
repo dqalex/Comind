@@ -2,7 +2,7 @@
 
 import { useTranslation } from 'react-i18next';
 import type { Session } from '@/types';
-import { useChatStore } from '@/store/chat.store';
+import { useChatStore } from '@/domains/chat';
 import { ExternalLink } from 'lucide-react';
 
 interface SessionsPanelProps {

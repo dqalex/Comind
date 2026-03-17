@@ -1,7 +1,7 @@
 'use client';
 
 import { forwardRef } from 'react';
-import type { ChatMessage } from '@/store/chat.store';
+import type { ChatMessage } from '@/domains/chat';
 import { MessageBubble, GwMessageBubble } from './MessageBubble';
 import { Loader2, MessageSquare, Bot, ArrowDown } from 'lucide-react';
 

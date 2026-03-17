@@ -19,7 +19,7 @@ import { useRouter, useParams } from 'next/navigation';
 import AppShell from '@/components/AppShell';
 import Header from '@/components/Header';
 import { Button, Badge, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
-import { useSkillStore, useAuthStore, useSOPTemplateStore } from '@/store';
+import { useSkillStore, useAuthStore, useSOPTemplateStore } from '@/domains';
 import { skillsApi } from '@/lib/data-service';
 import type { Skill, SOPTemplate } from '@/db/schema';
 import {

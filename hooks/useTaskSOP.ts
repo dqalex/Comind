@@ -6,7 +6,7 @@
 
 import { useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTaskStore, useSOPTemplateStore, useTaskLogStore } from '@/store';
+import { useTaskStore, useSOPTemplateStore, useTaskLogStore } from '@/domains';
 import type { Task } from '@/db/schema';
 
 interface UseTaskSOPOptions {

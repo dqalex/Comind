@@ -4,8 +4,8 @@ import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import AppShell from '@/components/AppShell';
 import Header from '@/components/Header';
-import { useProjectStore, useTaskStore, useMemberStore, useDocumentStore, useDeliveryStore, useOpenClawStatusStore } from '@/store';
-import { useGatewayStore } from '@/store/gateway.store';
+import { useProjectStore, useTaskStore, useMemberStore, useDocumentStore, useDeliveryStore, useOpenClawStatusStore } from '@/domains';
+import { useGatewayStore } from '@/core/gateway/store';
 import Link from 'next/link';
 import clsx from 'clsx';
 import {

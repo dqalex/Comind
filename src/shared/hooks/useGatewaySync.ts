@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useRef, useEffect } from 'react';
-import { useGatewayStore } from '@/store/gateway.store';
+import { useGatewayStore } from '@/core/gateway/store';
 import { logger } from '@/lib/logger';
 
 interface GatewayConfig {

@@ -4,9 +4,9 @@ import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
 import { useConfirmAction } from '@/hooks/useConfirmAction';
-import { useTaskStore, useProjectStore, useMemberStore, useTaskLogStore, useMilestoneStore, useSOPTemplateStore, useChatStore } from '@/store';
-import { useGatewayStore } from '@/store/gateway.store';
-import { useAuthStore } from '@/store/auth.store';
+import { useTaskStore, useProjectStore, useMemberStore, useTaskLogStore, useMilestoneStore, useSOPTemplateStore, useChatStore } from '@/domains';
+import { useGatewayStore } from '@/core/gateway/store';
+import { useAuthStore } from '@/domains/auth';
 import type { Task, Milestone } from '@/db/schema';
 
 export type ViewMode = 'board' | 'list';

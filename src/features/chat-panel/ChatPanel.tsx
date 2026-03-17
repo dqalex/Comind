@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { useChatStore } from '@/store/chat.store';
-import { useMemberStore } from '@/store/member.store';
-import { useGatewayStore } from '@/store/gateway.store';
-import { useAuthStore } from '@/store/auth.store';
+import { useChatStore } from '@/domains/chat';
+import { useMemberStore } from '@/domains/member';
+import { useGatewayStore } from '@/core/gateway/store';
+import { useAuthStore } from '@/domains/auth';
 import type { ChatAttachment } from '@/types';
 import {
   X, ChevronLeft, Maximize2, Minimize2,

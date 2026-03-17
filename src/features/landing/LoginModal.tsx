@@ -5,7 +5,7 @@ import { X, Loader2, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TeamClawLogo } from '@/components/Logo';
-import { useAuthStore } from '@/store';
+import { useAuthStore } from '@/domains';
 import { useRouter } from 'next/navigation';
 
 // i18n 翻译

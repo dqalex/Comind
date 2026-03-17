@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { OpenClawWorkspace } from '@/db/schema';
-import { useMemberStore } from '@/store';
+import { useMemberStore } from '@/domains';
 import { Button, Input, Switch } from '@/components/ui';
 import {
   Dialog,

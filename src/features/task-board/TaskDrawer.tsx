@@ -3,9 +3,9 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
-import { useTaskStore, useMemberStore, useCommentStore, useTaskLogStore, useDocumentStore, useChatStore, useProjectStore, useOpenClawWorkspaceStore, useMilestoneStore } from '@/store';
-import { useGatewayStore } from '@/store/gateway.store';
-import { useAuthStore } from '@/store/auth.store';
+import { useTaskStore, useMemberStore, useCommentStore, useTaskLogStore, useDocumentStore, useChatStore, useProjectStore, useOpenClawWorkspaceStore, useMilestoneStore } from '@/domains';
+import { useGatewayStore } from '@/core/gateway/store';
+import { useAuthStore } from '@/domains/auth';
 import { useConfirmAction } from '@/hooks/useConfirmAction';
 import { useTaskSOP } from '@/hooks/useTaskSOP';
 import { useInlineEdit } from '@/hooks/useInlineEdit';

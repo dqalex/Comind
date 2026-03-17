@@ -4,7 +4,7 @@
  */
 
 import { getGatewayProxyClient } from '@/lib/gateway-proxy';
-import { useMemberStore } from '@/store/member.store';
+import { useMemberStore } from '@/domains/member';
 import type { AgentListEntry } from '@/lib/gateway-types';
 import type { GatewayState } from './types';
 import type { StoreGet, StoreSet } from './utils';

@@ -1,6 +1,6 @@
 'use client';
 
-import { useUIStore } from '@/store';
+import { useUIStore } from '@/domains';
 import Sidebar from './Sidebar';
 import AuthGuard from './AuthGuard';
 import clsx from 'clsx';

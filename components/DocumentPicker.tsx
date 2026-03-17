@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { useDocumentStore, useProjectStore } from '@/store';
+import { useDocumentStore, useProjectStore } from '@/domains';
 import type { Document } from '@/db/schema';
 import { FileText, Search, X, ExternalLink, FolderOpen } from 'lucide-react';
 import clsx from 'clsx';

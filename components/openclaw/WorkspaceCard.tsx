@@ -3,9 +3,9 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { OpenClawWorkspace } from '@/db/schema';
-import { useOpenClawWorkspaceStore } from '@/store/openclaw-workspace.store';
-import { useMemberStore } from '@/store';
-import { useGatewayStore } from '@/store/gateway.store';
+import { useOpenClawWorkspaceStore } from '@/core/gateway/openclaw-workspace.store';
+import { useMemberStore } from '@/domains';
+import { useGatewayStore } from '@/core/gateway/store';
 import { Button, Switch, Badge } from '@/components/ui';
 import { Folder, RefreshCw, Trash2, Eye, Check, Bot } from 'lucide-react';
 import { formatRelativeTime } from '@/hooks/useRelativeTime';

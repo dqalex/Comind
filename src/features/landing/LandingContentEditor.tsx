@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRenderTemplateStore } from '@/store';
+import { useRenderTemplateStore } from '@/domains';
 import { Button } from '@/components/ui/button';
 import { Loader2, Save, Globe, Upload } from 'lucide-react';
 import { useSecurityCode } from '@/hooks/useSecurityCode';

@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useConfirmAction } from '@/hooks/useConfirmAction';
 import ConfirmDialog from '@/components/ConfirmDialog';
-import { useMilestoneStore, useProjectStore, useTaskStore, useDocumentStore } from '@/store';
+import { useMilestoneStore, useProjectStore, useTaskStore, useDocumentStore } from '@/domains';
 import { Button, Input, Select, Card } from '@/components/ui';
 import { useInlineEdit } from '@/hooks/useInlineEdit';
 import {

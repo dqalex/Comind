@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useProjectStore, useUIStore } from '@/store';
+import { useProjectStore, useUIStore } from '@/domains';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, Button, Input } from '@/components/ui';
 import { Loader2, Folder, Globe, Users, Lock } from 'lucide-react';
 import clsx from 'clsx';

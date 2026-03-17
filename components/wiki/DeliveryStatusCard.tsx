@@ -2,8 +2,8 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDeliveryStore, useMemberStore, useTaskStore, useProjectStore, useGatewayStore } from '@/store';
-import { useAuthStore } from '@/store/auth.store';
+import { useDeliveryStore, useMemberStore, useTaskStore, useProjectStore, useGatewayStore } from '@/domains';
+import { useAuthStore } from '@/domains/auth';
 import { Button, Textarea } from '@/components/ui';
 import type { Document } from '@/db/schema';
 import {

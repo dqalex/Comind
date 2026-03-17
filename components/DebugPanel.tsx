@@ -5,10 +5,10 @@ import {
   useProjectStore, useTaskStore, useMemberStore,
   useDocumentStore, useDeliveryStore, useScheduledTaskStore,
   useOpenClawStatusStore, useUIStore,
-} from '@/store';
-import { useDataInitializer } from '@/store';
-import { useGatewayStore } from '@/store/gateway.store';
-import { useChatStore } from '@/store/chat.store';
+} from '@/domains';
+import { useDataInitializer } from '@/domains';
+import { useGatewayStore } from '@/core/gateway/store';
+import { useChatStore } from '@/domains/chat';
 import { Card } from '@/components/ui';
 import { Badge } from '@/components/ui/badge';
 import { Bug, ChevronDown, ChevronUp, Trash2, Play, RefreshCw, Wifi, Database, Server, Settings, AlertCircle, CheckCircle, XCircle, Wrench, ClipboardList } from 'lucide-react';

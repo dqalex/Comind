@@ -4,7 +4,7 @@
  * 从 ChatPanel.tsx 提取的纯函数和常量
  */
 
-import { useGatewayStore } from '@/store/gateway.store';
+import { useGatewayStore } from '@/core/gateway/store';
 import { getGatewayProxyClient } from '@/lib/gateway-proxy';
 
 // Thinking levels matching OpenClaw

@@ -2,8 +2,8 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSOPTemplateStore, useProjectStore } from '@/store';
-import { useRenderTemplateStore } from '@/store/render-template.store';
+import { useSOPTemplateStore, useProjectStore } from '@/domains';
+import { useRenderTemplateStore } from '@/domains/render-template';
 import { Button, Input, Badge } from '@/components/ui';
 import type { SOPTemplate, SOPStage, SOPCategory, StageType, StageOutputType, ReferenceFile, ScriptFile } from '@/db/schema';
 import ReferencesPanel from './ReferencesPanel';

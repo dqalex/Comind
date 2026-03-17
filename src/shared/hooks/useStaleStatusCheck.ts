@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useOpenClawStatusStore } from '@/store';
+import { useOpenClawStatusStore } from '@/domains';
 import { logger } from '@/lib/logger';
 
 interface StaleStatusCheckOptions {

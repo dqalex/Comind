@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
-import { useDeliveryStore, useMemberStore, useDocumentStore, useTaskStore, useProjectStore, useChatStore } from '@/store';
-import { useGatewayStore } from '@/store/gateway.store';
-import { useAuthStore } from '@/store/auth.store';
+import { useDeliveryStore, useMemberStore, useDocumentStore, useTaskStore, useProjectStore, useChatStore } from '@/domains';
+import { useGatewayStore } from '@/core/gateway/store';
+import { useAuthStore } from '@/domains/auth';
 import AppShell from '@/components/AppShell';
 import Header from '@/components/Header';
 import { Button, Textarea, Badge } from '@/components/ui';

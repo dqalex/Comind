@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Search, FileText, CheckSquare, Folder, User, Calendar, Milestone, ArrowRight } from 'lucide-react';
 import clsx from 'clsx';
 import { Input } from '@/components/ui';
-import { useTaskStore, useProjectStore, useDocumentStore, useMemberStore, useMilestoneStore, useScheduledTaskStore } from '@/store';
+import { useTaskStore, useProjectStore, useDocumentStore, useMemberStore, useMilestoneStore, useScheduledTaskStore } from '@/domains';
 import { useClickOutside } from '@/hooks/useClickOutside';
 
 interface SearchResult {

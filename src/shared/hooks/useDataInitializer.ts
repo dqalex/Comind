@@ -3,19 +3,19 @@
  * 统一加载所有领域数据，在应用启动时调用
  */
 
-import { useProjectStore } from '@/store/project.store';
-import { useTaskStore } from '@/store/task.store';
-import { useMemberStore } from '@/store/member.store';
-import { useDocumentStore } from '@/store/document.store';
-import { useOpenClawStatusStore } from '@/store/openclaw.store';
-import { useScheduledTaskStore } from '@/store/schedule.store';
-import { useDeliveryStore } from '@/store/delivery.store';
-import { useMilestoneStore } from '@/store/milestone.store';
-import { useUIStore } from '@/store/ui.store';
-import { useChatStore } from '@/store/chat.store';
-import { useSOPTemplateStore } from '@/store/sop-template.store';
-import { useRenderTemplateStore } from '@/store/render-template.store';
-import { useSkillStore } from '@/store/skill.store';
+import { useProjectStore } from '@/domains/project';
+import { useTaskStore } from '@/domains/task';
+import { useMemberStore } from '@/domains/member';
+import { useDocumentStore } from '@/domains/document';
+import { useOpenClawStatusStore } from '@/core/gateway/openclaw.store';
+import { useScheduledTaskStore } from '@/domains/schedule';
+import { useDeliveryStore } from '@/domains/delivery';
+import { useMilestoneStore } from '@/domains/milestone';
+import { useUIStore } from '@/domains/ui';
+import { useChatStore } from '@/domains/chat';
+import { useSOPTemplateStore } from '@/domains/sop';
+import { useRenderTemplateStore } from '@/domains/render-template';
+import { useSkillStore } from '@/domains/skill';
 
 export function useDataInitializer() {
   const fetchProjects = useProjectStore((s) => s.fetchProjects);

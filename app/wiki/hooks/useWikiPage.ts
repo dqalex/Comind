@@ -5,10 +5,10 @@ import { useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
 import { useConfirmAction } from '@/hooks/useConfirmAction';
-import { useDocumentStore, useProjectStore, useMemberStore, useTaskStore, useDeliveryStore, useChatStore } from '@/store';
-import { useGatewayStore } from '@/store/gateway.store';
-import { useAuthStore } from '@/store/auth.store';
-import { useRenderTemplateStore } from '@/store/render-template.store';
+import { useDocumentStore, useProjectStore, useMemberStore, useTaskStore, useDeliveryStore, useChatStore } from '@/domains';
+import { useGatewayStore } from '@/core/gateway/store';
+import { useAuthStore } from '@/domains/auth';
+import { useRenderTemplateStore } from '@/domains/render-template';
 import { DOC_TEMPLATES } from '@/lib/doc-templates';
 import { syncMdToHtml as directSyncMdToHtml } from '@/lib/slot-sync';
 import type { Document } from '@/db/schema';
@@ -480,7 +480,7 @@ export function useWikiPage() {
     const userSessionKey = authUser?.id ? getUserSessionKey(authUser.id) : null;
 
     // 获取当前用户及其关联的成员
-    const { useAuthStore } = await import('@/store/auth.store');
+    const { useAuthStore } = await import('@/domains/auth');
     const currentUser = useAuthStore.getState().user;
     if (!currentUser?.id) {
       console.error('[useWikiPage] 未登录');

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useAuthStore } from '@/store';
+import { useAuthStore } from '@/domains';
 
 interface UseSecurityCodeOptions {
   onVerified: () => void | Promise<void>;
