@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Button, Input, Textarea, Select, Card } from '@/shared/ui';
 import { useConfirmAction } from '@/shared/hooks/useConfirmAction';
 import ConfirmDialog from '@/shared/layout/ConfirmDialog';
-import { X, Save, Users, Settings, Crown, Shield, User, Eye, Plus, Trash2, BookOpen } from 'lucide-react';
+import { X, Save, Users, Settings, Crown, Shield, User, Eye, Plus, Trash2, BookOpen, Wand2 } from 'lucide-react';
 import { useDocumentStore } from '@/domains';
 import type { KnowledgeConfig } from '@/db/schema';
 import clsx from 'clsx';
@@ -71,6 +71,7 @@ export function ProjectEditDialog({
   const documents = useDocumentStore((s) => s.documents);
   const [knowledgeDocId, setKnowledgeDocId] = useState<string>(initialKnowledgeConfig?.documentId || '');
   const [knowledgeLayers, setKnowledgeLayers] = useState<string[]>(initialKnowledgeConfig?.layers || ['L1']);
+  const [initializing, setInitializing] = useState(false);
 
   // 过滤出 guide 类型的文档作为知识库候选
   const guideDocs = useMemo(() => {
@@ -135,6 +136,58 @@ export function ProjectEditDialog({
     await onSave(name.trim(), desc.trim() || '', visibility, newKnowledgeConfig);
     setSaving(false);
     onClose();
+  };
+
+  // 初始化知识库：使用现有 create_document 原子能力创建带 L1-L5 分层的文档
+  const handleInitKnowledgeBase = async () => {
+    if (!projectId) return;
+    setInitializing(true);
+    try {
+      const content = `# ${name || '项目'} 知识库
+
+## L1 核心概要
+- **负责人**：
+- **目标**：
+- **关键规则**：
+
+## L2 详细标准
+### 编码规范
+### 流程规范
+
+## L3 案例模板
+
+## L4 经验记录
+### 踩坑记录
+### 最佳实践
+
+## L5 维护日志
+`;
+
+      const res = await fetch('/api/documents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: `${name || '项目'} 知识库`,
+          content,
+          projectId,
+          source: 'internal',
+          type: 'guide',
+        }),
+      });
+
+      if (res.ok) {
+        const doc = await res.json();
+        setKnowledgeDocId(doc.id);
+        setKnowledgeLayers(['L1', 'L2', 'L3', 'L4', 'L5']);
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to create knowledge base');
+      }
+    } catch (err) {
+      console.error('Failed to init knowledge base:', err);
+    } finally {
+      setInitializing(false);
+    }
   };
 
   const handleAddMember = async () => {
@@ -304,6 +357,31 @@ export function ProjectEditDialog({
             </div>
           ) : activeTab === 'knowledge' ? (
             <div className="p-5 space-y-4">
+              {/* 初始化按钮 */}
+              {!knowledgeDocId && (
+                <div className="p-4 rounded-lg border-2 border-dashed border-primary-200 dark:border-primary-800 bg-primary-50/50 dark:bg-primary-950/20">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-primary-700 dark:text-primary-300">
+                        {t('projects.initKnowledgeBase') || '初始化知识库'}
+                      </p>
+                      <p className="text-xs text-primary-600/70 dark:text-primary-400/70 mt-0.5">
+                        {t('projects.initKnowledgeBaseHint') || '自动创建带 L1-L5 分层骨架的空白知识库文档'}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={handleInitKnowledgeBase}
+                      disabled={initializing || !projectId}
+                    >
+                      <Wand2 className="w-3.5 h-3.5" />
+                      {initializing ? t('common.loading') : t('projects.initKnowledgeBase')}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="text-xs mb-1.5 block font-medium" style={{ color: 'var(--text-secondary)' }}>
                   {t('projects.knowledgeDoc') || '知识库文档'}

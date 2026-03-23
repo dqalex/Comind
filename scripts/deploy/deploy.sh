@@ -17,14 +17,20 @@ set -e
 LOCAL_PATH="$(pwd)"
 
 # 检测部署模式
-if [ -n "${DEPLOY_SERVER}" ]; then
-  # 远程部署模式
+if [ -n "${DEPLOY_SERVER}" ] && [ -n "${DEPLOY_PATH}" ]; then
+  # 远程部署模式（使用环境变量）
   DEPLOY_MODE="remote"
   SERVER="${DEPLOY_SERVER}"
-  REMOTE_PATH="${DEPLOY_PATH:-/root/teamclaw}"
+  REMOTE_PATH="${DEPLOY_PATH}"
   NVM_INIT="${DEPLOY_NVM_DIR:+source $DEPLOY_NVM_DIR/nvm.sh && nvm use 22 &&}"
+elif [ -n "${DEPLOY_SERVER}" ]; then
+  # 部分环境变量设置，提示用户
+  echo "⚠️  警告: DEPLOY_SERVER 已设置但 DEPLOY_PATH 未设置"
+  echo "    请设置完整的环境变量：DEPLOY_SERVER, DEPLOY_PATH, DEPLOY_NVM_DIR"
+  echo "    参见 .codebuddy/rules/deploy-enforcement.mdc"
+  exit 1
 else
-  # 本地部署模式
+  # 本地部署模式（未设置远程服务器环境变量）
   DEPLOY_MODE="local"
   SERVER=""
   REMOTE_PATH="${LOCAL_PATH}"
@@ -234,11 +240,13 @@ if echo "$REBUILD_ARGON2" | grep -qi "error\|failed"; then
   run_cmd "mkdir -p $REMOTE_PATH/.next/standalone/node_modules/argon2/build/Release"
 
   # 尝试多种可能的预编译文件路径
-  # argon2 预编译文件命名规则：<platform>-<arch>/argon2.<arch>.<libc>.node
+  # argon2 预编译文件命名规则：<platform>-<arch>/argon2.<arch>.<libc>.node 或 <platform>-<arch>/argon2.<libc>.node
   PREBUILDS=(
     "$REMOTE_PATH/node_modules/argon2/prebuilds/${PLATFORM}-${ARCH_MAP}/argon2.${ARCH_MAP}.${LIBC}.node"
     "$REMOTE_PATH/node_modules/argon2/prebuilds/${PLATFORM}-x64/argon2.x64.${LIBC}.node"
     "$REMOTE_PATH/node_modules/argon2/prebuilds/${PLATFORM}-${ARCH_MAP}/${PLATFORM}.${ARCH_MAP}.${LIBC}.node"
+    "$REMOTE_PATH/node_modules/argon2/prebuilds/${PLATFORM}-${ARCH_MAP}/argon2.${LIBC}.node"
+    "$REMOTE_PATH/node_modules/argon2/prebuilds/${PLATFORM}-x64/argon2.${LIBC}.node"
   )
 
   COPIED=false

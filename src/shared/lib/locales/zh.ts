@@ -456,6 +456,14 @@ export default {
     startPatrol: '开始巡检',
     deletePatrol: '删除巡检任务',
     nextRun: '下次运行',
+    knowledgeBase: '知识库',
+    knowledgeDoc: '知识库文档',
+    knowledgeDocHint: '选择 Wiki 中的指南文档作为项目知识库，任务推送时将自动植入关键信息',
+    knowledgeTip: '项目知识库中的 L1 层内容将在任务推送给 AI 时自动植入，作为关键上下文信息。建议使用 KnowHow 格式编写文档（## L1 / ## L2 等标题分层）。',
+    knowledgeLayers: '知识分层',
+    knowledgeLayersHint: 'L1: 核心概要（自动植入任务推送）| L2: 详细标准 | L3: 案例模板 | L4: 经验记录 | L5: 维护日志',
+    initKnowledgeBase: '初始化知识库',
+    initKnowledgeBaseHint: '自动创建带 L1-L5 分层骨架的空白知识库文档',
   },
   deliveries: {
     title: '文档交付中心',
@@ -504,6 +512,8 @@ export default {
     deleteWarning: '删除后无法恢复，关联的任务将不再显示此交付物。',
   },
   common: {
+    none: '无',
+    tip: '提示',
     create: '创建',
     cancel: '取消',
     save: '保存',
