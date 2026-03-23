@@ -116,10 +116,10 @@ export DEPLOY_NVM_DIR="/path/to/.nvm"
 
 ```bash
 # Standard deployment
-./scripts/deploy.sh
+./scripts/deploy/deploy.sh
 
 # Skip local build
-./scripts/deploy.sh --skip-build
+./scripts/deploy/deploy.sh --skip-build
 ```
 
 ### Verify Deployment
@@ -129,10 +129,10 @@ export DEPLOY_NVM_DIR="/path/to/.nvm"
 ssh $DEPLOY_SERVER "pm2 status teamclaw"
 
 # Health check
-ssh $DEPLOY_SERVER "curl -s http://localhost:3000/api/health | jq ."
+ssh $DEPLOY_SERVER "curl -s http://localhost:3000/api/health"
 
-# Gateway connection
-ssh $DEPLOY_SERVER "curl -s http://localhost:3000/api/gateway/config | jq ."
+# Authenticated APIs (expect 401 without login)
+ssh $DEPLOY_SERVER "curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/api/projects"
 ```
 
 ---
@@ -151,8 +151,10 @@ ssh $DEPLOY_SERVER "curl -s http://localhost:3000/api/gateway/config | jq ."
 # Local
 npm rebuild argon2
 
-# Remote (deploy.sh handles automatically)
-ssh $DEPLOY_SERVER "cp -r $DEPLOY_PATH/node_modules/argon2 $DEPLOY_PATH/.next/standalone/node_modules/"
+# Remote (deploy.sh handles automatically via prebuilds)
+# If argon2 compilation fails, the script will automatically:
+# 1. Detect target platform (linux-x64, darwin-arm64, etc.)
+# 2. Copy prebuilt binaries from node_modules/argon2/prebuilds/
 ```
 
 ### Initialization Page Not Accessible

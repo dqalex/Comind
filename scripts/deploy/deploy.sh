@@ -1,6 +1,6 @@
 #!/bin/bash
 # TeamClaw 部署脚本
-# 用法: ./scripts/deploy.sh [--skip-build] [--init-db]
+# 用法: ./scripts/deploy/deploy.sh [--skip-build] [--init-db]
 #
 # 部署前请设置环境变量：
 #   DEPLOY_SERVER  - 服务器地址（如 user@your-server）
@@ -14,7 +14,7 @@ SERVER="${DEPLOY_SERVER:?请设置 DEPLOY_SERVER 环境变量，如: export DEPL
 REMOTE_PATH="${DEPLOY_PATH:-/root/teamclaw}"
 LOCAL_PATH="$(pwd)"
 # 如果服务器使用 nvm，设置 NVM_DIR 以便 ssh 命令中初始化 Node 环境
-NVM_INIT="${DEPLOY_NVM_DIR:+source $DEPLOY_NVM_DIR/nvm.sh &&}"
+NVM_INIT="${DEPLOY_NVM_DIR:+source $DEPLOY_NVM_DIR/nvm.sh && nvm use 22 &&}"
 
 # 解析参数
 SKIP_BUILD=false
@@ -54,7 +54,7 @@ fi
 
 # 1. 本地构建
 if [ "$SKIP_BUILD" = false ]; then
-  echo "[1/6] 本地构建..."
+  echo "[1/8] 本地构建..."
   npm run build
   
   if [ $? -ne 0 ]; then
@@ -63,11 +63,11 @@ if [ "$SKIP_BUILD" = false ]; then
   fi
   echo "✓ 构建完成"
 else
-  echo "[1/6] 跳过本地构建"
+  echo "[1/8] 跳过本地构建"
 fi
 
 # 2. 同步文件到服务器（排除 data/ 目录保护数据库）
-echo "[2/6] 同步文件到服务器..."
+echo "[2/8] 同步文件到服务器..."
 rsync -avz --delete \
   --exclude='node_modules/' \
   --exclude='.next/' \
@@ -87,63 +87,169 @@ if [ $? -ne 0 ]; then
 fi
 echo "✓ 同步完成"
 
-# 3. 服务器端构建
-echo "[3/6] 服务器端构建..."
-
-# 注意：数据库现在固定存储在项目根目录的 data/ 下，不会被构建覆盖
-# 构建过程中 standalone/data/ 的临时数据库不影响生产数据
-
-ssh $SERVER "$NVM_INIT cd $REMOTE_PATH && npm install --production=false && npm run build"
+# 3. 服务器端安装依赖
+echo "[3/8] 服务器端安装依赖..."
+ssh $SERVER "$NVM_INIT cd $REMOTE_PATH && npm install --production=false"
 
 if [ $? -ne 0 ]; then
-  echo "❌ 服务器构建失败"
+  echo "❌ 依赖安装失败"
   exit 1
 fi
-echo "✓ 服务器构建完成"
+echo "✓ 依赖安装完成"
 
-# 4. 复制静态文件（standalone 模式必须）
-echo "[4/6] 复制静态文件到 standalone..."
-ssh $SERVER "cd $REMOTE_PATH && cp -r .next/static .next/standalone/.next/ && cp .env .next/standalone/.env 2>/dev/null || echo 'No .env file found'"
-
-if [ $? -ne 0 ]; then
-  echo "❌ 静态文件复制失败"
-  exit 1
+# 4. 服务器端构建
+if [ "$SKIP_BUILD" = false ]; then
+  echo "[4/8] 服务器端构建..."
+  ssh $SERVER "$NVM_INIT cd $REMOTE_PATH && npm run build"
+  
+  if [ $? -ne 0 ]; then
+    echo "❌ 服务器构建失败"
+    exit 1
+  fi
+  echo "✓ 服务器构建完成"
+else
+  echo "[4/8] 跳过服务器构建"
 fi
-echo "✓ 静态文件复制完成"
 
-# 4.5 复制 serverExternalPackages（chokidar 等）到 standalone
-echo "[4.5/6] 复制外部依赖到 standalone..."
-ssh $SERVER "cd $REMOTE_PATH && mkdir -p .next/standalone/node_modules/chokidar && cp -r node_modules/chokidar/* .next/standalone/node_modules/chokidar/ 2>/dev/null || echo 'chokidar not found'"
-# 复制 chokidar 的依赖
-ssh $SERVER "cd $REMOTE_PATH && mkdir -p .next/standalone/node_modules/readdirp && cp -r node_modules/readdirp/* .next/standalone/node_modules/readdirp/ 2>/dev/null || echo 'readdirp not found'"
-# 复制 argon2 原生模块（需要针对服务器 Node.js 版本编译）
-ssh $SERVER "cd $REMOTE_PATH && mkdir -p .next/standalone/node_modules/@node-rs && cp -r node_modules/argon2 .next/standalone/node_modules/ 2>/dev/null || echo 'argon2 not found'"
-ssh $SERVER "cd $REMOTE_PATH && cp -r node_modules/@node-rs .next/standalone/node_modules/ 2>/dev/null || echo '@node-rs not found'"
+# 5. 检测目标平台信息
+echo "[5/8] 检测目标平台并处理原生模块..."
+TARGET_INFO=$(ssh $SERVER "uname -s && uname -m && ldd --version 2>&1 | head -1")
+echo "目标平台: $TARGET_INFO"
 
-echo "✓ 外部依赖复制完成"
+# 5.1 重建 better-sqlite3
+echo "[5.1/8] 重建 better-sqlite3..."
+ssh $SERVER "$NVM_INIT cd $REMOTE_PATH && npm rebuild better-sqlite3 2>&1 | tail -3"
+echo "✓ better-sqlite3 重建完成"
 
-# 5. 确保 public 目录存在
-echo "[5/6] 复制 public 目录..."
+# 5.2 处理 argon2 原生模块
+# argon2 需要 C 编译器（gcc）和 Python 2 进行 node-gyp 构建
+# 如果没有，先尝试安装；否则使用预编译版本
+echo "[5.2/8] 处理 argon2 原生模块..."
+ssh $SERVER "$NVM_INIT cd $REMOTE_PATH && npm rebuild argon2 2>&1" || {
+  echo "  argon2 编译失败，尝试使用预编译版本..."
+  
+  # 检测目标平台的预编译文件
+  # 格式: <platform>-<arch>.<libc>.node
+  PLATFORM=$(ssh $SERVER "uname -s | tr '[:upper:]' '[:lower:]'")
+  ARCH=$(ssh $SERVER "uname -m")
+  LIBC=$(ssh $SERVER "ldd --version 2>&1 | head -1 | grep -qi 'musl' && echo 'musl' || echo 'glibc'")
+  
+  # 映射架构名称
+  case $ARCH in
+    x86_64) ARCH="x64" ;;
+    aarch64|arm64) ARCH="arm64" ;;
+    armv7l) ARCH="arm" ;;
+  esac
+  
+  echo "  检测平台: $PLATFORM-$ARCH ($LIBC)"
+  
+  # 创建 standalone 的 argon2 目录结构
+  ssh $SERVER "mkdir -p $REMOTE_PATH/.next/standalone/node_modules/argon2/build/Release"
+  
+  # 尝试复制预编译文件
+  PREBUILD_PATH="$REMOTE_PATH/node_modules/argon2/prebuilds/${PLATFORM}-${ARCH}/${PLATFORM}.${ARCH}.${LIBC}.node"
+  ALT_PATH="$REMOTE_PATH/node_modules/argon2/prebuilds/${PLATFORM}-${ARCH}/argon2.${ARCH}.${LIBC}.node"
+  
+  if ssh $SERVER "test -f $PREBUILD_PATH"; then
+    ssh $SERVER "cp $PREBUILD_PATH $REMOTE_PATH/.next/standalone/node_modules/argon2/build/Release/"
+    echo "  ✓ 已复制预编译文件: $PREBUILD_PATH"
+  elif ssh $SERVER "test -f $ALT_PATH"; then
+    ssh $SERVER "cp $ALT_PATH $REMOTE_PATH/.next/standalone/node_modules/argon2/build/Release/"
+    echo "  ✓ 已复制预编译文件: $ALT_PATH"
+  else
+    echo "  ⚠️  未找到预编译文件，尝试所有可用选项..."
+    # 列出可用预编译文件
+    ssh $SERVER "find $REMOTE_PATH/node_modules/argon2/prebuilds -name '*.node' 2>/dev/null | head -10"
+  fi
+}
+
+# 5.3 重建 standalone 目录的 better-sqlite3
+echo "[5.3/8] 重建 standalone 的 better-sqlite3..."
+# 清理旧的编译文件确保干净重建
+ssh $SERVER "$NVM_INIT cd $REMOTE_PATH/.next/standalone && rm -rf node_modules/better-sqlite3/build/Release/*.node 2>/dev/null || true"
+ssh $SERVER "$NVM_INIT cd $REMOTE_PATH/.next/standalone && npm rebuild better-sqlite3 2>&1 | tail -3"
+echo "✓ standalone better-sqlite3 重建完成"
+
+# 5.4 处理 standalone 的 argon2
+echo "[5.4/8] 处理 standalone 的 argon2..."
+# 如果主目录的 argon2 编译成功，复制到 standalone
+if ssh $SERVER "test -f $REMOTE_PATH/node_modules/argon2/build/Release/argon2.node"; then
+  ssh $SERVER "cp $REMOTE_PATH/node_modules/argon2/build/Release/argon2.node $REMOTE_PATH/.next/standalone/node_modules/argon2/build/Release/ 2>/dev/null || true"
+  echo "  ✓ 已复制编译好的 argon2.node"
+elif ssh $SERVER "test -f $REMOTE_PATH/.next/standalone/node_modules/argon2/build/Release/argon2.glibc.node"; then
+  # 重命名预编译文件为argon2.node
+  ssh $SERVER "cp $REMOTE_PATH/.next/standalone/node_modules/argon2/build/Release/argon2.glibc.node $REMOTE_PATH/.next/standalone/node_modules/argon2/build/Release/argon2.node"
+  echo "  ✓ 已重命名 glibc 预编译文件"
+elif ssh $SERVER "test -f $REMOTE_PATH/.next/standalone/node_modules/argon2/build/Release/argon2.musl.node"; then
+  ssh $SERVER "cp $REMOTE_PATH/.next/standalone/node_modules/argon2/build/Release/argon2.musl.node $REMOTE_PATH/.next/standalone/node_modules/argon2/build/Release/argon2.node"
+  echo "  ✓ 已重命名 musl 预编译文件"
+fi
+
+# 6. 复制静态文件和配置到 standalone
+echo "[6/8] 复制静态文件和配置到 standalone..."
+
+# 复制静态文件
+ssh $SERVER "cd $REMOTE_PATH && cp -r .next/static .next/standalone/.next/" 
+
+# 复制 public 目录
 ssh $SERVER "cd $REMOTE_PATH && cp -r public .next/standalone/ 2>/dev/null || echo 'No public directory'"
 
-# 5.5 数据库初始化（如请求）
+# 复制外部依赖（chokidar 等）
+ssh $SERVER "cd $REMOTE_PATH && \
+  mkdir -p .next/standalone/node_modules/chokidar && \
+  cp -r node_modules/chokidar/* .next/standalone/node_modules/chokidar/ 2>/dev/null || true"
+
+# 关键：standalone 读取 .env.local，不是 .env
+if ssh $SERVER "test -f $REMOTE_PATH/.env"; then
+  ssh $SERVER "cd $REMOTE_PATH && cp .env .next/standalone/.env.local"
+  echo "✓ .env 已复制为 .env.local"
+else
+  echo "⚠️  警告: .env 文件不存在，跳过复制"
+fi
+
+echo "✓ 静态文件和配置复制完成"
+
+# 7. 确保环境变量完整（自动生成缺失的密钥）
+echo "[7/8] 检查并生成缺失的环境变量..."
+ssh $SERVER "$NVM_INIT cd $REMOTE_PATH/.next/standalone && \
+  if ! grep -q 'TEAMCLAW_API_TOKEN=' .env.local 2>/dev/null || grep -q 'TEAMCLAW_API_TOKEN=\$' .env.local 2>/dev/null; then
+    sed -i 's/TEAMCLAW_API_TOKEN=.*/TEAMCLAW_API_TOKEN='\$(openssl rand -hex 32)'/' .env.local 2>/dev/null || true
+  fi && \
+  if ! grep -q 'JWT_SECRET=' .env.local 2>/dev/null || grep -q 'JWT_SECRET=\$' .env.local 2>/dev/null; then
+    sed -i 's/JWT_SECRET=.*/JWT_SECRET='\$(openssl rand -base64 48)'/' .env.local 2>/dev/null || true
+  fi && \
+  if ! grep -q 'MCP_TOKEN_KEY=' .env.local 2>/dev/null || grep -q 'MCP_TOKEN_KEY=\$' .env.local 2>/dev/null; then
+    sed -i 's/MCP_TOKEN_KEY=.*/MCP_TOKEN_KEY='\$(openssl rand -hex 32)'/' .env.local 2>/dev/null || true
+  fi && \
+  if ! grep -q 'SESSION_SECRET=' .env.local 2>/dev/null || grep -q 'SESSION_SECRET=\$' .env.local 2>/dev/null; then
+    sed -i 's/SESSION_SECRET=.*/SESSION_SECRET='\$(openssl rand -base64 32)'/' .env.local 2>/dev/null || true
+  fi && \
+  if ! grep -q 'TOKEN_ENCRYPTION_KEY=' .env.local 2>/dev/null || grep -q 'TOKEN_ENCRYPTION_KEY=\$' .env.local 2>/dev/null; then
+    sed -i 's/TOKEN_ENCRYPTION_KEY=.*/TOKEN_ENCRYPTION_KEY='\$(openssl rand -base64 32)'/' .env.local 2>/dev/null || true
+  fi
+:"
+echo "✓ 环境变量检查完成"
+
+# 7.5 数据库初始化（如请求）
 if [ "$INIT_DB" = true ]; then
-  echo "[5.5/6] 重置数据库..."
+  echo "[7.5/8] 重置数据库..."
   ssh $SERVER "$NVM_INIT pm2 stop teamclaw 2>/dev/null || echo '服务未运行'"
   ssh $SERVER "rm -f $REMOTE_PATH/.next/standalone/data/teamclaw.db $REMOTE_PATH/.next/standalone/data/teamclaw.db-* 2>/dev/null || echo 'standalone 数据库不存在'"
   ssh $SERVER "rm -f $REMOTE_PATH/data/teamclaw.db $REMOTE_PATH/data/teamclaw.db-* 2>/dev/null || echo 'data 目录数据库不存在'"
   echo "✓ 数据库已重置，将在服务启动时自动初始化"
 fi
 
-# 6. 重启服务
-echo "[6/6] 重启服务..."
-ssh $SERVER "$NVM_INIT cd $REMOTE_PATH && pm2 restart teamclaw || pm2 start ecosystem.config.cjs"
+# 8. 重启服务
+echo "[8/8] 重启服务..."
+ssh $SERVER "$NVM_INIT cd $REMOTE_PATH && pm2 stop teamclaw 2>/dev/null || true && pm2 start .next/standalone/server.js --name teamclaw"
 
 if [ $? -ne 0 ]; then
-  echo "❌ 服务重启失败"
+  echo "❌ 服务启动失败"
   exit 1
 fi
-echo "✓ 服务已重启"
+
+# 等待服务启动
+sleep 3
 
 # 检查服务状态
 echo ""
