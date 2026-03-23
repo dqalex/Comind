@@ -22,6 +22,7 @@ import { BUILTIN_SOP_TEMPLATES, BUILTIN_RENDER_TEMPLATES } from './templates';
 import { migrateUuidToBase58 } from './migrations';
 import { validateTableName, validateColumnName } from '@/lib/sql-validator';
 import { logger } from '@/lib/logger';
+import { encryptToken } from '@/lib/security';
 
 /**
  * 数据库路径计算（解决 Next.js standalone 模式下的路径问题）
@@ -824,6 +825,73 @@ Dashboard 预览
   }
   console.log('[TeamClaw] Seeded default landing pages (en + zh) to landing_pages table.');
 
+  // ===== 审批策略种子数据 =====
+  const insertApprovalStrategy = sqlite.prepare(
+    `INSERT OR IGNORE INTO approval_strategies (id, type, strategy, enabled, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)`
+  );
+  const BUILTIN_APPROVAL_STRATEGIES = [
+    {
+      id: 'as-skill-publish',
+      type: 'skill_publish',
+      strategy: JSON.stringify({
+        type: 'skill_publish',
+        approverRule: 'any_admin',
+        requireMultiple: false,
+        requiredApprovals: 1,
+        timeoutHours: 72,
+        timeoutAction: 'none',
+        notifyRequester: true,
+        notifyApprover: true,
+      }),
+    },
+    {
+      id: 'as-skill-install',
+      type: 'skill_install',
+      strategy: JSON.stringify({
+        type: 'skill_install',
+        approverRule: 'any_admin',
+        requireMultiple: false,
+        requiredApprovals: 1,
+        timeoutHours: 48,
+        timeoutAction: 'none',
+        notifyRequester: true,
+        notifyApprover: true,
+      }),
+    },
+    {
+      id: 'as-project-join',
+      type: 'project_join',
+      strategy: JSON.stringify({
+        type: 'project_join',
+        approverRule: 'project_admin',
+        requireMultiple: false,
+        requiredApprovals: 1,
+        timeoutHours: 24,
+        timeoutAction: 'auto_reject',
+        notifyRequester: true,
+        notifyApprover: true,
+      }),
+    },
+    {
+      id: 'as-sensitive-action',
+      type: 'sensitive_action',
+      strategy: JSON.stringify({
+        type: 'sensitive_action',
+        approverRule: 'any_admin',
+        requireMultiple: true,
+        requiredApprovals: 2,
+        timeoutHours: 24,
+        timeoutAction: 'auto_reject',
+        notifyRequester: true,
+        notifyApprover: true,
+      }),
+    },
+  ];
+  for (const s of BUILTIN_APPROVAL_STRATEGIES) {
+    insertApprovalStrategy.run(s.id, s.type, s.strategy, 1, 'system', now, now);
+  }
+  console.log(`[TeamClaw] Seeded ${BUILTIN_APPROVAL_STRATEGIES.length} builtin approval strategies.`);
+
   console.log('[TeamClaw] Database initialization complete.');
 } else {
   // ===== V1 数据库兼容迁移 =====
@@ -1294,7 +1362,7 @@ Dashboard 预览
     }
   }
 
-  // 5.1 确保 milestones 表存在（v2.4.0 新增）
+  // 5.1 确保 milestones 表存在（v0.3.9 新增）
   if (!tableNames.includes('milestones')) {
     console.log('[TeamClaw] Creating missing "milestones" table...');
     sqlite.exec(`
@@ -1439,7 +1507,8 @@ Dashboard 预览
     const sopColNamesV31 = sopColsV31.map(c => c.name);
     const v31SopCols: [string, string][] = [
       ['version', "TEXT NOT NULL DEFAULT '1.0.0'"],
-      ['references', "TEXT DEFAULT '[]'"],
+      // references 是 SQLite 关键字，需要用双引号包裹列名
+      ['references', 'TEXT DEFAULT \'[]\''],
       ['scripts', "TEXT DEFAULT '[]'"],
     ];
     for (const [col, def] of v31SopCols) {
@@ -1448,7 +1517,9 @@ Dashboard 预览
           console.log(`[TeamClaw] Adding v3.1 column "sop_templates.${col}"...`);
           validateTableName('sop_templates');
           validateColumnName('sop_templates', col);
-          sqlite.exec(`ALTER TABLE sop_templates ADD COLUMN ${col} ${def}`);
+          // references 是 SQLite 关键字，需要特殊处理
+          const colName = col === 'references' ? `"${col}"` : col;
+          sqlite.exec(`ALTER TABLE sop_templates ADD COLUMN ${colName} ${def}`);
         } catch (err) {
           console.error(`[TeamClaw] Failed to add sop_templates.${col}:`, err);
         }
@@ -1621,7 +1692,6 @@ Dashboard 预览
           console.error('[TeamClaw] Invalid Gateway URL protocol, must be ws:// or wss://:', defaultUrl);
         } else {
           try {
-            const { encryptToken } = require('@/lib/security');
             const encryptedToken = encryptToken(defaultToken);
             
             sqlite.prepare(`

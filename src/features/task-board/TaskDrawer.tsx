@@ -1,21 +1,21 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import { useTaskStore, useMemberStore, useCommentStore, useTaskLogStore, useDocumentStore, useChatStore, useProjectStore, useOpenClawWorkspaceStore, useMilestoneStore } from '@/domains';
 import { useGatewayStore } from '@/core/gateway/store';
 import { useAuthStore } from '@/domains/auth';
-import { useConfirmAction } from '@/hooks/useConfirmAction';
-import { useTaskSOP } from '@/hooks/useTaskSOP';
-import { useInlineEdit } from '@/hooks/useInlineEdit';
-import ConfirmDialog from '@/components/ConfirmDialog';
-import TaskComments from '@/components/TaskComments';
-import TaskLogs from '@/components/TaskLogs';
-import { Input, Select, Textarea } from '@/components/ui';
+import { useConfirmAction } from '@/shared/hooks/useConfirmAction';
+import { useTaskSOP } from '@/shared/hooks/useTaskSOP';
+import { useInlineEdit } from '@/shared/hooks/useInlineEdit';
+import ConfirmDialog from '@/shared/layout/ConfirmDialog';
+import TaskComments from '@/features/task-board/TaskComments';
+import TaskLogs from '@/features/task-board/TaskLogs';
+import { Input, Select, Textarea } from '@/shared/ui';
 import type { Task } from '@/db/schema';
-import DocumentPicker from '@/components/DocumentPicker';
-import { SOPProgressBar } from '@/components/sop';
+import DocumentPicker from '@/shared/layout/DocumentPicker';
+import { SOPProgressBar } from '@/features/sop-engine';
 import {
   X, Trash2, MessageSquare,
   CheckSquare, Square, Plus, FileText, Link2, Send,
@@ -142,7 +142,7 @@ export default function TaskDrawer({ task, onClose, onDelete }: TaskDrawerProps)
   }, [task.id, fetchCommentsByTask, fetchLogsByTask]);
 
   // 标题防抖保存
-  const handleTitleChange = (value: string) => {
+  const handleTitleChange = useCallback((value: string) => {
     setTitle(value);
     if (titleDebounceRef.current) clearTimeout(titleDebounceRef.current);
     titleDebounceRef.current = setTimeout(() => {
@@ -150,46 +150,46 @@ export default function TaskDrawer({ task, onClose, onDelete }: TaskDrawerProps)
         updateTaskAsync(task.id, { title: value.trim() });
       }
     }, 500);
-  };
+  }, [task.id, task.title, updateTaskAsync]);
 
   // 描述防抖保存
-  const handleDescChange = (value: string) => {
+  const handleDescChange = useCallback((value: string) => {
     setDescription(value);
     if (descDebounceRef.current) clearTimeout(descDebounceRef.current);
     descDebounceRef.current = setTimeout(() => {
       updateTaskAsync(task.id, { description: value });
     }, 500);
-  };
+  }, [task.id, updateTaskAsync]);
 
   // 精确 selector 订阅
   const createLog = useTaskLogStore((s) => s.createLog);
 
-  const handleStatusChange = async (status: string) => {
+  const handleStatusChange = useCallback(async (status: string) => {
     const oldLabel = STATUS_OPTIONS.find(s => s.key === task.status)?.label || task.status;
     const newLabel = STATUS_OPTIONS.find(s => s.key === status)?.label || status;
     await updateTaskAsync(task.id, { status: status as Task['status'] });
     createLog({ taskId: task.id, action: t('tasks.statusChange'), message: `${oldLabel} → ${newLabel}` });
-  };
+  }, [task.id, task.status, updateTaskAsync, createLog, t, STATUS_OPTIONS]);
 
-  const handlePriorityChange = async (priority: string) => {
+  const handlePriorityChange = useCallback(async (priority: string) => {
     const oldLabel = PRIORITY_MAP[task.priority]?.label || task.priority;
     const newLabel = PRIORITY_MAP[priority]?.label || priority;
     await updateTaskAsync(task.id, { priority: priority as Task['priority'] });
     createLog({ taskId: task.id, action: t('tasks.priorityChange'), message: `${oldLabel} → ${newLabel}` });
-  };
+  }, [task.id, task.priority, updateTaskAsync, createLog, t, PRIORITY_MAP]);
 
-  const handleAssigneeChange = async (assigneeId: string) => {
+  const handleAssigneeChange = useCallback(async (assigneeId: string) => {
     const assignees = assigneeId ? [assigneeId] : [];
     const oldName = (task.assignees as string[])?.[0] ? members.find(m => m.id === (task.assignees as string[])[0])?.name || t('tasks.unassigned') : t('tasks.unassigned');
     const newName = assigneeId ? members.find(m => m.id === assigneeId)?.name || assigneeId : t('tasks.unassigned');
     await updateTaskAsync(task.id, { assignees });
     createLog({ taskId: task.id, action: t('tasks.assigneeChange'), message: `${oldName} → ${newName}` });
-  };
+  }, [task.id, task.assignees, members, updateTaskAsync, createLog, t]);
 
-  const handleDeadlineChange = async (deadline: string) => {
+  const handleDeadlineChange = useCallback(async (deadline: string) => {
     await updateTaskAsync(task.id, { deadline: deadline ? new Date(deadline) : null });
     createLog({ taskId: task.id, action: t('tasks.deadlineChange'), message: deadline || t('tasks.cleared') });
-  };
+  }, [task.id, updateTaskAsync, createLog, t]);
 
   // 里程碑相关
   const projectMilestones = useMemo(() =>
@@ -197,30 +197,30 @@ export default function TaskDrawer({ task, onClose, onDelete }: TaskDrawerProps)
     [milestones, task.projectId]
   );
 
-  const handleMilestoneChange = async (milestoneId: string) => {
+  const handleMilestoneChange = useCallback(async (milestoneId: string) => {
     const oldMs = milestones.find(m => m.id === task.milestoneId);
     const newMs = milestoneId ? milestones.find(m => m.id === milestoneId) : null;
     await updateTaskAsync(task.id, { milestoneId: milestoneId || null });
     createLog({ taskId: task.id, action: t('tasks.milestoneChange'), message: `${oldMs?.title || t('milestones.unassigned')} → ${newMs?.title || t('milestones.unassigned')}` });
-  };
+  }, [milestones, task.id, task.milestoneId, updateTaskAsync, createLog, t]);
 
-  const handleToggleCheckItem = async (index: number) => {
+  const handleToggleCheckItem = useCallback(async (index: number) => {
     const updated = [...checkItems];
     updated[index] = { ...updated[index], completed: !updated[index].completed };
-    await updateTaskAsync(task.id, { checkItems: updated as any });
-  };
+    await updateTaskAsync(task.id, { checkItems: updated });
+  }, [checkItems, task.id, updateTaskAsync]);
 
-  const handleAddCheckItem = async () => {
+  const handleAddCheckItem = useCallback(async () => {
     if (!newCheckItem.trim()) return;
     const updated = [...checkItems, { id: crypto.randomUUID(), text: newCheckItem.trim(), completed: false }];
-    await updateTaskAsync(task.id, { checkItems: updated as any });
+    await updateTaskAsync(task.id, { checkItems: updated });
     setNewCheckItem('');
-  };
+  }, [checkItems, newCheckItem, task.id, updateTaskAsync]);
 
-  const handleRemoveCheckItem = async (index: number) => {
+  const handleRemoveCheckItem = useCallback(async (index: number) => {
     const updated = checkItems.filter((_, i) => i !== index);
-    await updateTaskAsync(task.id, { checkItems: updated as any });
-  };
+    await updateTaskAsync(task.id, { checkItems: updated });
+  }, [checkItems, task.id, updateTaskAsync]);
 
   const handleChatAboutTask = () => {
     // v3.0 多用户：在函数内部实时计算用户专用会话键（确保 agentsDefaultId 已加载）

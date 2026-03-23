@@ -463,7 +463,7 @@ Built for OpenClaw Gateway — Compatible with Industry Leading Models
 - [GitHub](https://github.com/dqalex/teamclaw)
 
 <!-- @slot:footerCopyright -->
-© 2026 TeamClaw. All rights reserved. v1.0.0`,
+© 2026 TeamClaw. All rights reserved. v0.9.7`,
   slots: {
     heroBadge: { label: 'Hero Badge', type: 'content', placeholder: '**Badge:** v3.0 Released — Multi-User & SOP Engine' },
     heroTitle: { label: 'Hero Title', type: 'content', placeholder: '# Elevate AI Agents from Chatbots to Team Members' },
@@ -476,7 +476,7 @@ Built for OpenClaw Gateway — Compatible with Industry Leading Models
     modelLogos: { label: 'Model Logos (list)', type: 'content', placeholder: '- OpenAI\n- Anthropic\n- DeepSeek\n- Qwen' },
     footerLinks: { label: 'Footer Links (list)', type: 'content', placeholder: '- [User Guide](/wiki?doc=VrihWxkCoM9Q)\n- [API Documentation](/wiki?doc=FtmyZ2zMsm1c)\n- [Blog](/blog)' },
     footerSocial: { label: 'Footer Social (list)', type: 'content', placeholder: '- [GitHub](https://github.com/dqalex/teamclaw)' },
-    footerCopyright: { label: 'Footer Copyright', type: 'content', placeholder: '© 2026 TeamClaw. All rights reserved. v1.0.0' },
+    footerCopyright: { label: 'Footer Copyright', type: 'content', placeholder: '© 2026 TeamClaw. All rights reserved. v0.9.7' },
   },
   sections: [
     { id: 'hero', label: 'Hero 区域', slots: ['heroBadge', 'heroTitle', 'heroSubtitle', 'ctaButtons', 'dashboardPreview'] },

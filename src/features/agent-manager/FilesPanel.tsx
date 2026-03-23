@@ -4,12 +4,12 @@ import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useGatewayStore } from '@/core/gateway/store';
 import { getGatewayProxyClient } from '@/lib/gateway-proxy';
-import { Button } from '@/components/ui';
+import { Button } from '@/shared/ui';
 import clsx from 'clsx';
 import { FileText, Loader2, Settings2, Save, AlertCircle } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
-const MarkdownEditor = dynamic(() => import('@/components/MarkdownEditor'), { ssr: false });
+const MarkdownEditor = dynamic(() => import('@/shared/editor/MarkdownEditor'), { ssr: false });
 
 interface FilesPanelProps {
   agentId: string;

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { scheduledTasks, scheduledTaskHistory, tasks } from '@/db/schema';
+import { scheduledTasks, scheduledTaskHistory } from '@/db/schema';
 
 // 标记为动态路由，避免静态生成错误
 export const dynamic = 'force-dynamic';
@@ -11,7 +11,7 @@ import { withAuth, withAdminAuth } from '@/lib/with-auth';
 import type { AuthResult } from '@/lib/api-auth';
 
 // GET - 获取单个定时任务
-// v3.0: 需要登录才能访问（只读）
+// v0.9.8: 需要登录才能访问（只读）
 export const GET = withAuth(async (
   request: NextRequest,
   auth: AuthResult,
@@ -36,13 +36,13 @@ export const GET = withAuth(async (
       .limit(30);
 
     return NextResponse.json({ ...task, history });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch scheduled task' }, { status: 500 });
   }
 });
 
 // PUT - 更新定时任务
-// v3.0: Admin Only - 只有管理员可以修改定时任务
+// v0.9.8: Admin Only - 只有管理员可以修改定时任务
 export const PUT = withAdminAuth(async (
   request: NextRequest,
   auth: AuthResult,
@@ -93,13 +93,13 @@ export const PUT = withAdminAuth(async (
 
     eventBus.emit({ type: 'schedule_update', resourceId: task.id });
     return NextResponse.json(task);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to update scheduled task' }, { status: 500 });
   }
 });
 
 // DELETE - 删除定时任务
-// v3.0: Admin Only - 只有管理员可以删除定时任务
+// v0.9.8: Admin Only - 只有管理员可以删除定时任务
 export const DELETE = withAdminAuth(async (
   request: NextRequest,
   auth: AuthResult,
@@ -120,8 +120,8 @@ export const DELETE = withAdminAuth(async (
 
     eventBus.emit({ type: 'schedule_update', resourceId: id });
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('[DELETE /api/scheduled-tasks]', error);
+  } catch (err) {
+    console.error('[DELETE /api/scheduled-tasks]', err);
     return NextResponse.json({ error: 'Failed to delete scheduled task' }, { status: 500 });
   }
 });

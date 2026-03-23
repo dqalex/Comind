@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import I18nProvider from './i18n';
-import { ThemeProvider } from '@/components/ThemeProvider';
-import { DataProvider } from '@/components/DataProvider';
-import ErrorBoundary from '@/components/ErrorBoundary';
+import { ThemeProvider } from '@/shared/layout/ThemeProvider';
+import { DataProvider } from '@/shared/layout/DataProvider';
+import ErrorBoundary from '@/shared/layout/ErrorBoundary';
 import dynamic from 'next/dynamic';
 import { Toaster } from 'sonner';
 
-const ChatOverlay = dynamic(() => import('@/components/ChatOverlay'), { ssr: false });
+const ChatOverlay = dynamic(() => import('@/shared/layout/ChatOverlay'), { ssr: false });
 
 export const metadata: Metadata = {
   title: 'TeamClaw - AI 团队协作平台',

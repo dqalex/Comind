@@ -2,8 +2,8 @@
 
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useEscapeKey } from '@/hooks/useEscapeKey';
-import { useConfirmAction } from '@/hooks/useConfirmAction';
+import { useEscapeKey } from '@/shared/hooks/useEscapeKey';
+import { useConfirmAction } from '@/shared/hooks/useConfirmAction';
 import { useTaskStore, useProjectStore, useMemberStore, useTaskLogStore, useMilestoneStore, useSOPTemplateStore, useChatStore } from '@/domains';
 import { useGatewayStore } from '@/core/gateway/store';
 import { useAuthStore } from '@/domains/auth';
@@ -19,7 +19,7 @@ export function useTasksPage() {
   const { members } = useMemberStore();
   const { milestones } = useMilestoneStore();
   const { templates: sopTemplates } = useSOPTemplateStore();
-  // v3.0 多用户：获取用户专用会话键（注意：不在组件级别缓存，而是在函数调用时实时计算）
+  // v0.9.8 多用户：获取用户专用会话键（注意：不在组件级别缓存，而是在函数调用时实时计算）
   const { connected, connectionMode, serverProxyConnected, getUserSessionKey } = useGatewayStore();
   const gwConnected = connectionMode === 'server_proxy' ? serverProxyConnected : connected;
   const authUser = useAuthStore((s) => s.user);
@@ -286,24 +286,24 @@ export function useTasksPage() {
   }, [members]);
 
   const toggleLane = useCallback((laneId: string) => {
-    setCollapsedLanes(prev => { const next = new Set(prev); next.has(laneId) ? next.delete(laneId) : next.add(laneId); return next; });
+    setCollapsedLanes(prev => { const next = new Set(prev); if (next.has(laneId)) { next.delete(laneId); } else { next.add(laneId); } return next; });
   }, []);
 
   const toggleStatusColumn = useCallback((col: StatusColumn) => {
-    setCollapsedStatusColumns(prev => { const next = new Set(prev); next.has(col) ? next.delete(col) : next.add(col); return next; });
+    setCollapsedStatusColumns(prev => { const next = new Set(prev); if (next.has(col)) { next.delete(col); } else { next.add(col); } return next; });
   }, []);
 
   // --- 多选操作 ---
   const toggleTaskSelection = useCallback((taskId: string) => {
-    setSelectedTaskIds(prev => { const next = new Set(prev); next.has(taskId) ? next.delete(taskId) : next.add(taskId); return next; });
+    setSelectedTaskIds(prev => { const next = new Set(prev); if (next.has(taskId)) { next.delete(taskId); } else { next.add(taskId); } return next; });
   }, []);
 
   const selectAllVisible = useCallback(() => { setSelectedTaskIds(new Set(filteredTasks.map(t => t.id))); }, [filteredTasks]);
   const clearSelection = useCallback(() => { setSelectedTaskIds(new Set()); }, []);
 
-  // v3.0 多用户：批量推送使用用户专用会话键
+  // v0.9.8 多用户：批量推送使用用户专用会话键
   const handleBatchPush = useCallback(async () => {
-    // v3.0 多用户：在函数内部实时计算用户专用会话键（确保 agentsDefaultId 已加载）
+    // v0.9.8 多用户：在函数内部实时计算用户专用会话键（确保 agentsDefaultId 已加载）
     const userSessionKey = authUser?.id ? getUserSessionKey(authUser.id) : null;
 
     if (!gwConnected || !userSessionKey || selectedTaskIds.size === 0) return;
@@ -314,7 +314,7 @@ export function useTasksPage() {
       setPushing(false);
       clearSelection();
       if (res.ok && json.success) {
-        // v3.0 多用户：传入用户专用会话键
+        // v0.9.8 多用户：传入用户专用会话键
         openChatWithMessage(json.data.message, { sessionKey: userSessionKey });
       } else {
         setPushError(json.error || 'Batch push failed');

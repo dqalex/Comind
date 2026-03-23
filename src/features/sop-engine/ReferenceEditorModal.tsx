@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Input } from '@/components/ui';
+import { Button, Input } from '@/shared/ui';
 import type { ReferenceFile, ReferenceType } from '@/db/schema';
 import { X, Save, FileText } from 'lucide-react';
 

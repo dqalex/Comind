@@ -8,14 +8,14 @@ import { deliveries } from '@/db/schema';
 import { eq, desc, and, sql } from 'drizzle-orm';
 import { generateDeliveryId, generateId } from '@/lib/id';
 import { eventBus } from '@/lib/event-bus';
-import { validateEnum, VALID_DELIVERY_STATUS, VALID_DELIVERY_PLATFORM } from '@/lib/validators';
+import { validateEnum, VALID_DELIVERY_STATUS } from '@/lib/validators';
 import { triggerMarkdownSync } from '@/lib/markdown-sync';
 import { withAuth } from '@/lib/with-auth';
 import { errorResponse, createdResponse, ApiErrors } from '@/lib/api-route-factory';
 import { createDeliverySchema, validate } from '@/lib/validation';
 
 // GET - 获取所有交付记录（支持分页）
-// v3.0: 需要登录才能访问
+// v0.9.8: 需要登录才能访问
 export const GET = withAuth(async (request: NextRequest) => {
   try {
     const { searchParams } = new URL(request.url);
@@ -66,7 +66,7 @@ export const GET = withAuth(async (request: NextRequest) => {
 });
 
 // POST - 创建交付记录
-// v3.0: 需要登录才能创建
+// v0.9.8: 需要登录才能创建
 export const POST = withAuth(async (request: NextRequest) => {
   const requestId = request.headers.get('x-request-id') || generateId();
   

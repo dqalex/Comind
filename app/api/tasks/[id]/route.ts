@@ -27,7 +27,7 @@ async function findTask(id: string) {
 }
 
 // GET /api/tasks/[id] - 获取单个任务
-// v3.0: 需要登录才能访问，任务权限继承项目权限
+// v0.9.8: 需要登录才能访问，任务权限继承项目权限
 export const GET = withAuth(async (
   request: NextRequest,
   auth: AuthResult,
@@ -40,7 +40,7 @@ export const GET = withAuth(async (
       return notFound('Task');
     }
     
-    // v3.0: 检查项目权限（无项目的任务所有登录用户可见）
+    // v0.9.8: 检查项目权限（无项目的任务所有登录用户可见）
     if (task.projectId && auth.userRole !== 'admin') {
       const access = await checkProjectAccess(task.projectId, auth.userId!, auth.userRole!);
       if (!access.hasAccess) {
@@ -55,7 +55,7 @@ export const GET = withAuth(async (
 });
 
 // PUT /api/tasks/[id] - 更新任务
-// v3.0: 需要登录才能修改，任务权限继承项目权限（需要编辑权限）
+// v0.9.8: 需要登录才能修改，任务权限继承项目权限（需要编辑权限）
 export const PUT = withAuth(async (
   request: NextRequest,
   auth: AuthResult,
@@ -71,7 +71,7 @@ export const PUT = withAuth(async (
     }
     const resolvedId = existing.id;
 
-    // v3.0: 检查项目权限（无项目的任务所有登录用户可编辑）
+    // v0.9.8: 检查项目权限（无项目的任务所有登录用户可编辑）
     if (existing.projectId && auth.userRole !== 'admin') {
       const access = await checkProjectAccess(existing.projectId, auth.userId!, auth.userRole!);
       if (!access.canEdit) {
@@ -79,7 +79,7 @@ export const PUT = withAuth(async (
       }
     }
     
-    // v3.0: 如果要修改 projectId，检查目标项目的编辑权限
+    // v0.9.8: 如果要修改 projectId，检查目标项目的编辑权限
     if (body.projectId !== undefined && body.projectId !== existing.projectId) {
       if (body.projectId && !isValidId(body.projectId)) {
         return badRequest('Invalid projectId format');
@@ -141,7 +141,7 @@ export const PUT = withAuth(async (
 });
 
 // DELETE /api/tasks/[id] - 删除任务（级联清理）
-// v3.0: 需要登录才能删除，任务权限继承项目权限（需要编辑权限）
+// v0.9.8: 需要登录才能删除，任务权限继承项目权限（需要编辑权限）
 export const DELETE = withAuth(async (
   request: NextRequest,
   auth: AuthResult,
@@ -155,7 +155,7 @@ export const DELETE = withAuth(async (
     }
     const resolvedId = existing.id;
 
-    // v3.0: 检查项目权限（无项目的任务所有登录用户可删除）
+    // v0.9.8: 检查项目权限（无项目的任务所有登录用户可删除）
     if (existing.projectId && auth.userRole !== 'admin') {
       const access = await checkProjectAccess(existing.projectId, auth.userId!, auth.userRole!);
       if (!access.canEdit) {

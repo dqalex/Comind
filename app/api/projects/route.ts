@@ -1,5 +1,5 @@
 import { db } from '@/db';
-import { projects, members, projectMembers, type NewProject } from '@/db/schema';
+import { projects, projectMembers, type NewProject } from '@/db/schema';
 import { NextRequest } from 'next/server';
 
 // 标记为动态路由，避免静态生成错误
@@ -20,7 +20,7 @@ import {
 } from '@/lib/api-route-factory';
 
 // GET /api/projects - 获取所有项目（支持 source 过滤）
-// v3.0: 项目权限过滤 - 只返回用户可访问的项目
+// v0.9.8: 项目权限过滤 - 只返回用户可访问的项目
 export const GET = withAuth(async (request: NextRequest, auth: AuthResult) => {
   const requestId = request.headers.get('x-request-id') || generateId();
 
@@ -45,7 +45,7 @@ export const GET = withAuth(async (request: NextRequest, auth: AuthResult) => {
 });
 
 // POST /api/projects - 创建新项目
-// v3.0: 自动设置当前用户为 Owner
+// v0.9.8: 自动设置当前用户为 Owner
 export const POST = withAuth(async (request: NextRequest, auth: AuthResult) => {
   const requestId = request.headers.get('x-request-id') || generateId();
 

@@ -48,6 +48,7 @@ const MOCK_MILESTONE = {
 
 const MOCK_MILESTONE_2 = {
   id: 'ms_test2',
+  knowledgeConfig: null,
   title: '另一个里程碑',
   description: null,
   projectId: 'proj_2',
@@ -63,13 +64,13 @@ const MOCK_MILESTONE_2 = {
 // ============================================================
 
 describe('useMilestoneStore', () => {
-  let useMilestoneStore: typeof import('@/store/milestone.store').useMilestoneStore;
+  let useMilestoneStore: typeof import('@/domains/milestone').useMilestoneStore;
 
   beforeEach(async () => {
     vi.clearAllMocks();
     vi.resetModules();
     // 动态导入以确保 store 每次测试都是新的
-    const mod = await import('@/store/milestone.store');
+    const mod = await import('@/domains/milestone');
     useMilestoneStore = mod.useMilestoneStore;
     // 重置 store 状态
     useMilestoneStore.setState({

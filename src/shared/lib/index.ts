@@ -20,6 +20,7 @@ export {
   cleanEditorAttributes,
   injectSlotsToHtml,
   generateMdFromTemplate,
+  htmlToSimpleMd,
   // 类型
   type SlotDef,
   type SlotValue,
@@ -27,6 +28,7 @@ export {
   type SlotSyncResult,
 } from './slot-sync';
 
+// 避免重复导出 SlotDef 等类型（已从 slot-sync 导出）
 export { renderIconsInHtml } from './icon-render';
 
 // ============================================================
@@ -94,7 +96,7 @@ export {
   type ApprovalFilters,
   type ApprovalQueryOptions,
   type ApprovalResult,
-} from './services/approval-service';
+} from '@/lib/services/approval-service';
 
 // ============================================================
 // 同步服务
@@ -125,15 +127,11 @@ export {
   createSyncState,
   updateSyncStateFromMarkdown,
   updateSyncStateFromHTML,
-  // 类型
-  type SlotDef,
-  type SlotValue,
-  type SlotSyncResult,
-  type SlotType,
+  // 类型（SlotDef, SlotValue, SlotSyncResult, SlotType 已从 slot-sync 导出）
   type SyncResult,
   type DocumentSyncState,
   type BatchSyncInput,
   type BatchSyncOutput,
   // 常量
   MD_RICHTEXT_STYLES,
-} from './services/sync-service';
+} from '@/lib/services/sync-service';

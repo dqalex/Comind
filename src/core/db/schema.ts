@@ -656,7 +656,7 @@ export const sopTemplates = sqliteTable('sop_templates', {
   icon: text('icon').default('clipboard-list'),
   status: text('status', { enum: ['draft', 'active', 'archived'] }).notNull().default('active'),
   
-  // 版本控制（v3.0.1 新增）
+  // 版本控制（v0.9.9 新增）
   version: text('version').notNull().default('1.0.0'),
   
   // 流程定义

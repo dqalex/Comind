@@ -47,7 +47,7 @@ vi.mock('zustand/middleware', () => ({
 // Task Store Tests
 // ============================================================
 describe('useTaskStore', () => {
-  let useTaskStore: typeof import('@/store/task.store').useTaskStore;
+  let useTaskStore: typeof import('@/domains/task').useTaskStore;
   let tasksApi: typeof import('@/lib/data-service').tasksApi;
 
   beforeEach(async () => {
@@ -57,7 +57,7 @@ describe('useTaskStore', () => {
     const dataService = await import('@/lib/data-service');
     tasksApi = dataService.tasksApi;
     
-    const store = await import('@/store/task.store');
+    const store = await import('@/domains/task');
     useTaskStore = store.useTaskStore;
     
     // Reset store
@@ -65,22 +65,24 @@ describe('useTaskStore', () => {
   });
 
   describe('本地操作', () => {
+    const now = new Date();
+    
     it('setTasks 应该更新任务列表', () => {
       const { setTasks } = useTaskStore.getState();
-      setTasks([{ id: 't1', title: 'Task 1', status: 'todo', priority: 'medium', createdAt: 0, updatedAt: 0 }]);
+      setTasks([{ id: 't1', title: 'Task 1', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now }]);
       expect(useTaskStore.getState().tasks).toHaveLength(1);
     });
 
     it('addTask 应该追加任务', () => {
       const { setTasks, addTask } = useTaskStore.getState();
       setTasks([]);
-      addTask({ id: 't1', title: 'New', status: 'todo', priority: 'medium', createdAt: 0, updatedAt: 0 });
+      addTask({ id: 't1', title: 'New', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now });
       expect(useTaskStore.getState().tasks).toHaveLength(1);
     });
 
     it('updateTask 应该更新指定任务', () => {
       const { setTasks, updateTask } = useTaskStore.getState();
-      setTasks([{ id: 't1', title: 'Old', status: 'todo', priority: 'medium', createdAt: 0, updatedAt: 0 }]);
+      setTasks([{ id: 't1', title: 'Old', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now }]);
       updateTask('t1', { title: 'New' });
       expect(useTaskStore.getState().tasks[0].title).toBe('New');
     });
@@ -88,8 +90,8 @@ describe('useTaskStore', () => {
     it('deleteTask 应该删除指定任务', () => {
       const { setTasks, deleteTask } = useTaskStore.getState();
       setTasks([
-        { id: 't1', title: 'Task 1', status: 'todo', priority: 'medium', createdAt: 0, updatedAt: 0 },
-        { id: 't2', title: 'Task 2', status: 'todo', priority: 'medium', createdAt: 0, updatedAt: 0 },
+        { id: 't1', title: 'Task 1', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now },
+        { id: 't2', title: 'Task 2', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now },
       ]);
       deleteTask('t1');
       expect(useTaskStore.getState().tasks).toHaveLength(1);
@@ -98,11 +100,13 @@ describe('useTaskStore', () => {
   });
 
   describe('派生查询', () => {
+    const now = new Date();
+    
     it('getTasksByProject 应该返回项目任务', () => {
       const { setTasks, getTasksByProject } = useTaskStore.getState();
       setTasks([
-        { id: 't1', projectId: 'p1', title: 'P1 Task', status: 'todo', priority: 'medium', createdAt: 0, updatedAt: 0 },
-        { id: 't2', projectId: 'p2', title: 'P2 Task', status: 'todo', priority: 'medium', createdAt: 0, updatedAt: 0 },
+        { id: 't1', projectId: 'p1', title: 'P1 Task', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now },
+        { id: 't2', projectId: 'p2', title: 'P2 Task', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now },
       ]);
       const result = getTasksByProject('p1');
       expect(result).toHaveLength(1);
@@ -112,8 +116,8 @@ describe('useTaskStore', () => {
     it('getTasksByMember 应该返回成员任务', () => {
       const { setTasks, getTasksByMember } = useTaskStore.getState();
       setTasks([
-        { id: 't1', assignees: ['m1'], title: 'M1 Task', status: 'todo', priority: 'medium', createdAt: 0, updatedAt: 0 },
-        { id: 't2', assignees: ['m2'], title: 'M2 Task', status: 'todo', priority: 'medium', createdAt: 0, updatedAt: 0 },
+        { id: 't1', assignees: ['m1'], title: 'M1 Task', status: 'todo', priority: 'medium', source: 'local', creatorId: 'test', createdAt: now, updatedAt: now },
+        { id: 't2', assignees: ['m2'], title: 'M2 Task', status: 'todo', priority: 'medium', source: 'local', creatorId: 'test', createdAt: now, updatedAt: now },
       ]);
       const result = getTasksByMember('m1');
       expect(result).toHaveLength(1);
@@ -122,8 +126,8 @@ describe('useTaskStore', () => {
     it('getGlobalTasks 应该返回无项目任务', () => {
       const { setTasks, getGlobalTasks } = useTaskStore.getState();
       setTasks([
-        { id: 't1', projectId: null, title: 'Global', status: 'todo', priority: 'medium', createdAt: 0, updatedAt: 0 },
-        { id: 't2', projectId: 'p1', title: 'Project', status: 'todo', priority: 'medium', createdAt: 0, updatedAt: 0 },
+        { id: 't1', projectId: null, title: 'Global', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now },
+        { id: 't2', projectId: 'p1', title: 'Project', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now },
       ]);
       const result = getGlobalTasks();
       expect(result).toHaveLength(1);
@@ -133,8 +137,8 @@ describe('useTaskStore', () => {
     it('getCrossProjectTasks 应该返回跨项目任务', () => {
       const { setTasks, getCrossProjectTasks } = useTaskStore.getState();
       setTasks([
-        { id: 't1', crossProjects: ['p1', 'p2'], title: 'Cross', status: 'todo', priority: 'medium', createdAt: 0, updatedAt: 0 },
-        { id: 't2', crossProjects: ['p3'], title: 'Other', status: 'todo', priority: 'medium', createdAt: 0, updatedAt: 0 },
+        { id: 't1', crossProjects: ['p1', 'p2'], title: 'Cross', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now },
+        { id: 't2', crossProjects: ['p3'], title: 'Other', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now },
       ]);
       const result = getCrossProjectTasks('p1');
       expect(result).toHaveLength(1);
@@ -142,8 +146,10 @@ describe('useTaskStore', () => {
   });
 
   describe('异步操作', () => {
+    const now = new Date();
+    
     it('fetchTasks 成功应该更新 tasks', async () => {
-      const mockTasks = [{ id: 't1', title: 'Task', status: 'todo', priority: 'medium', createdAt: 0, updatedAt: 0 }];
+      const mockTasks = [{ id: 't1', title: 'Task', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now }];
       (tasksApi.getAll as ReturnType<typeof vi.fn>).mockResolvedValue({ data: mockTasks, error: undefined });
 
       const { fetchTasks } = useTaskStore.getState();
@@ -163,7 +169,7 @@ describe('useTaskStore', () => {
     });
 
     it('createTask 成功应该添加任务', async () => {
-      const newTask = { id: 't1', title: 'New', status: 'todo', priority: 'medium', createdAt: 0, updatedAt: 0 };
+      const newTask = { id: 't1', title: 'New', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now };
       (tasksApi.create as ReturnType<typeof vi.fn>).mockResolvedValue({ data: newTask, error: undefined });
 
       const { createTask } = useTaskStore.getState();
@@ -174,10 +180,10 @@ describe('useTaskStore', () => {
     });
 
     it('updateTaskAsync 成功应该更新任务', async () => {
-      const updated = { id: 't1', title: 'Updated', status: 'done', priority: 'medium', createdAt: 0, updatedAt: 1 };
+      const updated = { id: 't1', title: 'Updated', status: 'done', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now };
       (tasksApi.update as ReturnType<typeof vi.fn>).mockResolvedValue({ data: updated, error: undefined });
       
-      useTaskStore.setState({ tasks: [{ id: 't1', title: 'Old', status: 'todo', priority: 'medium', createdAt: 0, updatedAt: 0 }] });
+      useTaskStore.setState({ tasks: [{ id: 't1', title: 'Old', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now }] });
 
       const { updateTaskAsync } = useTaskStore.getState();
       const result = await updateTaskAsync('t1', { status: 'done' });
@@ -188,7 +194,7 @@ describe('useTaskStore', () => {
 
     it('deleteTaskAsync 成功应该删除任务', async () => {
       (tasksApi.delete as ReturnType<typeof vi.fn>).mockResolvedValue({ data: { success: true }, error: undefined });
-      useTaskStore.setState({ tasks: [{ id: 't1', title: 'Task', status: 'todo', priority: 'medium', createdAt: 0, updatedAt: 0 }] });
+      useTaskStore.setState({ tasks: [{ id: 't1', title: 'Task', status: 'todo', priority: 'medium', source: 'local', assignees: [], creatorId: 'test', createdAt: now, updatedAt: now }] });
 
       const { deleteTaskAsync } = useTaskStore.getState();
       const result = await deleteTaskAsync('t1');
@@ -203,7 +209,7 @@ describe('useTaskStore', () => {
 // Document Store Tests
 // ============================================================
 describe('useDocumentStore', () => {
-  let useDocumentStore: typeof import('@/store/document.store').useDocumentStore;
+  let useDocumentStore: typeof import('@/domains/document').useDocumentStore;
   let documentsApi: typeof import('@/lib/data-service').documentsApi;
 
   beforeEach(async () => {
@@ -213,7 +219,7 @@ describe('useDocumentStore', () => {
     const dataService = await import('@/lib/data-service');
     documentsApi = dataService.documentsApi;
     
-    const store = await import('@/store/document.store');
+    const store = await import('@/domains/document');
     useDocumentStore = store.useDocumentStore;
     
     useDocumentStore.setState({ documents: [], loading: false, error: null });
@@ -268,7 +274,7 @@ describe('useDocumentStore', () => {
 // Member Store Tests
 // ============================================================
 describe('useMemberStore', () => {
-  let useMemberStore: typeof import('@/store/member.store').useMemberStore;
+  let useMemberStore: typeof import('@/domains/member').useMemberStore;
   let membersApi: typeof import('@/lib/data-service').membersApi;
 
   beforeEach(async () => {
@@ -278,7 +284,7 @@ describe('useMemberStore', () => {
     const dataService = await import('@/lib/data-service');
     membersApi = dataService.membersApi;
     
-    const store = await import('@/store/member.store');
+    const store = await import('@/domains/member');
     useMemberStore = store.useMemberStore;
     
     useMemberStore.setState({ members: [], currentMemberId: null, loading: false, error: null });
@@ -321,7 +327,7 @@ describe('useMemberStore', () => {
 // Project Store Tests
 // ============================================================
 describe('useProjectStore', () => {
-  let useProjectStore: typeof import('@/store/project.store').useProjectStore;
+  let useProjectStore: typeof import('@/domains/project').useProjectStore;
   let projectsApi: typeof import('@/lib/data-service').projectsApi;
 
   beforeEach(async () => {
@@ -331,7 +337,7 @@ describe('useProjectStore', () => {
     const dataService = await import('@/lib/data-service');
     projectsApi = dataService.projectsApi;
     
-    const store = await import('@/store/project.store');
+    const store = await import('@/domains/project');
     useProjectStore = store.useProjectStore;
     
     useProjectStore.setState({ projects: [], currentProjectId: null, loading: false, error: null, initialized: false });

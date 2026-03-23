@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import clsx from 'clsx';
 import { Trash2, ChevronDown, ChevronRight } from 'lucide-react';
-import { Card, Badge } from '@/components/ui';
+import { Card, Badge } from '@/shared/ui';
 import type { Task, Project, Member } from '@/db/schema';
 import type { StatusColumn } from '../hooks/useTasksPage';
 

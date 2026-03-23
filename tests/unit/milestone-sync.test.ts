@@ -166,6 +166,7 @@ describe('serializeMilestones', () => {
     status: 'open',
     dueDate: null,
     sortOrder: 0,
+    knowledgeConfig: null,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
     ...overrides,

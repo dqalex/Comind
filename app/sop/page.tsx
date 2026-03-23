@@ -1,17 +1,18 @@
 'use client';
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
-import { useEscapeKey } from '@/hooks/useEscapeKey';
-import { useConfirmAction } from '@/hooks/useConfirmAction';
-import ConfirmDialog from '@/components/ConfirmDialog';
-import AppShell from '@/components/AppShell';
-import Header from '@/components/Header';
-import { Button, Input, Badge } from '@/components/ui';
+import { useEscapeKey } from '@/shared/hooks/useEscapeKey';
+import { useConfirmAction } from '@/shared/hooks/useConfirmAction';
+import ConfirmDialog from '@/shared/layout/ConfirmDialog';
+import AppShell from '@/shared/layout/AppShell';
+import Header from '@/shared/layout/Header';
+import { Button, Input, Badge } from '@/shared/ui';
 import { useSOPTemplateStore, useProjectStore, useChatStore, useAuthStore, useGatewayStore } from '@/domains';
 import { useRenderTemplateStore } from '@/domains/render-template';
 import type { SOPTemplate, SOPCategory, SOPStage, RenderTemplate, NewRenderTemplate, ReferenceFile, ScriptFile } from '@/db/schema';
-import { useFilteredList } from '@/hooks/useFilteredList';
+import { useFilteredList } from '@/shared/hooks/useFilteredList';
 import clsx from 'clsx';
 import JSZip from 'jszip';
 import {
@@ -21,7 +22,9 @@ import {
   Download, Upload, Palette, Eye, MessageSquare, Sparkles, Code2, SlidersHorizontal,
   Zap, Loader2,
 } from 'lucide-react';
-import SOPTemplateEditor from '@/components/sop/SOPTemplateEditor';
+
+// 懒加载大型编辑器组件（仅在实际编辑时加载）
+const SOPTemplateEditor = dynamic(() => import('@/features/sop-engine/SOPTemplateEditor'), { ssr: false });
 import { syncMdToHtml as directSyncMdToHtml } from '@/lib/slot-sync';
 import type { SlotDef } from '@/db/schema';
 
@@ -429,7 +432,7 @@ export default function SOPPage() {
   const aiCreateRtTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const openChatWithMessage = useChatStore((s) => s.openChatWithMessage);
 
-  // v3.0 多用户：获取用户专用会话键（注意：不在组件级别缓存，而是在函数调用时实时计算）
+  // v0.9.8 多用户：获取用户专用会话键（注意：不在组件级别缓存，而是在函数调用时实时计算）
   const authUser = useAuthStore((s) => s.user);
   const getUserSessionKey = useGatewayStore((s) => s.getUserSessionKey);
   
@@ -595,7 +598,7 @@ export default function SOPPage() {
     if (!aiCreateRtPrompt.trim() || aiCreateRtSending) return;
     setAiCreateRtSending(true);
 
-    // v3.0 多用户：在函数内部实时计算用户专用会话键（确保 agentsDefaultId 已加载）
+    // v0.9.8 多用户：在函数内部实时计算用户专用会话键（确保 agentsDefaultId 已加载）
     const userSessionKey = authUser?.id ? getUserSessionKey(authUser.id) : null;
 
     const message = `请为 TeamClaw 创建一个 HTML 渲染模板，需求如下：
@@ -617,7 +620,7 @@ ${aiCreateRtPrompt.trim()}
 
 请使用 MCP 工具 \`create_render_template\` 创建模板。创建后模板为 draft 状态。`;
 
-    // v3.0 多用户：传入用户专用会话键
+    // v0.9.8 多用户：传入用户专用会话键
     openChatWithMessage(message, { sessionKey: userSessionKey || undefined });
     if (aiCreateRtTimerRef.current) clearTimeout(aiCreateRtTimerRef.current);
     aiCreateRtTimerRef.current = setTimeout(() => {

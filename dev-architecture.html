@@ -58,14 +58,15 @@
 
 <!-- 统计概览 -->
 <div class="stats">
-  <div class="stat"><div class="num">14</div><div class="label">页面路由</div></div>
-  <div class="stat"><div class="num">50</div><div class="label">API 端点</div></div>
-  <div class="stat"><div class="num">24</div><div class="label">MCP 工具</div></div>
-  <div class="stat"><div class="num">17</div><div class="label">数据库表</div></div>
-  <div class="stat"><div class="num">13</div><div class="label">Zustand Store</div></div>
-  <div class="stat"><div class="num">14</div><div class="label">SSE 事件</div></div>
-  <div class="stat"><div class="num">38</div><div class="label">Gateway 方法</div></div>
-  <div class="stat"><div class="num">35</div><div class="label">UI 组件</div></div>
+  <div class="stat"><div class="num">26</div><div class="label">页面路由</div></div>
+  <div class="stat"><div class="num">112</div><div class="label">API 端点</div></div>
+  <div class="stat"><div class="num">37</div><div class="label">MCP 工具</div></div>
+  <div class="stat"><div class="num">35</div><div class="label">数据库表</div></div>
+  <div class="stat"><div class="num">16</div><div class="label">Zustand Store</div></div>
+  <div class="stat"><div class="num">28</div><div class="label">SSE 事件</div></div>
+  <div class="stat"><div class="num">37</div><div class="label">Gateway 方法</div></div>
+  <div class="stat"><div class="num">15</div><div class="label">UI 组件</div></div>
+  <div class="stat"><div class="num">10</div><div class="label">功能模块</div></div>
 </div>
 
 <!-- 目录 -->
@@ -74,18 +75,20 @@
   <ol>
     <li><a href="#arch">系统架构总览</a></li>
     <li><a href="#data-flow">四条数据流</a></li>
-    <li><a href="#pages">页面路由（14 页）</a></li>
-    <li><a href="#api">API 端点（50 个）</a></li>
-    <li><a href="#mcp">MCP 工具系统（24 个工具）</a></li>
+    <li><a href="#pages">页面路由（26 页）</a></li>
+    <li><a href="#api">API 端点（112 个）</a></li>
+    <li><a href="#mcp">MCP 工具系统（37 个工具）</a></li>
     <li><a href="#gateway">Gateway 客户端能力</a></li>
-    <li><a href="#store">状态管理（13 个 Store）</a></li>
-    <li><a href="#db">数据库模型（17 张表）</a></li>
-    <li><a href="#sse">SSE 实时事件（14 种）</a></li>
+    <li><a href="#store">状态管理（16 个 Store）</a></li>
+    <li><a href="#db">数据库模型（35 张表）</a></li>
+    <li><a href="#sse">SSE 实时事件（28 种）</a></li>
     <li><a href="#workspace">Workspace 文件同步</a></li>
     <li><a href="#heartbeat">心跳任务系统</a></li>
     <li><a href="#security">安全中间件</a></li>
     <li><a href="#components">组件架构</a></li>
     <li><a href="#skills">Skill 参考模板</a></li>
+    <li><a href="#sop">SOP 引擎</a></li>
+    <li><a href="#approval">审批流程</a></li>
   </ol>
 </div>
 
@@ -152,7 +155,7 @@ flowchart TB
 </pre>
 
 <div class="note">
-<strong>双模式连接</strong>：Gateway 支持两种模式：<code>server_proxy</code>（Next.js 服务端维护 WebSocket）和 <code>browser_direct</code>（浏览器直接连接 Gateway）。生产环境推荐 server_proxy。
+<strong>server_proxy 模式</strong>：TeamClaw 仅支持 <code>server_proxy</code> 模式（Next.js 服务端维护 WebSocket 到 Gateway），浏览器不直接连接 Gateway。
 </div>
 
 <!-- ====================================== -->
@@ -204,7 +207,7 @@ flowchart LR
 </pre>
 
 <!-- ====================================== -->
-<h2 id="pages">三、页面路由（14 页）</h2>
+<h2 id="pages">三、页面路由（26 页）</h2>
 <!-- ====================================== -->
 
 <pre class="mermaid">
@@ -258,10 +261,15 @@ flowchart TD
   <div class="card"><div class="icon">⏰</div><h4>Schedule</h4><p>Gateway Cron Job 管理（创建/编辑/启停/手动执行），执行历史查看</p></div>
   <div class="card"><div class="icon">🧩</div><h4>Skills</h4><p>Gateway Skills 查看/启停/安装</p></div>
   <div class="card"><div class="icon">⚙️</div><h4>Settings</h4><p>语言切换、主题切换、Gateway 配置面板、Workspace 管理</p></div>
+  <div class="card"><div class="icon">📰</div><h4>Blog</h4><p>博客文章管理，支持 Markdown 编辑和发布</p></div>
+  <div class="card"><div class="icon">📋</div><h4>SOP</h4><p>SOP 模板引擎，支持阶段确认、任务分发和执行追踪</p></div>
+  <div class="card"><div class="icon">✅</div><h4>Approvals</h4><p>审批请求管理，支持创建、审批历史追踪和状态更新</p></div>
+  <div class="card"><div class="icon">👤</div><h4>Users</h4><p>用户管理，支持管理员操作和用户权限管理</p></div>
+  <div class="card"><div class="icon">🧩</div><h4>Skillhub</h4><p>技能市场，支持技能安装、配置、信任管理和快照捕获</p></div>
 </div>
 
 <!-- ====================================== -->
-<h2 id="api">四、API 端点（50 个）</h2>
+<h2 id="api">四、API 端点（112 个）</h2>
 <!-- ====================================== -->
 
 <h3>4.1 核心业务 CRUD</h3>
@@ -322,7 +330,7 @@ flowchart TD
 </table>
 
 <!-- ====================================== -->
-<h2 id="mcp">五、MCP 工具系统（24 个工具）</h2>
+<h2 id="mcp">五、MCP 工具系统（37 个工具）</h2>
 <!-- ====================================== -->
 
 <div class="note purple">
@@ -461,12 +469,12 @@ flowchart LR
 </pre>
 
 <!-- ====================================== -->
-<h2 id="store">七、状态管理（13 个 Zustand Store）</h2>
+<h2 id="store">七、状态管理（16 个 Zustand Store）</h2>
 <!-- ====================================== -->
 
 <pre class="mermaid">
 flowchart TD
-    Init["useDataInitializer()<br/>Promise.allSettled 并发初始化"] --> PS & TS & MS & DS & DvS & SS & CSS & OCS & OWS
+    Init["useDataInitializer()<br/>Promise.allSettled 并发初始化"] --> PS & TS & MS & DS & DvS & SS & CSS & OCS & OWS & AS & MStS & RTS & SPS & SKS & ApS & UIS
 
     subgraph Core_S["核心业务 Store"]
         PS["useProjectStore<br/>项目 CRUD"]
@@ -497,7 +505,7 @@ flowchart TD
 </pre>
 
 <!-- ====================================== -->
-<h2 id="db">八、数据库模型（17 张表）</h2>
+<h2 id="db">八、数据库模型（35 张表）</h2>
 <!-- ====================================== -->
 
 <pre class="mermaid">
@@ -570,7 +578,7 @@ erDiagram
 </table>
 
 <!-- ====================================== -->
-<h2 id="sse">九、SSE 实时事件（14 种）</h2>
+<h2 id="sse">九、SSE 实时事件（28 种）</h2>
 <!-- ====================================== -->
 
 <pre class="mermaid">
@@ -813,6 +821,89 @@ flowchart TD
 <tr><td><code>task-board.md</code></td><td>任务看板模板</td></tr>
 <tr><td><code>deliveries.md</code></td><td>交付管理模板</td></tr>
 <tr><td><code>schedules.md</code></td><td>定时任务模板</td></tr>
+</table>
+
+<!-- ====================================== -->
+<h2 id="sop">十五、SOP 引擎</h2>
+<!-- ====================================== -->
+
+<div class="note purple">
+<strong>SOP（Standard Operating Procedure）引擎</strong>：支持通过模板定义标准化操作流程，包含阶段管理、确认机制和任务分发。
+:</div>
+
+<pre class="mermaid">
+flowchart LR
+    subgraph Templates["SOP 模板"]
+        T1["sopTemplates 表<br/>模板定义"]
+        T2["sopStageRecords 表<br/>阶段记录"]
+    end
+
+    subgraph Execution["执行流程"]
+        E1["创建 SOP 实例"]
+        E2["按阶段执行"]
+        E3["阶段确认"]
+        E4["任务分发到成员"]
+    end
+
+    subgraph Triggers["触发方式"]
+        TR1["手动创建"]
+        TR2["MCP 工具调用"]
+        TR3["审批通过后自动"]
+    end
+
+    Templates --> Execution
+    Triggers --> E1
+    E1 --> E2 --> E3 --> E4
+
+    style Templates fill:#161b22,stroke:#d29922,color:#c9d1d9
+    style Execution fill:#161b22,stroke:#8b5cf6,color:#c9d1d9
+    style Triggers fill:#161b22,stroke:#3fb950,color:#c9d1d9
+:</pre>
+
+<table>
+<tr><th>表名</th><th>说明</th></tr>
+<tr><td><code>sopTemplates</code></td><td>SOP 模板（阶段定义、确认条件）</td></tr>
+<tr><td><code>sopStageRecords</code></td><td>SOP 执行阶段记录</td></tr>
+</table>
+
+<!-- ====================================== -->
+<h2 id="approval">十六、审批流程</h2>
+<!-- ====================================== -->
+
+<div class="note success">
+<strong>审批请求系统</strong>：支持创建审批请求、审批历史追踪、多种状态管理（pending/approved/rejected/cancelled）。
+:</div>
+
+<pre class="mermaid">
+flowchart LR
+    subgraph Request["创建审批"]
+        R1["createApprovalRequest<br/>创建请求"]
+        R2["关联任务/文档"]
+        R3["设置审批人"]
+    end
+
+    subgraph Review["审批流程"]
+        RV1["approve<br/>通过"]
+        RV2["reject<br/>拒绝"]
+        RV3["cancel<br/>取消"]
+    end
+
+    subgraph History["历史记录"]
+        H1["approvalHistories 表<br/>审批历史"]
+        H2["状态变更追踪"]
+    end
+
+    Request --> Review --> History
+
+    style Request fill:#161b22,stroke:#3fb950,color:#c9d1d9
+    style Review fill:#161b22,stroke:#d29922,color:#c9d1d9
+    style History fill:#161b22,stroke:#1f6feb,color:#c9d1d9
+:</pre>
+
+<table>
+<tr><th>表名</th><th>说明</th></tr>
+<tr><td><code>approvalRequests</code></td><td>审批请求（状态：pending/approved/rejected/cancelled）</td></tr>
+<tr><td><code>approvalHistories</code></td><td>审批历史（操作人、时间、备注）</td></tr>
 </table>
 
 <hr/>

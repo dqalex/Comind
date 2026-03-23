@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Input } from '@/components/ui';
+import { Button, Input } from '@/shared/ui';
 import type { ScriptFile } from '@/db/schema';
 import { Plus, Trash2, Code, Edit2, Play } from 'lucide-react';
 import ScriptEditorModal from './ScriptEditorModal';

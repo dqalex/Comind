@@ -6,7 +6,7 @@
 
 TeamClaw is an open-source human-AI collaboration platform that enables AI Agents to participate in project management as real team members — picking up tasks, writing documents, submitting deliveries, and reporting progress.
 
-> Current version: v1.0.0
+> Current version: v1.0.1
 
 ---
 
@@ -206,12 +206,13 @@ OPENCLAW_WORKSPACE_SYNC_INTERVAL=120
 ```
 teamclaw/
 ├── app/                  # Next.js pages + API routes
-├── components/           # UI components (30+)
-├── core/mcp/             # MCP command parsing & execution
-├── db/                   # SQLite schema + connection
-├── lib/                  # Core libraries (Gateway client, data service, event bus, etc.)
-├── store/                # Zustand stores (18)
-├── hooks/                # Custom React hooks
+├── src/
+│   ├── core/            # Core modules (db, gateway, mcp)
+│   ├── domains/         # Domain modules (16 domains with store + api + mcp)
+│   ├── features/        # Feature modules (10 features)
+│   ├── shared/          # Shared modules (lib, components, hooks, ui, layout, editor)
+│   └── server/          # Server modules
+├── db/                   # SQLite schema + connection (symlink to src/core/db)
 ├── skills/               # AI Skill documents & templates
 ├── docs/                 # Project documentation
 └── scripts/              # Deployment & utility scripts

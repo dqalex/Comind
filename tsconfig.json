@@ -19,8 +19,18 @@
       "@/src/*": ["./src/*"],
       "@/core/*": ["./src/core/*"],
       "@/shared/*": ["./src/shared/*"],
+      "@/domains": ["./src/domains/index.ts"],
       "@/domains/*": ["./src/domains/*"],
-      "@/features/*": ["./src/features/*"]
+      "@/features/*": ["./src/features/*"],
+      "@/lib/*": ["./src/shared/lib/*"],
+      "@/lib": ["./src/shared/lib/index.ts"],
+      "@/lib/openclaw/*": ["./src/shared/lib/openclaw/*"],
+      "@/lib/sync/*": ["./src/shared/lib/sync/*"],
+      "@/lib/chat-channel/*": ["./src/shared/lib/chat-channel/*"],
+      "@/lib/services/*": ["./src/shared/lib/services/*"],
+      "@/lib/locales/*": ["./src/shared/lib/locales/*"],
+      "@/lib/workspace/*": ["./src/shared/lib/workspace/*"],
+      "@/hooks/*": ["./src/shared/hooks/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

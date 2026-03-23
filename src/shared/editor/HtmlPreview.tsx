@@ -4,7 +4,7 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Globe, Monitor, Smartphone, ZoomIn, ZoomOut, Edit3, PanelRightOpen, PanelRightClose } from 'lucide-react';
 import clsx from 'clsx';
-import PropertyPanel from '@/components/studio/PropertyPanel';
+import PropertyPanel from '@/features/document-editor/PropertyPanel';
 import type { HtmlPreviewProps, DeviceMode } from './types';
 import { DEVICE_PRESETS } from './types';
 

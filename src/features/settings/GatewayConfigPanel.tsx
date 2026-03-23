@@ -3,11 +3,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { initI18n } from '@/lib/i18n';
-import { Button, Input } from '@/components/ui';
+import { Button, Input } from '@/shared/ui';
+import { useConfirmAction } from '@/shared/hooks/useConfirmAction';
+import ConfirmDialog from '@/shared/layout/ConfirmDialog';
 import clsx from 'clsx';
 import { useAuthStore } from '@/domains';
-import { useSecurityCode } from '@/hooks/useSecurityCode';
-import { SecurityCodeDialog } from '@/components/SecurityCodeDialog';
+import { useSecurityCode } from '@/shared/hooks/useSecurityCode';
+import { SecurityCodeDialog } from '@/shared/layout/SecurityCodeDialog';
 import { Wifi, Server, AlertCircle, CheckCircle2, Loader2, Lock } from 'lucide-react';
 
 type ConnectionMode = 'server_proxy';
@@ -36,6 +38,9 @@ export function GatewayConfigPanel() {
   const [token, setToken] = useState('');
   const [showToken, setShowToken] = useState(false);
   const [mode, setMode] = useState<ConnectionMode>('server_proxy');
+
+  // 删除确认
+  const deleteConfirm = useConfirmAction<boolean>();
 
   // Gateway 配置更改安全码验证（仅连通后需要）
   const gatewaySecurity = useSecurityCode({
@@ -144,9 +149,14 @@ export function GatewayConfigPanel() {
   };
 
   // 删除配置
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!config) return;
-    if (!confirm('Are you sure you want to delete this gateway configuration?')) return;
+    deleteConfirm.requestConfirm(true);
+  };
+
+  // 执行删除
+  const doDelete = async () => {
+    if (!config) return;
 
     try {
       const res = await fetch(`/api/gateway/config?id=${config.id}`, {
@@ -299,6 +309,18 @@ export function GatewayConfigPanel() {
         securityCode={gatewaySecurity}
         title="配置验证"
         description="修改已连接的 Gateway 配置需要验证安全码"
+      />
+
+      {/* 删除确认对话框 */}
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        onClose={deleteConfirm.cancel}
+        onConfirm={() => deleteConfirm.confirm(async () => { await doDelete(); })}
+        title={t('common.confirm')}
+        message="Are you sure you want to delete this gateway configuration?"
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
+        isLoading={deleteConfirm.isLoading}
       />
     </>
   );

@@ -27,7 +27,7 @@ async function findMember(id: string) {
 }
 
 // GET /api/members/[id] - 获取单个成员
-// v3.0: 需要登录才能访问（AI 成员是系统级共享，所有用户可见）
+// v0.9.8: 需要登录才能访问（AI 成员是系统级共享，所有用户可见）
 export const GET = withAuth(async (
   request: NextRequest,
   auth,
@@ -40,13 +40,13 @@ export const GET = withAuth(async (
       return NextResponse.json({ error: 'Member not found' }, { status: 404 });
     }
     return NextResponse.json(sanitizeMember(member));
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch member' }, { status: 500 });
   }
 });
 
 // PUT /api/members/[id] - 更新成员
-// v3.0: 需要管理员权限（AI 成员是系统级资源）
+// v0.9.8: 需要管理员权限（AI 成员是系统级资源）
 export const PUT = withAdminAuth(async (
   request: NextRequest,
   auth,
@@ -116,13 +116,13 @@ export const PUT = withAdminAuth(async (
     // 问题 #11：PUT 后通知前端刷新
     eventBus.emit({ type: 'member_update', resourceId: resolvedId });
     return NextResponse.json(sanitizeMember(updated));
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to update member' }, { status: 500 });
   }
 });
 
 // DELETE /api/members/[id] - 删除成员（级联清理关联数据）
-// v3.0: 需要管理员权限（AI 成员是系统级资源）
+// v0.9.8: 需要管理员权限（AI 成员是系统级资源）
 export const DELETE = withAdminAuth(async (
   request: NextRequest,
   auth,
@@ -136,7 +136,7 @@ export const DELETE = withAdminAuth(async (
     }
     const resolvedId = existing.id;
 
-    // v3.0: 禁止删除关联 admin 角色用户的成员
+    // v0.9.8: 禁止删除关联 admin 角色用户的成员
     if (existing.userId) {
       const [linkedUser] = await db.select({ role: users.role }).from(users).where(eq(users.id, existing.userId));
       if (linkedUser?.role === 'admin') {
@@ -216,8 +216,8 @@ export const DELETE = withAdminAuth(async (
     eventBus.emit({ type: 'delivery_update' });
     
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('[DELETE /api/members]', error);
+  } catch (err) {
+    console.error('[DELETE /api/members]', err);
     return NextResponse.json({ error: 'Failed to delete member' }, { status: 500 });
   }
 });

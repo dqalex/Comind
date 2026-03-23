@@ -48,7 +48,11 @@ export type SSEEventType =
   | 'approval_request_created'
   | 'approval_request_approved'
   | 'approval_request_rejected'
+  // Chat channel 事件
+  | 'chat:job_failed'
   | 'approval_request_cancelled'
+  // 项目成员事件
+  | 'project_member_joined'
   // v3.0: 增量更新事件
   | 'task:incremental'
   | 'document:incremental'
@@ -100,10 +104,14 @@ export const SSE_EVENT_TYPES: SSEEventType[] = [
   'approval_request_approved',
   'approval_request_rejected',
   'approval_request_cancelled',
+  // 项目成员事件
+  'project_member_joined',
   // v3.0: 增量更新
   'task:incremental',
   'document:incremental',
   'delivery:incremental',
+  // Chat channel 事件
+  'chat:job_failed',
 ];
 
 /**
@@ -183,10 +191,15 @@ export const SSE_EVENT_REFRESH_MAP: Record<SSEEventType, string[]> = {
   approval_request_rejected: ['approvalRequests'],
   approval_request_cancelled: ['approvalRequests'],
   
+  // 项目成员事件
+  project_member_joined: ['members', 'projects'],
+  
   // v3.0: 增量更新事件
   'task:incremental': ['tasks'],
   'document:incremental': ['documents'],
   'delivery:incremental': ['deliveries'],
+  // Chat channel 事件（不需要刷新 store）
+  'chat:job_failed': [],
 };
 
 // ============================================================

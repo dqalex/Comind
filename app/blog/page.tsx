@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { Navbar } from '@/components/landing/Navbar';
+import { Navbar } from '@/features/landing/Navbar';
 import { Clock, ArrowRight, BookOpen } from 'lucide-react';
 import type { Document } from '@/db/schema';
 

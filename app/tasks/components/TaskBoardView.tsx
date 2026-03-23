@@ -7,8 +7,8 @@ import {
   FolderKanban,
   Milestone as MilestoneIcon,
 } from 'lucide-react';
-import { Button } from '@/components/ui';
-import { MilestoneDivider } from '@/components/MilestoneDivider';
+import { Button } from '@/shared/ui';
+import { MilestoneDivider } from '@/features/milestone-tracker/MilestoneDivider';
 import TaskCard from './TaskCard';
 import type { Task, Member } from '@/db/schema';
 import type { StatusColumn } from '../hooks/useTasksPage';

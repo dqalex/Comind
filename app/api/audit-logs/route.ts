@@ -25,7 +25,7 @@ import { withAuth } from '@/lib/with-auth';
 const VALID_SOURCES: AuditSource[] = ['mcp', 'mcp_external', 'chat_channel', 'gateway', 'system'];
 
 // GET /api/audit-logs - 查询审计日志
-// v3.0: 需要登录才能访问（审计日志包含敏感操作记录）
+// v0.9.8: 需要登录才能访问（审计日志包含敏感操作记录）
 export const GET = withAuth(async (request: NextRequest) => {
   try {
     const { searchParams } = new URL(request.url);

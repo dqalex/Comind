@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { TeamClawLogo } from '@/components/Logo';
-import { Button } from '@/components/ui/button';
+import { TeamClawLogo } from '@/shared/layout/Logo';
+import { Button } from '@/shared/ui/button';
 import { useAuthStore } from '@/domains';
 import { useEffect, useState } from 'react';
 import { Globe } from 'lucide-react';

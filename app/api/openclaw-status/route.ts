@@ -16,13 +16,13 @@ export async function GET() {
   try {
     const status = await db.select().from(openclawStatus);
     return NextResponse.json(status);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to get status' }, { status: 500 });
   }
 }
 
 // POST - 创建或更新状态
-// v3.0: 需要登录才能操作
+// v0.9.8: 需要登录才能操作
 export const POST = withAuth(async (request: NextRequest) => {
   try {
     const body = await request.json();
@@ -95,7 +95,7 @@ export const POST = withAuth(async (request: NextRequest) => {
       eventBus.emit({ type: 'openclaw_status', resourceId: memberId });
       return NextResponse.json(created);
     }
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to create/update status' }, { status: 500 });
   }
 });

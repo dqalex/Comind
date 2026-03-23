@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { useProjectStore, useUIStore, useTaskStore, useDocumentStore, useMemberStore, useOpenClawStatusStore } from '@/domains';
-import { CreateProjectDialog } from '@/components/projects/CreateProjectDialog';
+import { useProjectStore, useUIStore, useTaskStore, useDocumentStore, useMemberStore } from '@/domains';
+import { useOpenClawStatusStore } from '@/core/gateway/store';
+import { CreateProjectDialog } from '@/features/task-board/CreateProjectDialog';
 import {
   LayoutDashboard, 
   FileText, 
@@ -31,10 +32,87 @@ import {
   Globe,
   Building2,
   Package,
+  LucideIcon,
 } from 'lucide-react';
-import { TeamClawLogo } from '@/components/Logo';
+import { TeamClawLogo } from '@/shared/layout/Logo';
 import clsx from 'clsx';
-import { Card, Button } from '@/components/ui';
+import { Card, Button } from '@/shared/ui';
+
+// NavItem 组件提取到外部避免每次渲染重新创建
+interface NavItemProps {
+  item: { href: string; label: string; icon: LucideIcon; clearProject?: boolean };
+  isOpen: boolean;
+  isNavItemActive: (href: string) => boolean;
+  setCurrentProject: (id: string | null) => void;
+  router: ReturnType<typeof useRouter>;
+}
+
+const NavItem = memo(function NavItem({ item, isOpen, isNavItemActive, setCurrentProject, router }: NavItemProps) {
+  const Icon = item.icon;
+  const isActive = isNavItemActive(item.href);
+  
+  const content = (
+    <>
+      <div className={clsx(
+        'flex items-center justify-center w-8 h-8 rounded-xl transition-all duration-200',
+        isActive
+          ? 'bg-primary-500/10 dark:bg-primary-400/10'
+          : 'group-hover:bg-slate-100 dark:group-hover:bg-white/5'
+      )}>
+        <Icon className={clsx(
+          'w-[18px] h-[18px] transition-colors duration-200',
+          isActive ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'
+        )} />
+      </div>
+      {isOpen && (
+        <span className={clsx(
+          'text-[13px] transition-colors duration-200',
+          isActive
+            ? 'font-semibold text-primary-700 dark:text-primary-300'
+            : 'font-medium text-slate-500 group-hover:text-slate-700 dark:text-slate-400 dark:group-hover:text-slate-200'
+        )}>
+          {item.label}
+        </span>
+      )}
+      {isActive && (
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-primary-500 dark:bg-primary-400" />
+      )}
+    </>
+  );
+
+  const className = clsx(
+    'group relative flex items-center gap-2.5 px-3 py-1.5 rounded-xl transition-all duration-200',
+    isOpen ? 'w-full' : 'w-10 h-10 !p-0 justify-center mx-auto',
+    isActive
+      ? 'bg-primary-50/80 dark:bg-primary-500/[0.08]'
+      : 'hover:bg-slate-50 dark:hover:bg-white/[0.03]'
+  );
+
+  if (item.href === '/tasks' || item.href === '/wiki') {
+    return (
+      <li>
+        <button
+          onClick={() => {
+            if (item.href === '/tasks' || item.clearProject) setCurrentProject(null);
+            router.push(item.href);
+          }}
+          className={className}
+          title={!isOpen ? item.label : undefined}
+        >
+          {content}
+        </button>
+      </li>
+    );
+  }
+
+  return (
+    <li>
+      <Link href={item.href} className={className} title={!isOpen ? item.label : undefined}>
+        {content}
+      </Link>
+    </li>
+  );
+});
 
 export default function Sidebar() {
   const { t } = useTranslation();
@@ -143,73 +221,6 @@ export default function Sidebar() {
     return { working: working.length, total: aiMembers.length };
   }, [aiMembers, statusList, getByMemberId]);
 
-  const NavItem = ({ item }: { item: typeof mainNavItems[0] }) => {
-    const Icon = item.icon;
-    const isActive = isNavItemActive(item.href);
-    
-    const content = (
-      <>
-        <div className={clsx(
-          'flex items-center justify-center w-8 h-8 rounded-xl transition-all duration-200',
-          isActive
-            ? 'bg-primary-500/10 dark:bg-primary-400/10'
-            : 'group-hover:bg-slate-100 dark:group-hover:bg-white/5'
-        )}>
-          <Icon className={clsx(
-            'w-[18px] h-[18px] transition-colors duration-200',
-            isActive ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'
-          )} />
-        </div>
-        {isOpen && (
-          <span className={clsx(
-            'text-[13px] transition-colors duration-200',
-            isActive
-              ? 'font-semibold text-primary-700 dark:text-primary-300'
-              : 'font-medium text-slate-500 group-hover:text-slate-700 dark:text-slate-400 dark:group-hover:text-slate-200'
-          )}>
-            {item.label}
-          </span>
-        )}
-        {isActive && (
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-primary-500 dark:bg-primary-400" />
-        )}
-      </>
-    );
-
-    const className = clsx(
-      'group relative flex items-center gap-2.5 px-3 py-1.5 rounded-xl transition-all duration-200',
-      isOpen ? 'w-full' : 'w-10 h-10 !p-0 justify-center mx-auto',
-      isActive
-        ? 'bg-primary-50/80 dark:bg-primary-500/[0.08]'
-        : 'hover:bg-slate-50 dark:hover:bg-white/[0.03]'
-    );
-
-    if (item.href === '/tasks' || item.href === '/wiki') {
-      return (
-        <li>
-          <button
-            onClick={() => {
-              if (item.href === '/tasks' || item.clearProject) setCurrentProject(null);
-              router.push(item.href);
-            }}
-            className={className}
-            title={!isOpen ? item.label : undefined}
-          >
-            {content}
-          </button>
-        </li>
-      );
-    }
-
-    return (
-      <li>
-        <Link href={item.href} className={className} title={!isOpen ? item.label : undefined}>
-          {content}
-        </Link>
-      </li>
-    );
-  };
-
   // ===== 收起态 =====
   if (!isOpen) {
     return (
@@ -230,7 +241,7 @@ export default function Sidebar() {
         <nav className="flex-1 flex flex-col items-center py-3 gap-0.5 overflow-y-auto w-full px-1">
           <ul className="space-y-0.5 w-full flex flex-col items-center">
             {mainNavItems.map((item) => (
-              <NavItem key={item.href} item={item} />
+              <NavItem key={item.href} item={item} isOpen={isOpen} isNavItemActive={isNavItemActive} setCurrentProject={setCurrentProject} router={router} />
             ))}
           </ul>
           
@@ -334,7 +345,7 @@ export default function Sidebar() {
       <nav className="flex-1 overflow-y-auto px-3 py-3">
         <ul className="space-y-0.5">
           {mainNavItems.map((item) => (
-            <NavItem key={item.href} item={item} />
+            <NavItem key={item.href} item={item} isOpen={isOpen} isNavItemActive={isNavItemActive} setCurrentProject={setCurrentProject} router={router} />
           ))}
         </ul>
 

@@ -5,5 +5,5 @@
 // Store
 export { useMemberStore } from './store';
 
-// 类型从 db/schema 导出
+// 类型
 export type { Member, NewMember } from '@/db/schema';

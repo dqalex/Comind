@@ -154,7 +154,7 @@ export function middleware(request: NextRequest) {
       const result = checkRateLimit(`${clientId}:${rateLimitKey}`, config);
       if (!result.allowed) {
         return new NextResponse(
-          JSON.stringify({ error: '请求频率过高，请稍后重试', retryAfter: result.retryAfter }),
+          JSON.stringify({ error: 'Rate limit exceeded, please try again later', retryAfter: result.retryAfter }),
           { 
             status: 429, 
             headers: { 

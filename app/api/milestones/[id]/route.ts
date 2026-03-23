@@ -20,7 +20,7 @@ export async function GET(
       return NextResponse.json({ error: 'Milestone not found' }, { status: 404 });
     }
     return NextResponse.json(milestone);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch milestone' }, { status: 500 });
   }
 }
@@ -64,7 +64,7 @@ export async function PUT(
     const [updated] = await db.select().from(milestones).where(eq(milestones.id, id));
     eventBus.emit({ type: 'milestone_update', resourceId: id });
     return NextResponse.json(updated);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to update milestone' }, { status: 500 });
   }
 }
@@ -91,8 +91,8 @@ export async function DELETE(
 
     eventBus.emit({ type: 'milestone_update', resourceId: id });
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('[DELETE /api/milestones]', error);
+  } catch (err) {
+    console.error('[DELETE /api/milestones]', err);
     return NextResponse.json({ error: 'Failed to delete milestone' }, { status: 500 });
   }
 }

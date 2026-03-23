@@ -3,7 +3,7 @@ import { db, users, members } from '@/db';
 import { eq } from 'drizzle-orm';
 import { validateAuth } from '@/lib/auth';
 import { existsSync, unlinkSync } from 'fs';
-import { join, dirname } from 'path';
+import { join } from 'path';
 
 // 标记为动态路由，避免静态生成错误
 export const dynamic = 'force-dynamic';
@@ -71,7 +71,8 @@ export async function POST(request: NextRequest) {
       try {
         if (existsSync(dbPath)) {
           unlinkSync(dbPath);
-          console.log('[Admin] Database file deleted:', dbPath);
+          // eslint-disable-next-line no-console
+      console.log('[Admin] Database file deleted:', dbPath);
         }
         if (existsSync(walPath)) {
           unlinkSync(walPath);

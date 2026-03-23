@@ -15,9 +15,9 @@ import {
   Shield,
   ExternalLink,
 } from 'lucide-react';
-import { Button, Badge, Card, CardContent } from '@/components/ui';
-import AppShell from '@/components/AppShell';
-import Header from '@/components/Header';
+import { Button, Badge, Card, CardContent } from '@/shared/ui';
+import AppShell from '@/shared/layout/AppShell';
+import Header from '@/shared/layout/Header';
 import { useApprovalStore } from '@/domains/approval';
 import { useAuthStore } from '@/domains';
 import clsx from 'clsx';

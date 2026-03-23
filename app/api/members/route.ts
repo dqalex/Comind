@@ -16,14 +16,13 @@ import { eventBus } from '@/lib/event-bus';
 import { withAuth, withAdminAuth } from '@/lib/with-auth';
 import {
   successResponse,
-  createdResponse,
   errorResponse,
   ApiErrors,
 } from '@/lib/api-route-factory';
 import { createMemberSchema, validate } from '@/lib/validation';
 
 // GET /api/members - 获取所有成员（包含关联用户的角色信息）
-// v3.0: 需要登录才能访问（AI 成员是系统级共享，所有用户可见）
+// v0.9.8: 需要登录才能访问（AI 成员是系统级共享，所有用户可见）
 export const GET = withAuth(async (request: NextRequest) => {
   const requestId = request.headers.get('x-request-id') || generateId();
   
@@ -131,5 +130,5 @@ async function handlePost(request: NextRequest) {
 }
 
 // 应用限流 + 认证
-// v3.0: 创建成员需要管理员权限（AI 成员是系统级资源）
+// v0.9.8: 创建成员需要管理员权限（AI 成员是系统级资源）
 export const POST = withAdminAuth(withRateLimit(handlePost, RATE_LIMITS.CREATE));

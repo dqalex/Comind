@@ -2,14 +2,14 @@
 
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useConfirmAction } from '@/hooks/useConfirmAction';
-import ConfirmDialog from '@/components/ConfirmDialog';
+import { useConfirmAction } from '@/shared/hooks/useConfirmAction';
+import ConfirmDialog from '@/shared/layout/ConfirmDialog';
 import { useGatewayStore } from '@/core/gateway/store';
-import AppShell from '@/components/AppShell';
-import Header from '@/components/Header';
-import GatewayRequired from '@/components/GatewayRequired';
-import { Button, Input, Select, Badge } from '@/components/ui';
-import { useFilteredList } from '@/hooks/useFilteredList';
+import AppShell from '@/shared/layout/AppShell';
+import Header from '@/shared/layout/Header';
+import GatewayRequired from '@/shared/layout/GatewayRequired';
+import { Button, Input, Select, Badge } from '@/shared/ui';
+import { useFilteredList } from '@/shared/hooks/useFilteredList';
 import type { Session, ThinkingLevel, VerboseLevel, ReasoningLevel, SessionKind } from '@/types';
 import {
   MessageSquare, User, Trash2, Edit2, X, Save,

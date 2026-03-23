@@ -10,8 +10,8 @@ sopTemplateId: sop-wechat-article
 # 微信公众号文章创作工作流
 
 > 本 Skill 由 TeamClaw 自动生成，包含项目上下文加载能力
-> **版本**: v3.0.0
-> **项目地址**: https://github.com/teamclaw
+> **版本**: v0.9.8
+> **项目地址**: https://github.com/dqalex/teamclaw
 
 ## 阶段 0: 项目上下文加载（固定）
 

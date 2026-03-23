@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDeliveryStore, useMemberStore, useTaskStore, useProjectStore, useGatewayStore } from '@/domains';
 import { useAuthStore } from '@/domains/auth';
-import { Button, Textarea } from '@/components/ui';
+import { Button, Textarea } from '@/shared/ui';
 import type { Document } from '@/db/schema';
 import {
   Clock,
@@ -21,9 +21,9 @@ import {
   Hash,
 } from 'lucide-react';
 import clsx from 'clsx';
-import { useEscapeKey } from '@/hooks/useEscapeKey';
-import { formatRelativeTime } from '@/hooks/useRelativeTime';
-import { getActiveGwClient } from '@/components/chat/chat-utils';
+import { useEscapeKey } from '@/shared/hooks/useEscapeKey';
+import { formatRelativeTime } from '@/shared/hooks/useRelativeTime';
+import { getActiveGwClient } from '@/features/chat-panel/chat-utils';
 
 interface DeliveryStatusCardProps {
   document: Document;

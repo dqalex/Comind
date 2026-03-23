@@ -40,7 +40,8 @@ describe('Agent MCP Token', () => {
       const { TEAMCLAW_TOOLS } = await import('@/core/mcp/definitions');
       
       expect(TEAMCLAW_TOOLS.get_agent_mcp_token.description).toContain('Agent');
-      expect(TEAMCLAW_TOOLS.get_task_detail.description).toContain('L2');
+      // get_task_detail is deprecated in v1.0.1, use get_task with detail=true
+      expect(TEAMCLAW_TOOLS.get_task_detail.description).toContain('DEPRECATED');
     });
 
     it('should have correct parameter definitions', async () => {

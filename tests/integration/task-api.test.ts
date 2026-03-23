@@ -169,7 +169,7 @@ describe('任务 API 集成测试', () => {
       const user = auth.getUser();
 
       const res = await apiPut(`/api/tasks/${task.id}`, {
-        assigneeId: user?.id,
+        assignees: user?.id ? [user.id] : [],
       }, { headers: auth.getAuthHeaders() });
 
       expect(res.ok).toBe(true);
@@ -179,7 +179,7 @@ describe('任务 API 集成测试', () => {
       const task = await factory.createTask();
 
       const res = await apiPut(`/api/tasks/${task.id}`, {
-        assigneeId: null,
+        assignees: [],
       }, { headers: auth.getAuthHeaders() });
 
       expect(res.ok).toBe(true);

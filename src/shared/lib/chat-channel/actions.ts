@@ -22,11 +22,11 @@ export const ACTION_DEFINITIONS: Record<ActionType, ActionDefinition> = {
   get_task: {
     type: 'get_task',
     name: '获取任务',
-    description: '获取任务详情，包括标题、描述、状态、负责人等信息。任务推送场景下必须通过对话通道 Actions 调用此操作获取完整上下文',
+    description: '获取任务详情，包括标题、描述、状态、负责人等信息',
     category: 'query',
     requiredParams: ['task_id'],
     optionalParams: ['detail'],
-    supportedInChat: true,
+    supportedInChat: false,
     requiresAuth: true,
   },
   
@@ -37,7 +37,7 @@ export const ACTION_DEFINITIONS: Record<ActionType, ActionDefinition> = {
     category: 'query',
     requiredParams: [],
     optionalParams: ['status', 'project_id', 'limit', 'detail'],
-    supportedInChat: true,
+    supportedInChat: false,
     requiresAuth: true,
   },
   
@@ -393,7 +393,7 @@ export const ACTION_DEFINITIONS: Record<ActionType, ActionDefinition> = {
     category: 'status',
     requiredParams: ['interruptible'],
     optionalParams: ['member_id', 'reason'],
-    supportedInChat: true,
+    supportedInChat: false,
     requiresAuth: true,
   },
 

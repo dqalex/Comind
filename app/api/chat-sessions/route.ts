@@ -1,7 +1,7 @@
 import { db } from '@/db';
 import { chatSessions } from '@/db/schema';
 import { NextRequest, NextResponse } from 'next/server';
-import { eq, desc, sql, and } from 'drizzle-orm';
+import { eq, desc, sql } from 'drizzle-orm';
 import { generateSessionId, generateId } from '@/lib/id';
 import { validateEnum, VALID_ENTITY_TYPE } from '@/lib/validators';
 import { eventBus } from '@/lib/event-bus';
@@ -11,7 +11,7 @@ import { errorResponse, createdResponse, ApiErrors } from '@/lib/api-route-facto
 import { createChatSessionSchema, validate } from '@/lib/validation';
 
 // GET /api/chat-sessions - 获取所有会话（支持分页）
-// v3.0: 严格用户隔离 - 只返回当前用户的聊天记录
+// v0.9.8: 严格用户隔离 - 只返回当前用户的聊天记录
 export const GET = withAuth(async (request: NextRequest, auth: AuthResult) => {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -42,12 +42,13 @@ export const GET = withAuth(async (request: NextRequest, auth: AuthResult) => {
       .orderBy(desc(chatSessions.updatedAt));
     return NextResponse.json(sessions);
   } catch (error) {
+    console.error('[GET /api/chat-sessions]', error);
     return NextResponse.json({ error: 'Failed to fetch chat sessions' }, { status: 500 });
   }
 });
 
 // POST /api/chat-sessions - 创建新会话
-// v3.0: 严格用户隔离 - 强制绑定当前用户
+// v0.9.8: 严格用户隔离 - 强制绑定当前用户
 export const POST = withAuth(async (request: NextRequest, auth: AuthResult) => {
   const requestId = request.headers.get('x-request-id') || generateId();
   

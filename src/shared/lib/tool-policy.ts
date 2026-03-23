@@ -153,3 +153,17 @@ export function resolveToolProfilePolicy(profile: string): { allow?: string[]; d
   if (!p.allow) return undefined;
   return { allow: [...p.allow] };
 }
+
+// ===================== 类型定义 =====================
+
+export interface ToolInfo {
+  id: string;
+  label: string;
+  description: string;
+}
+
+export interface ToolSection {
+  id: string;
+  label: string;
+  tools: ToolInfo[];
+}

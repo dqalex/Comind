@@ -32,11 +32,17 @@ function buildSkillAccessFilter(userId: string | undefined, userRole: string): S
   if (userRole === 'admin') {
     return undefined;
   }
-  
+
   if (!userId) {
     return eq(skills.status, 'active');
   }
-  
+
+  // viewer（观察者）只能看到 active 状态的 Skill
+  if (userRole === 'viewer') {
+    return eq(skills.status, 'active');
+  }
+
+  // member 可以看到 active + 自己创建的
   return or(
     eq(skills.status, 'active'),
     eq(skills.createdBy, userId)

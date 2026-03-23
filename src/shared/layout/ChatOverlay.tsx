@@ -1,6 +1,6 @@
 'use client';
 
-import { ChatFab, ChatDrawer } from '@/components/chat';
+import { ChatFab, ChatDrawer } from '@/features/chat-panel';
 import { useAuthStore } from '@/domains';
 
 export default function ChatOverlay() {

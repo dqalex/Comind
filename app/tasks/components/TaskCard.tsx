@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { memo, useCallback } from 'react';
 import clsx from 'clsx';
 import {
   MoreVertical,
@@ -9,7 +9,7 @@ import {
   CheckSquare,
   Square,
 } from 'lucide-react';
-import { SOPProgressBar } from '@/components/sop';
+import { SOPProgressBar } from '@/features/sop-engine';
 import type { Task, Member } from '@/db/schema';
 
 interface TaskCardProps {
@@ -27,7 +27,8 @@ interface TaskCardProps {
   onMenuToggle: (taskId: string, e: React.MouseEvent) => void;
 }
 
-export default function TaskCard({
+// 使用 memo 优化防止无关状态变化导致的重渲染
+const TaskCard = memo(function TaskCard({
   task,
   priorityInfo,
   assignee,
@@ -127,4 +128,6 @@ export default function TaskCard({
       })()}
     </div>
   );
-}
+});
+
+export default TaskCard;

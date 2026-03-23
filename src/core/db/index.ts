@@ -1,12 +1,9 @@
 /**
- * Core 层统一导出
+ * Core DB 层统一导出
  */
 
-// 数据库
-export * from './db';
+// Schema
+export * from './schema';
 
-// MCP
-export * from './mcp/types';
-
-// Gateway
-export * from './gateway/gateway-types';
+// Migrations
+export * from './migrations';

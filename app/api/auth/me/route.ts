@@ -20,7 +20,7 @@ export const GET = withAuth(async (_request, auth) => {
     }
 
     // 返回用户信息（不包含敏感字段）
-    const { passwordHash, lockedUntil, ...safeUser } = user;
+    const { passwordHash: _passwordHash, lockedUntil: _lockedUntil, ...safeUser } = user;
     
     return NextResponse.json({ user: safeUser });
 

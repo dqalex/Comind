@@ -73,11 +73,11 @@ export function parseFrontmatter(content: string): { frontmatter: Frontmatter | 
     fm[key] = val;
   }
 
-  const isComindType = fm.type && (fm.type.startsWith('teamclaw:') || fm.type === 'task_list');
+  const isTeamclawType = fm.type && (fm.type.startsWith('teamclaw:') || fm.type === 'task_list');
   const hasDeliveryFields = !!fm.delivery_status;
 
   // 非 teamclaw 类型且无交付字段 → 不需要解析
-  if (!isComindType && !hasDeliveryFields) {
+  if (!isTeamclawType && !hasDeliveryFields) {
     return { frontmatter: null, body: content };
   }
 

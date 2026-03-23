@@ -12,6 +12,8 @@
 import Database from 'better-sqlite3';
 import { existsSync, mkdirSync, rmSync, readFileSync, readdirSync, statSync } from 'fs';
 import { join, basename, extname } from 'path';
+import { BUILTIN_SOP_TEMPLATES, BUILTIN_RENDER_TEMPLATES } from '../../db/templates';
+import { rtLandingPage } from '../../db/templates/render/rt-landing-page';
 // 使用简单的 ID 生成函数
 function generateSimpleId(): string {
   const chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
@@ -20,17 +22,6 @@ function generateSimpleId(): string {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
-}
-
-// 动态导入内置模板（需要先 build 或使用 tsx）
-let BUILTIN_SOP_TEMPLATES: any[] = [];
-let BUILTIN_RENDER_TEMPLATES: any[] = [];
-try {
-  const templates = require('../db/builtin-templates');
-  BUILTIN_SOP_TEMPLATES = templates.BUILTIN_SOP_TEMPLATES;
-  BUILTIN_RENDER_TEMPLATES = templates.BUILTIN_RENDER_TEMPLATES;
-} catch {
-  // tsx 模式下使用 import
 }
 
 // 内置文档定义
@@ -216,6 +207,21 @@ CREATE INDEX IF NOT EXISTS idx_project_members_project ON project_members(projec
 CREATE INDEX IF NOT EXISTS idx_project_members_user ON project_members(user_id);
 CREATE INDEX IF NOT EXISTS idx_activity_action ON activity_logs(module, action);
 CREATE INDEX IF NOT EXISTS idx_activity_created ON activity_logs(created_at DESC);
+
+-- v3.0: 首页内容表（独立于 documents，用于公开 API）
+CREATE TABLE IF NOT EXISTS landing_pages (
+  id TEXT PRIMARY KEY NOT NULL,
+  locale TEXT NOT NULL CHECK(locale IN ('en', 'zh')),
+  title TEXT NOT NULL,
+  content TEXT,
+  rendered_html TEXT,
+  render_template_id TEXT,
+  meta_title TEXT,
+  meta_description TEXT,
+  status TEXT NOT NULL DEFAULT 'published' CHECK(status IN ('draft', 'published')),
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
 `;
 
 function readDocContent(filename: string): string {
@@ -253,7 +259,8 @@ function main() {
   db.exec(SCHEMA_SQL);
   console.log('已创建数据库表结构');
 
-  const now = Date.now();
+  // Drizzle mode:timestamp expects seconds, not milliseconds
+  const now = Math.floor(Date.now() / 1000);
   // v3.0: 不再创建默认用户，用户通过 /login 页面注册
   // 第一个注册的用户自动成为 admin，同时自动创建关联的 member 记录
   console.log('v3.0 多用户系统：用户通过 /login 注册，无预置用户');
@@ -298,6 +305,20 @@ function main() {
     console.log(`已插入 ${BUILTIN_RENDER_TEMPLATES.length} 个内置渲染模板`);
   }
 
+  // 插入内置首页内容（使用 rtLandingPage 模板）
+  const landingPages = [
+    { id: 'landing-en', locale: 'en', title: 'Home (English)', content: rtLandingPage.mdTemplate },
+    { id: 'landing-zh', locale: 'zh', title: '首页（中文）', content: rtLandingPage.mdTemplate },
+  ];
+  const insertLanding = db.prepare(`
+    INSERT OR IGNORE INTO landing_pages (id, locale, title, content, render_template_id, status, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  for (const lp of landingPages) {
+    insertLanding.run(lp.id, lp.locale, lp.title, lp.content, rtLandingPage.id, 'published', now, now);
+  }
+  console.log(`已插入 ${landingPages.length} 个内置首页内容`);
+
   // 导入 blog 目录下的文档
   const blogDir = join(process.cwd(), 'docs', 'blog');
   if (existsSync(blogDir)) {
@@ -306,7 +327,8 @@ function main() {
       .map(f => ({
         name: f,
         path: join(blogDir, f),
-        mtime: statSync(join(blogDir, f)).mtime.getTime(),
+        // Drizzle mode:timestamp expects seconds, not milliseconds
+        mtime: Math.floor(statSync(join(blogDir, f)).mtime.getTime() / 1000),
       }))
       .sort((a, b) => b.mtime - a.mtime); // 按修改时间降序（最新的在前）
 

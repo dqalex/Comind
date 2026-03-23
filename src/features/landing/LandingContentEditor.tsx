@@ -2,14 +2,16 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRenderTemplateStore } from '@/domains';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/shared/ui/button';
 import { Loader2, Save, Globe, Upload } from 'lucide-react';
-import { useSecurityCode } from '@/hooks/useSecurityCode';
-import { SecurityCodeDialog } from '@/components/SecurityCodeDialog';
+import { useSecurityCode } from '@/shared/hooks/useSecurityCode';
+import { SecurityCodeDialog } from '@/shared/layout/SecurityCodeDialog';
 import dynamic from 'next/dynamic';
 import clsx from 'clsx';
+import { syncMdToHtml } from '@/shared/lib/slot-sync';
+import type { SlotDef } from '@/shared/lib/slot-sync';
 
-const MarkdownEditor = dynamic(() => import('@/components/MarkdownEditor').then(mod => mod.default), {
+const MarkdownEditor = dynamic(() => import('@/shared/editor/MarkdownEditor').then(mod => mod.default), {
   ssr: false,
   loading: () => (
     <div className="flex-1 flex items-center justify-center">
@@ -117,12 +119,29 @@ export function LandingContentEditor() {
   const doPublish = async () => {
     setPublishing(true);
     try {
+      // 发布时先渲染 HTML 供缓存
+      let renderedHtml = '';
+      if (landingTemplate) {
+        try {
+          const result = syncMdToHtml(
+            editContent,
+            landingTemplate.htmlTemplate,
+            landingTemplate.slots as Record<string, SlotDef>,
+            landingTemplate.cssTemplate || undefined
+          );
+          renderedHtml = result.html;
+        } catch (err) {
+          console.error('[doPublish] syncMdToHtml error:', err);
+        }
+      }
+
       const res = await fetch('/api/landing', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          locale: activeLocale, 
-          content: editContent, 
+        body: JSON.stringify({
+          locale: activeLocale,
+          content: editContent,
+          renderedHtml,  // 渲染后的 HTML（供服务端缓存）
           publish: true,
           securityCode: publishSecurity.code,
         }),

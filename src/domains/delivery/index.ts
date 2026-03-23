@@ -5,5 +5,5 @@
 // Store
 export { useDeliveryStore } from './store';
 
-// 类型从 db/schema 导出
+// 类型
 export type { Delivery, NewDelivery } from '@/db/schema';

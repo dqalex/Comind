@@ -1,10 +1,10 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import { Button, Input, Select } from '@/components/ui';
-import DeliveryStatusCard from '@/components/wiki/DeliveryStatusCard';
-import AnnotationPanel from '@/components/wiki/AnnotationPanel';
-import type { TextSelection } from '@/components/wiki/AnnotationPanel';
+import { Button, Input, Select } from '@/shared/ui';
+import DeliveryStatusCard from '@/features/wiki-editor/DeliveryStatusCard';
+import AnnotationPanel from '@/features/wiki-editor/AnnotationPanel';
+import type { TextSelection } from '@/features/wiki-editor/AnnotationPanel';
 import type { Document, RenderTemplate } from '@/db/schema';
 import dynamic from 'next/dynamic';
 import {
@@ -16,9 +16,9 @@ import {
 import clsx from 'clsx';
 import { tagColors, typeOrder } from '../hooks/useWikiPage';
 import WikiKnowledgeGraph from './WikiKnowledgeGraph';
-import { useInlineEdit } from '@/hooks/useInlineEdit';
+import { useInlineEdit } from '@/shared/hooks/useInlineEdit';
 
-const MarkdownEditor = dynamic(() => import('@/components/MarkdownEditor'), {
+const MarkdownEditor = dynamic(() => import('@/shared/editor/MarkdownEditor'), {
   ssr: false,
   loading: () => <div className="flex-1" />,
 });

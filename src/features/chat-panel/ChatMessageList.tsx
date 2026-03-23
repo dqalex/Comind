@@ -1,6 +1,6 @@
 'use client';
 
-import { forwardRef } from 'react';
+import { memo } from 'react';
 import type { ChatMessage } from '@/domains/chat';
 import { MessageBubble, GwMessageBubble } from './MessageBubble';
 import { Loader2, MessageSquare, Bot, ArrowDown } from 'lucide-react';
@@ -34,8 +34,10 @@ interface ChatMessageListProps {
  * 支持两种消息格式：
  * - 本地会话（ChatMessage[]）→ 使用 MessageBubble
  * - Gateway 会话（{role, content}[]）→ 使用 GwMessageBubble
+ * 
+ * 使用 React.memo 优化渲染性能，避免父组件状态变更导致不必要的重渲染
  */
-export default function ChatMessageList({
+function ChatMessageListInner({
   messages,
   gwMessages,
   loading,
@@ -99,3 +101,8 @@ export default function ChatMessageList({
     </>
   );
 }
+
+// 使用 memo 包装，避免父组件状态变更导致不必要的重渲染
+const ChatMessageList = memo(ChatMessageListInner);
+
+export default ChatMessageList;

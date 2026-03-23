@@ -180,9 +180,15 @@ export const createMemberSchema = z.object({
   type: memberTypeSchema.default('human'),
   email: emailSchema.optional(),
   avatar: urlSchema.optional(),
+  openclawName: z.string().max(100).optional(),
   openclawDeployMode: z.enum(['cloud', 'local', 'knot']).optional(),
   openclawEndpoint: urlSchema.optional(),
+  openclawGatewayUrl: urlSchema.optional(),
+  openclawAgentId: z.string().max(100).optional(),
+  openclawApiToken: z.string().max(500).optional(),
   openclawModel: z.string().max(100).optional(),
+  openclawEnableWebSearch: z.boolean().optional(),
+  openclawTemperature: z.number().min(0).max(2).optional(),
   executionMode: z.enum(['chat_only', 'api_first', 'api_only']).default('chat_only'),
 });
 
@@ -411,8 +417,8 @@ function sanitizeText(text: string): string {
     .replace(/javascript:/gi, '')
     // 移除 data: 协议（可能的 XSS 载体）
     .replace(/data:/gi, '')
-    // 限制连续空白字符
-    .replace(/\s+/g, ' ')
+    // 移除连续的多个空白字符，但保留换行（用于 Markdown 格式）
+    .replace(/[ \t]+/g, ' ')
     // Trim
     .trim();
 }

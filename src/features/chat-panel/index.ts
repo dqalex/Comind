@@ -2,11 +2,11 @@
  * Chat Panel 功能模块
  */
 
-export { ChatPanel } from './ChatPanel';
-export { ChatDrawer } from './ChatDrawer';
-export { ChatFab } from './ChatFab';
-export { ChatInputArea } from './ChatInputArea';
-export { ChatMessageList } from './ChatMessageList';
-export { ChatSessionList } from './ChatSessionList';
-export { MessageBubble } from './MessageBubble';
-export { ChatMarkdown } from './ChatMarkdown';
+export { default as ChatPanel } from './ChatPanel';
+export { default as ChatDrawer } from './ChatDrawer';
+export { default as ChatFab } from './ChatFab';
+export { default as ChatInputArea } from './ChatInputArea';
+export { default as ChatMessageList } from './ChatMessageList';
+export { default as ChatSessionList } from './ChatSessionList';
+export { MessageBubble, GwMessageBubble } from './MessageBubble';
+export { default as ChatMarkdown } from './ChatMarkdown';

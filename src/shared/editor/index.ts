@@ -13,7 +13,6 @@ export { default as MarkdownToolbar } from './MarkdownToolbar';
 export { default as HtmlPreview } from './HtmlPreview';
 export { default as MarkdownContent } from './MarkdownContent';
 export { default as CollapsibleSection } from './CollapsibleSection';
-export { default as CollapsibleMarkdown } from './CollapsibleMarkdown';
 export { default as FrontmatterBadges } from './FrontmatterBadges';
 
 // 工具函数

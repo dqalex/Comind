@@ -1,0 +1,28 @@
+const db = require('better-sqlite3')('./data/teamclaw.db');
+const landing = db.prepare("SELECT content FROM landing_pages WHERE locale='zh'").get();
+console.log('MD first 300:', landing.content.slice(0, 300));
+console.log('---');
+const tpl = db.prepare("SELECT slots, html_template FROM render_templates WHERE id='rt-builtin-landing-page'").get();
+console.log('Slot keys:', Object.keys(JSON.parse(tpl.slots)));
+const slotDef = JSON.parse(tpl.slots).heroBadge;
+console.log('heroBadge slot def:', slotDef);
+console.log('htmlTemplate contains heroBadge:', tpl.html_template.includes('data-slot="heroBadge"'));
+
+// Test MD slot extraction
+const mdContent = landing.content;
+const closedPattern = /<!--\s*@slot:(\w+)\s*-->([\s\S]*?)<!--\s*@\/slot\s*-->/g;
+const openPattern = /<!--\s*@slot:(\w+)\s*-->\n?([\s\S]*?)(?=<!--\s*@slot:\w+\s*-->|$)/g;
+
+const closedMatches = [...mdContent.matchAll(closedPattern)];
+console.log('\n=== Closed Pattern Matches ===');
+console.log('Count:', closedMatches.length);
+
+if (closedMatches.length === 0) {
+  const openMatches = [...mdContent.matchAll(openPattern)];
+  console.log('Open Pattern Matches:', openMatches.length);
+  if (openMatches.length > 0) {
+    openMatches.forEach(m => console.log('Slot:', m[1], 'Content:', m[2].trim().slice(0, 50)));
+  }
+} else {
+  closedMatches.forEach(m => console.log('Slot:', m[1], 'Content:', m[2].trim().slice(0, 50)));
+}

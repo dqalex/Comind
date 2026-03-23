@@ -2,9 +2,44 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db, landingPages, renderTemplates, users } from '@/db';
 import { eq, and } from 'drizzle-orm';
 import { validateAuth, verifySecurityCode } from '@/lib/auth';
+import { syncMdToHtml } from '@/shared/lib/slot-sync';
+import type { SlotDef } from '@/shared/lib/slot-sync';
 
 // 标记为动态路由，避免静态生成错误
 export const dynamic = 'force-dynamic';
+
+/**
+ * 从完整 HTML 文档中提取 body 内容，并保留 head 中的 style 标签
+ * syncMdToHtml 返回 <!DOCTYPE html><html><head>...</head><body>...</body></html>
+ * 前端需要 body 内容 + 必要的 style 标签
+ */
+function extractBodyContent(fullHtml: string): string {
+  // 提取 <head> 中的 <style> 标签（data-md-styles 和 data-studio-css）
+  const stylePattern = /<style[^>]*data-(md-styles|studio-css)[^>]*>[\s\S]*?<\/style>/gi;
+  const styles = fullHtml.match(stylePattern) || [];
+
+  // 匹配 <body>...</body> 或 <body ...>...</body>
+  const bodyMatch = fullHtml.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+  let bodyContent = '';
+  if (bodyMatch) {
+    bodyContent = bodyMatch[1].trim();
+  } else {
+    // 如果没有 body 标签，返回整个 HTML（减去 DOCTYPE 和 html 标签）
+    bodyContent = fullHtml
+      .replace(/<!DOCTYPE html>\s*/i, '')
+      .replace(/<html[^>]*>\s*/i, '')
+      .replace(/\s*<\/html>/i, '')
+      .replace(/<head>[\s\S]*<\/head>/i, '')
+      .trim();
+  }
+
+  // 如果有提取到的 style 标签，注入到 body 内容开头
+  if (styles.length > 0) {
+    return styles.join('\n') + '\n' + bodyContent;
+  }
+
+  return bodyContent;
+}
 
 /**
  * GET /api/landing - 获取首页数据（公开 API，无需认证）
@@ -22,6 +57,7 @@ export async function GET(request: NextRequest) {
       locale: landingPages.locale,
       title: landingPages.title,
       content: landingPages.content,
+      renderedHtml: landingPages.renderedHtml,  // 预渲染的 HTML 缓存
       renderTemplateId: landingPages.renderTemplateId,
       metaTitle: landingPages.metaTitle,
       metaDescription: landingPages.metaDescription,
@@ -45,6 +81,34 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Landing data not found' }, { status: 404 });
     }
 
+    // 如果有预渲染的 HTML 缓存，直接返回（SEO 友好）
+    // 否则使用 syncMdToHtml 渲染（服务端直接渲染，无需 DOMParser）
+    // 注意：即使有缓存，也需要提取 body 部分供前端渲染
+    let renderedHtml = landingPage.renderedHtml;
+    if (!renderedHtml || (typeof renderedHtml === 'string' && renderedHtml.includes('@slot:'))) {
+      if (landingPage.content) {
+        try {
+          const result = syncMdToHtml(
+            landingPage.content,
+            template.htmlTemplate,
+            template.slots as Record<string, SlotDef>,
+            template.cssTemplate || undefined
+          );
+          // syncMdToHtml 返回完整 HTML 文档，提取 body 内容供前端渲染
+          renderedHtml = extractBodyContent(result.html);
+        } catch (err) {
+          console.error('[GET /api/landing] syncMdToHtml error:', err);
+          // fallback to raw content wrapped
+          renderedHtml = `<div class="landing-page"><pre>${landingPage.content}</pre></div>`;
+        }
+      }
+    } else if (renderedHtml && typeof renderedHtml === 'string') {
+      // 有缓存但不是通过 syncMdToHtml 生成的，需要提取 body
+      if (renderedHtml.includes('<!DOCTYPE') || renderedHtml.includes('<html')) {
+        renderedHtml = extractBodyContent(renderedHtml);
+      }
+    }
+
     return NextResponse.json({
       // 保持与原 API 兼容的响应格式
       document: {
@@ -52,6 +116,8 @@ export async function GET(request: NextRequest) {
         content: landingPage.content,
       },
       template: template,
+      // 直接返回缓存的预渲染 HTML（SEO 友好）
+      renderedHtml,
       // 额外的 SEO 数据（可选）
       meta: {
         title: landingPage.metaTitle,
@@ -79,7 +145,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { locale, content, metaTitle, metaDescription, publish, securityCode } = body;
+    const { locale, content, renderedHtml, metaTitle, metaDescription, publish, securityCode } = body;
 
     if (!locale || (locale !== 'en' && locale !== 'zh')) {
       return NextResponse.json({ error: 'Invalid locale' }, { status: 400 });
@@ -113,9 +179,10 @@ export async function PUT(request: NextRequest) {
       updatedAt: new Date(),
     };
 
-    // 如果是发布操作，设置状态为 published
+    // 如果是发布操作，设置状态为 published，并保存渲染后的 HTML 缓存
     if (publish) {
       updateData.status = 'published';
+      updateData.renderedHtml = renderedHtml || null;  // 保存前端渲染好的 HTML
     }
 
     const result = await db.update(landingPages)

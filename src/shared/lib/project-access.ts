@@ -20,6 +20,9 @@ import { eq, or, and, inArray, sql } from 'drizzle-orm';
 // 类型定义
 // ============================================================
 
+// 重新导出 ProjectRole 类型
+export type { ProjectRole };
+
 export interface ProjectAccessInfo {
   hasAccess: boolean;
   role: ProjectRole | 'public' | null;  // 用户在项目中的角色，public 表示通过公开访问

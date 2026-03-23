@@ -30,6 +30,18 @@ import {
   handleInvokeSkill, handleListSkills,
 } from './index';
 
+// v1.0.1: 包装 deprecated 工具，添加运行时警告
+const wrapWithDeprecationWarning = <T extends Record<string, unknown>>(
+  handler: (params: T) => Promise<{ success: boolean; data?: unknown; error?: string }>,
+  deprecatedName: string,
+  alternative: string
+) => {
+  return async (params: T) => {
+    console.warn(`[DEPRECATED v1.0.1] ${deprecatedName} is deprecated, use ${alternative}`);
+    return handler(params);
+  };
+};
+
 /**
  * 工具名 → handler 映射表
  * 新增工具只需在此处添加一条映射
@@ -59,8 +71,12 @@ export const TOOL_HANDLERS: Record<TeamClawToolName, (params: Record<string, unk
   list_my_deliveries: handleListMyDeliveries,
   get_delivery: handleGetDelivery,
   register_member: handleRegisterMember,
-  get_template: handleGetTemplate,
-  list_templates: handleListTemplates,
+  // v1.0.1 新增：消息模板工具
+  get_message_template: handleGetTemplate,
+  list_message_templates: handleListTemplates,
+  // v1.0.1 Deprecated：带警告的模板工具
+  get_template: wrapWithDeprecationWarning(handleGetTemplate, 'get_template', 'get_message_template'),
+  list_templates: wrapWithDeprecationWarning(handleListTemplates, 'list_templates', 'list_message_templates'),
   create_milestone: handleCreateMilestone,
   list_milestones: handleListMilestones,
   update_milestone: handleUpdateMilestone,
@@ -83,12 +99,12 @@ export const TOOL_HANDLERS: Record<TeamClawToolName, (params: Record<string, unk
   get_agent_mcp_token: handleGetAgentMcpToken,
   list_agent_mcp_tokens: handleListAgentMcpTokens,
   revoke_agent_mcp_token: handleRevokeAgentMcpToken,
-  // 上下文获取工具（v3.0 Phase F 渐进式）
-  get_task_detail: handleGetTaskDetail,
-  get_project_detail: handleGetProjectDetail,
-  get_document_detail: handleGetDocumentDetail,
-  get_sop_previous_output: handleGetSopPreviousOutput,
-  get_sop_knowledge_layer: handleGetSopKnowledgeLayer,
+  // v1.0.1 Deprecated：带警告的上下文工具
+  get_task_detail: wrapWithDeprecationWarning(handleGetTaskDetail, 'get_task_detail', 'get_task with detail=true'),
+  get_project_detail: wrapWithDeprecationWarning(handleGetProjectDetail, 'get_project_detail', 'get_project with detail=true'),
+  get_document_detail: wrapWithDeprecationWarning(handleGetDocumentDetail, 'get_document_detail', 'get_document with detail=true'),
+  get_sop_previous_output: wrapWithDeprecationWarning(handleGetSopPreviousOutput, 'get_sop_previous_output', 'get_sop_context'),
+  get_sop_knowledge_layer: wrapWithDeprecationWarning(handleGetSopKnowledgeLayer, 'get_sop_knowledge_layer', 'get_sop_context'),
   // Skill 工具（v3.0 SkillHub 集成）
   invoke_skill: handleInvokeSkill,
   list_skills: handleListSkills,

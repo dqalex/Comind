@@ -4,9 +4,9 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMemberStore } from '@/domains';
 import { MessageSquarePlus, Trash2, ChevronRight, ChevronLeft, StickyNote, User, Clock, ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui';
+import { Button } from '@/shared/ui';
 import clsx from 'clsx';
-import { formatRelativeTime } from '@/hooks/useRelativeTime';
+import { formatRelativeTime } from '@/shared/hooks/useRelativeTime';
 
 // 批注数据结构
 export interface Annotation {

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { eq, and, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { chatSessions, chatMessages } from '@/db/schema';
@@ -13,7 +13,7 @@ import { errorResponse, createdResponse, ApiErrors } from '@/lib/api-route-facto
 export const dynamic = 'force-dynamic';
 
 // POST /api/chat-messages - 添加消息到会话
-// v3.0: 严格用户隔离 - 只能向自己的会话添加消息
+// v0.9.8: 严格用户隔离 - 只能向自己的会话添加消息
 export const POST = withAuth(async (request: NextRequest, auth: AuthResult) => {
   const requestId = request.headers.get('x-request-id') || generateId();
   

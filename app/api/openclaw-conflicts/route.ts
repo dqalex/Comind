@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 /**
  * GET /api/openclaw-conflicts
  * 获取冲突列表
- * v3.0: 需要登录才能访问
+ * v0.9.8: 需要登录才能访问
  */
 export const GET = withAuth(async (request: NextRequest) => {
   try {

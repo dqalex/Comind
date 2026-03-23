@@ -358,8 +358,13 @@ function handleDM(ws: WebSocket, requestId: string, params: unknown) {
   const sessionKey = `agent:${agentId}:dm:mock-${Date.now()}`;
   console.log('[Mock] DM request:', { agentId, content: content?.substring(0, 50) });
 
-  // 返回会话 key
-  ws.send(createResponse(requestId, { success: true, sessionKey }));
+  // 返回 RPC 格式响应
+  ws.send(JSON.stringify({
+    type: 'res',
+    id: requestId,
+    ok: true,
+    payload: { success: true, sessionKey }
+  }));
 
   // 模拟流式响应
   let delay = 300;

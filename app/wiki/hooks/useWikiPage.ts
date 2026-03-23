@@ -3,8 +3,8 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { useEscapeKey } from '@/hooks/useEscapeKey';
-import { useConfirmAction } from '@/hooks/useConfirmAction';
+import { useEscapeKey } from '@/shared/hooks/useEscapeKey';
+import { useConfirmAction } from '@/shared/hooks/useConfirmAction';
 import { useDocumentStore, useProjectStore, useMemberStore, useTaskStore, useDeliveryStore, useChatStore } from '@/domains';
 import { useGatewayStore } from '@/core/gateway/store';
 import { useAuthStore } from '@/domains/auth';
@@ -12,7 +12,7 @@ import { useRenderTemplateStore } from '@/domains/render-template';
 import { DOC_TEMPLATES } from '@/lib/doc-templates';
 import { syncMdToHtml as directSyncMdToHtml } from '@/lib/slot-sync';
 import type { Document } from '@/db/schema';
-import type { TextSelection } from '@/components/wiki/AnnotationPanel';
+import type { TextSelection } from '@/features/wiki-editor/AnnotationPanel';
 
 // --- 常量定义 ---
 export const typeIcons = {
@@ -55,7 +55,7 @@ export function useWikiPage() {
   const { openChatWithMessage } = useChatStore();
   const { templates: renderTemplates } = useRenderTemplateStore();
   
-  // v3.0 多用户：获取用户专用会话键（注意：不在组件级别缓存，而是在函数调用时实时计算）
+  // v0.9.8 多用户：获取用户专用会话键（注意：不在组件级别缓存，而是在函数调用时实时计算）
   const authUser = useAuthStore((s) => s.user);
   const getUserSessionKey = useGatewayStore((s) => s.getUserSessionKey);
 
@@ -364,7 +364,7 @@ export function useWikiPage() {
   const handleChatAboutDoc = useCallback(() => {
     if (!selectedDoc) return;
 
-    // v3.0 多用户：在函数内部实时计算用户专用会话键（确保 agentsDefaultId 已加载）
+    // v0.9.8 多用户：在函数内部实时计算用户专用会话键（确保 agentsDefaultId 已加载）
     const userSessionKey = authUser?.id ? getUserSessionKey(authUser.id) : null;
 
     const project = selectedDoc.projectId ? projects.find(p => p.id === selectedDoc.projectId) : null;
@@ -383,7 +383,7 @@ export function useWikiPage() {
     if (project) lines.push('## 所属项目', `- **项目名称**: ${project.name}`, '');
     if (contentPreview) lines.push('### 文档内容预览', '```', contentPreview, '```', '');
     lines.push('---', '', '## 访问方式', '- 文档: `get_document` 或 `list_documents`', '- 任务: `get_task` 或 `list_tasks`', '', '**请分析这篇文档，给出你的建议，但暂时不要执行任何修改操作。**');
-    // v3.0 多用户：传入用户专用会话键
+    // v0.9.8 多用户：传入用户专用会话键
     openChatWithMessage(lines.join('\n'), { sessionKey: userSessionKey || undefined });
   }, [selectedDoc, editContent, projects, typeLabels, openChatWithMessage, authUser, getUserSessionKey]);
 
@@ -434,7 +434,7 @@ export function useWikiPage() {
   const toggleCollapse = useCallback((type: string) => {
     setCollapsedTypes(prev => {
       const next = new Set(prev);
-      next.has(type) ? next.delete(type) : next.add(type);
+      if (next.has(type)) { next.delete(type); } else { next.add(type); }
       return next;
     });
   }, []);
@@ -476,7 +476,7 @@ export function useWikiPage() {
   const handleApplyTemplate = useCallback(async (data: { templateId: string; projectId: string }) => {
     if (!selectedDoc) return;
 
-    // v3.0 多用户：在函数内部实时计算用户专用会话键（确保 agentsDefaultId 已加载）
+    // v0.9.8 多用户：在函数内部实时计算用户专用会话键（确保 agentsDefaultId 已加载）
     const userSessionKey = authUser?.id ? getUserSessionKey(authUser.id) : null;
 
     // 获取当前用户及其关联的成员
@@ -521,7 +521,7 @@ export function useWikiPage() {
         const result = await res.json();
         if (result.success && result.data?.message) {
           // 打开聊天窗口并发送消息
-          // v3.0 多用户：传入用户专用会话键
+          // v0.9.8 多用户：传入用户专用会话键
           openChatWithMessage(result.data.message, { sessionKey: userSessionKey || undefined });
         }
       }

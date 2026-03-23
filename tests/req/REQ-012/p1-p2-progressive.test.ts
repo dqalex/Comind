@@ -162,7 +162,7 @@ describe('Workspace Service', () => {
 
 describe('Context Request Parser', () => {
   it('should parse single context request', async () => {
-    const { parseContextRequest } = await import('@/app/api/context-request/route');
+    const { parseContextRequest } = await import('@/lib/context-request-parser');
     
     const message = `好的，我来处理这个任务。
 
@@ -172,12 +172,15 @@ describe('Context Request Parser', () => {
 
 请等待我获取更多信息。`;
     
-    // 注意：parseContextRequest 在 route.ts 中是内部函数，需要导出或测试 API
-    // 这里我们通过测试 API 行为来验证
+    const requests = parseContextRequest(message);
+    expect(requests).toHaveLength(1);
+    expect(requests[0].type).toBe('task_detail');
+    expect(requests[0].params).toEqual({ task_id: 'task-123' });
   });
   
   it('should parse multiple context requests', async () => {
-    // 测试多个上下文请求的解析
+    const { parseContextRequest } = await import('@/lib/context-request-parser');
+    
     const message = `需要获取更多信息：
 
 请求上下文:
@@ -188,14 +191,18 @@ describe('Context Request Parser', () => {
 - 类型: project_detail
 - 参数: { "project_id": "proj-1" }
 `;
-    // 实际解析在 API 内部完成
-    expect(true).toBe(true);
+    const requests = parseContextRequest(message);
+    expect(requests).toHaveLength(2);
+    expect(requests[0].type).toBe('task_detail');
+    expect(requests[1].type).toBe('project_detail');
   });
   
   it('should handle invalid format gracefully', async () => {
+    const { parseContextRequest } = await import('@/lib/context-request-parser');
+    
     const message = `这是一条普通消息，没有上下文请求格式。`;
-    // 应该返回空数组
-    expect(true).toBe(true);
+    const requests = parseContextRequest(message);
+    expect(requests).toHaveLength(0);
   });
 });
 

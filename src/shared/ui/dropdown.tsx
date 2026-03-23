@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, type ReactNode } from 'react';
 import clsx from 'clsx';
-import { useClickOutside } from '@/hooks/useClickOutside';
+import { useClickOutside } from '@/shared/hooks/useClickOutside';
 
 interface DropdownProps {
   trigger: ReactNode;

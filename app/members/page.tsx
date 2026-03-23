@@ -3,14 +3,14 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { useMemberStore, useProjectStore, useTaskStore, useAuthStore } from '@/domains';
 import { useGatewayStore } from '@/core/gateway/store';
-import AppShell from '@/components/AppShell';
-import Header from '@/components/Header';
-import { Button, Badge, Input } from '@/components/ui';
+import AppShell from '@/shared/layout/AppShell';
+import Header from '@/shared/layout/Header';
+import { Button, Badge, Input } from '@/shared/ui';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { useEscapeKey } from '@/hooks/useEscapeKey';
-import { useSecurityCode } from '@/hooks/useSecurityCode';
+import { useEscapeKey } from '@/shared/hooks/useEscapeKey';
+import { useSecurityCode } from '@/shared/hooks/useSecurityCode';
 import {
   Bot, User, Trash2,
   ChevronRight, Activity, Cpu,

@@ -67,8 +67,51 @@
     <li><a href="#delivery-flow">交付审核流程</a></li>
     <li><a href="#schedule-flow">定时任务调度</a></li>
     <li><a href="#onboarding">AI 成员入驻流程</a></li>
+    <li><a href="#sop-flow">SOP 标准作业流程</a></li>
+    <li><a href="#approval-flow">审批请求流程</a></li>
     <li><a href="#scenarios">典型业务场景</a></li>
   </ol>
+</div>
+
+flowchart LR
+    subgraph Human["👤 人类用户"]
+        PM["项目经理<br/>创建项目 · 分配任务 · 审核交付"]
+        Dev["开发者<br/>编写代码 · 更新进度 · 提交文档"]
+    end
+
+    subgraph Platform["🧠 TeamClaw 平台"]
+        Dashboard["工作台"]
+        TaskBoard["任务看板"]
+        Wiki["文档 Wiki"]
+        Chat["智能聊天"]
+        Delivery["文档交付"]
+    end
+
+    subgraph AI["🤖 AI Agent（OpenClaw）"]
+        Agent1["AI 成员 A<br/>执行任务 · 生成文档"]
+        Agent2["AI 成员 B<br/>巡检报告 · 状态同步"]
+    end
+
+    PM -->|"创建任务"| TaskBoard
+    PM -->|"审核交付"| Delivery
+    Dev -->|"更新进度"| TaskBoard
+    Dev -->|"编辑文档"| Wiki
+    Dev -->|"与 AI 对话"| Chat
+
+    TaskBoard -->|"任务推送"| Agent1
+    Chat -->|"MCP 指令"| Agent1
+    Agent1 -->|"汇报进度"| TaskBoard
+    Agent1 -->|"提交交付"| Delivery
+    Agent2 -->|"巡检报告"| Wiki
+    Agent2 -->|"状态同步"| Dashboard
+
+    style Human fill:#161b22,stroke:#3fb950,color:#c9d1d9
+    style Platform fill:#0d1117,stroke:#1f6feb,color:#c9d1d9
+    style AI fill:#161b22,stroke:#8b5cf6,color:#c9d1d9
+</pre>
+
+<div class="note">
+<strong>核心理念</strong>：TeamClaw 的主要用户是 <strong>AI Agent</strong>（OpenClaw 智能体），人类用户通过平台管理和协调 AI 成员的工作。AI 成员通过 MCP 工具和对话 Actions 与平台交互，实现真正的人机协作。
 </div>
 
 <!-- ====================================== -->
@@ -115,9 +158,8 @@ flowchart LR
 
 <div class="note">
 <strong>核心理念</strong>：TeamClaw 的主要用户是 <strong>AI Agent</strong>（OpenClaw 智能体），人类用户通过平台管理和协调 AI 成员的工作。AI 成员通过 MCP 工具和对话 Actions 与平台交互，实现真正的人机协作。
-</div>
+:</div>
 
-<!-- ====================================== -->
 <h2 id="core-loop">二、核心工作循环</h2>
 <!-- ====================================== -->
 
@@ -460,8 +502,66 @@ sequenceDiagram
 <strong>幂等注册</strong>：AI 成员通过 <code>register_member</code> MCP 工具自注册。相同 endpoint 的成员不会重复创建，而是更新已有记录。这意味着 Gateway 重启后 Agent 可以无缝恢复工作。
 </div>
 
+
 <!-- ====================================== -->
-<h2 id="scenarios">十、典型业务场景</h2>
+<h2 id="sop-flow">十、SOP 标准作业流程</h2>
+<!-- ====================================== -->
+
+<pre class="mermaid">
+flowchart LR
+    subgraph Define["定义阶段"]
+        D1["创建 SOP 模板"]
+        D2["定义阶段数量"]
+        D3["设置阶段名称"]
+        D4["配置确认条件"]
+    end
+
+    subgraph Instantiate["创建实例"]
+        I1["选择模板"]
+        I2["指定执行成员"]
+        I3["关联任务/文档"]
+    end
+
+    subgraph Execute["执行流程"]
+        E1["进入阶段 1"]
+        E2["执行任务"]
+        E3["等待确认"]
+        E4["阶段完成"]
+        E5["进入下一阶段"]
+    end
+
+    Define --> Instantiate --> Execute
+
+    style Define fill:#161b22,stroke:#3fb950,color:#c9d1d9
+    style Instantiate fill:#161b22,stroke:#1f6feb,color:#c9d1d9
+    style Execute fill:#161b22,stroke:#8b5cf6,color:#c9d1d9
+:</pre>
+
+<div class="note purple">
+<strong>SOP 阶段确认</strong>：每个阶段完成后需要确认才能进入下一阶段。支持自动分发任务到成员，追踪执行进度。
+:</div>
+
+<!-- ====================================== -->
+<h2 id="approval-flow">十一、审批请求流程</h2>
+<!-- ====================================== -->
+
+<pre class="mermaid">
+stateDiagram-v2
+    [*] --> 待审批: 创建审批请求
+    待审批 --> 已通过: 审批通过
+    待审批 --> 已拒绝: 审批拒绝
+    待审批 --> 已取消: 申请人取消
+    已拒绝 --> [*]: 结束
+    已取消 --> [*]: 结束
+    已通过 --> [*]: 结束
+:</pre>
+
+<div class="note success">
+<strong>审批历史</strong>：所有审批操作（通过/拒绝/取消）都会记录到 approvalHistories 表，支持完整操作审计追踪。
+:</div>
+
+<!-- ====================================== -->
+<h2 id="scenarios">十二、典型业务场景</h2>
 <!-- ====================================== -->
 
 <h3>场景 A：人类分配任务 → AI 执行 → 人类审核</h3>
@@ -556,6 +656,7 @@ flowchart LR
 <br/>• 编码规范：<code>CODING_STANDARDS.md</code>
 <br/>• 产品需求：<code>docs/product/PRD.md</code>
 <br/>• 用户使用手册：<code>docs/product/USER_GUIDE.md</code>
+<br/>• SOP 流程规范：<code>docs/process/SOP.md</code>
 </div>
 
 <script>

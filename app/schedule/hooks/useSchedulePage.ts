@@ -3,8 +3,8 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useGatewayStore } from '@/core/gateway/store';
 import { useDocumentStore } from '@/domains';
-import { useConfirmAction } from '@/hooks/useConfirmAction';
-import { useEscapeKey } from '@/hooks/useEscapeKey';
+import { useConfirmAction } from '@/shared/hooks/useConfirmAction';
+import { useEscapeKey } from '@/shared/hooks/useEscapeKey';
 import type { CronJob, CronSchedule, CronPayload, CronDelivery } from '@/types';
 
 // --- 类型定义 ---

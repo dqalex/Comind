@@ -25,6 +25,10 @@ test.describe('文档协作流程', () => {
     const page = await context.newPage();
     const auth = new AuthHelper(page);
 
+    // 先导航到首页，确保 window.location.origin 有效
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
     const loginSuccess = await auth.login(TEST_USER.email, TEST_USER.password);
     if (!loginSuccess) {
       await auth.register(TEST_USER.email, TEST_USER.password, TEST_USER.name);

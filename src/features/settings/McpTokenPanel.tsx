@@ -4,8 +4,8 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useUserMcpTokenStore } from '@/core/mcp/user-mcp-token.store';
 import { useAuthStore } from '@/domains/auth';
-import { useEscapeKey } from '@/hooks/useEscapeKey';
-import { Button, Input, Badge } from '@/components/ui';
+import { useEscapeKey } from '@/shared/hooks/useEscapeKey';
+import { Button, Input, Badge } from '@/shared/ui';
 import {
   Key, Plus, Trash2, Copy, Check,
   AlertCircle, RefreshCw, Clock, Info,

@@ -7,7 +7,7 @@
 
 import { db } from '../../db';
 import { gatewayConfigs } from '../../db/schema';
-import { encryptToken } from '../../lib/security';
+import { encryptToken } from '../../src/shared/lib/security';
 import { randomBytes } from 'crypto';
 import { eq } from 'drizzle-orm';
 

@@ -110,10 +110,9 @@ export class TestDataFactory {
    * 创建任务
    */
   async createTask(overrides: Partial<TaskData> = {}): Promise<TaskData> {
-    const id = overrides.id || generateId('task');
     const task: TaskData = {
-      id,
-      title: '[测试] 任务 ' + id.slice(-6),
+      id: '',  // 将由 API 生成
+      title: '[测试] 任务 ' + Date.now().toString(36).slice(-6),
       description: '测试任务描述',
       status: 'todo',
       priority: 'medium',
@@ -122,21 +121,22 @@ export class TestDataFactory {
       ...overrides,
     };
 
-    const res = await apiPost('/api/tasks', {
-      id: task.id,
+    // 构建请求体，过滤掉 null 值（Zod optional 不接受 null）
+    const requestBody: Record<string, unknown> = {
       title: task.title,
       description: task.description,
       status: task.status,
       priority: task.priority,
-      projectId: task.projectId,
-      assigneeId: task.assigneeId,
-      deadline: task.deadline,
-      tags: task.tags || [],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }, { headers: this.authHeaders });
+    };
+    if (task.projectId) requestBody.projectId = task.projectId;
+    if (task.assigneeId) requestBody.assigneeId = task.assigneeId;
+    if (task.deadline) requestBody.deadline = task.deadline;
+    if (task.tags && task.tags.length > 0) requestBody.tags = task.tags;
 
-    if (res.ok) {
+    const res = await apiPost<{ id: string }>('/api/tasks', requestBody, { headers: this.authHeaders });
+
+    if (res.ok && res.data.id) {
+      task.id = res.data.id;
       this.createdResources.push({
         type: 'task',
         id: task.id,
@@ -144,6 +144,8 @@ export class TestDataFactory {
           await apiDelete(`/api/tasks/${task.id}`, { headers: this.authHeaders });
         },
       });
+    } else {
+      console.error('[createTask] Failed:', res.status, JSON.stringify(res.data));
     }
 
     return task;
@@ -153,10 +155,9 @@ export class TestDataFactory {
    * 创建项目
    */
   async createProject(overrides: Partial<ProjectData> = {}): Promise<ProjectData> {
-    const id = overrides.id || generateId('proj');
     const project: ProjectData = {
-      id,
-      name: '[测试] 项目 ' + id.slice(-6),
+      id: '',  // 将由 API 生成
+      name: '[测试] 项目 ' + Date.now().toString(36).slice(-6),
       description: '测试项目描述',
       status: 'active',
       color: '#3B82F6',
@@ -164,18 +165,18 @@ export class TestDataFactory {
       ...overrides,
     };
 
-    const res = await apiPost('/api/projects', {
-      id: project.id,
+    const requestBody: Record<string, unknown> = {
       name: project.name,
       description: project.description,
       status: project.status,
       color: project.color,
       icon: project.icon,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }, { headers: this.authHeaders });
+    };
 
-    if (res.ok) {
+    const res = await apiPost<{ id: string }>('/api/projects', requestBody, { headers: this.authHeaders });
+
+    if (res.ok && res.data.id) {
+      project.id = res.data.id;
       this.createdResources.push({
         type: 'project',
         id: project.id,
@@ -192,28 +193,27 @@ export class TestDataFactory {
    * 创建文档
    */
   async createDocument(overrides: Partial<DocumentData> = {}): Promise<DocumentData> {
-    const id = overrides.id || generateId('doc');
     const doc: DocumentData = {
-      id,
-      title: '[测试] 文档 ' + id.slice(-6),
+      id: '',  // 将由 API 生成
+      title: '[测试] 文档 ' + Date.now().toString(36).slice(-6),
       content: '# 测试文档\n\n这是一个测试文档的内容。',
       type: 'note',
       projectId: null,
       ...overrides,
     };
 
-    const res = await apiPost('/api/documents', {
-      id: doc.id,
+    const requestBody: Record<string, unknown> = {
       title: doc.title,
       content: doc.content,
       type: doc.type,
       source: 'local',
-      projectId: doc.projectId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }, { headers: this.authHeaders });
+    };
+    if (doc.projectId) requestBody.projectId = doc.projectId;
 
-    if (res.ok) {
+    const res = await apiPost<{ id: string }>('/api/documents', requestBody, { headers: this.authHeaders });
+
+    if (res.ok && res.data.id) {
+      doc.id = res.data.id;
       this.createdResources.push({
         type: 'document',
         id: doc.id,
@@ -230,10 +230,9 @@ export class TestDataFactory {
    * 创建成员
    */
   async createMember(overrides: Partial<MemberData> = {}): Promise<MemberData> {
-    const id = overrides.id || generateId('member');
     const member: MemberData = {
-      id,
-      name: '[测试] 成员 ' + id.slice(-6),
+      id: '',  // 将由 API 生成
+      name: '[测试] 成员 ' + Date.now().toString(36).slice(-6),
       type: 'human',
       role: 'member',
       skills: [],
@@ -241,18 +240,18 @@ export class TestDataFactory {
       ...overrides,
     };
 
-    const res = await apiPost('/api/members', {
-      id: member.id,
+    const requestBody: Record<string, unknown> = {
       name: member.name,
       type: member.type,
       role: member.role,
       skills: member.skills,
-      avatarUrl: member.avatarUrl,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }, { headers: this.authHeaders });
+    };
+    if (member.avatarUrl) requestBody.avatar = member.avatarUrl;
 
-    if (res.ok) {
+    const res = await apiPost<{ id: string }>('/api/members', requestBody, { headers: this.authHeaders });
+
+    if (res.ok && res.data.id) {
+      member.id = res.data.id;
       this.createdResources.push({
         type: 'member',
         id: member.id,
@@ -269,10 +268,9 @@ export class TestDataFactory {
    * 创建 SOP 模板
    */
   async createSOPTemplate(overrides: Partial<SOPTemplateData> = {}): Promise<SOPTemplateData> {
-    const id = overrides.id || generateId('sop');
     const template: SOPTemplateData = {
-      id,
-      name: '[测试] SOP 模板 ' + id.slice(-6),
+      id: '',  // 将由 API 生成
+      name: '[测试] SOP 模板 ' + Date.now().toString(36).slice(-6),
       description: '测试 SOP 模板描述',
       category: 'custom',
       status: 'active',
@@ -285,8 +283,7 @@ export class TestDataFactory {
       ...overrides,
     };
 
-    const res = await apiPost('/api/sop-templates', {
-      id: template.id,
+    const requestBody: Record<string, unknown> = {
       name: template.name,
       description: template.description,
       category: template.category,
@@ -294,11 +291,12 @@ export class TestDataFactory {
       stages: template.stages,
       systemPrompt: template.systemPrompt,
       icon: 'clipboard-list',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }, { headers: this.authHeaders });
+    };
 
-    if (res.ok) {
+    const res = await apiPost<{ id: string }>('/api/sop-templates', requestBody, { headers: this.authHeaders });
+
+    if (res.ok && res.data.id) {
+      template.id = res.data.id;
       this.createdResources.push({
         type: 'sop-template',
         id: template.id,
@@ -315,10 +313,9 @@ export class TestDataFactory {
    * 创建定时任务
    */
   async createSchedule(overrides: Partial<ScheduleData> = {}): Promise<ScheduleData> {
-    const id = overrides.id || generateId('schedule');
     const schedule: ScheduleData = {
-      id,
-      name: '[测试] 定时任务 ' + id.slice(-6),
+      id: '',  // 将由 API 生成
+      name: '[测试] 定时任务 ' + Date.now().toString(36).slice(-6),
       cron: '0 9 * * *', // 每天 9:00
       prompt: '执行测试任务',
       enabled: false,
@@ -326,18 +323,18 @@ export class TestDataFactory {
       ...overrides,
     };
 
-    const res = await apiPost('/api/scheduled-tasks', {
-      id: schedule.id,
+    const requestBody: Record<string, unknown> = {
       name: schedule.name,
       cron: schedule.cron,
       prompt: schedule.prompt,
       enabled: schedule.enabled,
-      memberId: schedule.memberId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }, { headers: this.authHeaders });
+    };
+    if (schedule.memberId) requestBody.memberId = schedule.memberId;
 
-    if (res.ok) {
+    const res = await apiPost<{ id: string }>('/api/scheduled-tasks', requestBody, { headers: this.authHeaders });
+
+    if (res.ok && res.data.id) {
+      schedule.id = res.data.id;
       this.createdResources.push({
         type: 'schedule',
         id: schedule.id,

@@ -148,7 +148,7 @@ export class WorkspaceWatcher {
    */
   private buildIgnorePatterns(patterns: string[]): (string | RegExp)[] {
     const defaultPatterns: (string | RegExp)[] = [
-      /(^|[\/\\])\.[^\/\\]/,     // 隐藏文件（以 . 开头的文件名部分）
+      /(^|[/\\])\.[^/\\]/,     // 隐藏文件（以 . 开头的文件名部分）
       /node_modules/,
       /\.git/,
       /temp/,

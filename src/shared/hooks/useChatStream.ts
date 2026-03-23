@@ -3,8 +3,8 @@
 import { useRef, useCallback } from 'react';
 import { useGatewayStore } from '@/core/gateway/store';
 import type { ChatEventPayload } from '@/types';
-import { normalizeContent } from '@/components/chat/chat-utils';
-import { parseChatActions, hasChatActions } from '@/lib/chat-channel/client';
+import { normalizeContent } from '@/features/chat-panel/chat-utils';
+import { parseChatActions, hasChatActions } from '@/shared/lib/chat-channel/client';
 
 /**
  * 处理 ChatEvent 流式响应的核心 hook

@@ -7,7 +7,7 @@ import {
   Bot, Pencil, FileText,
 } from 'lucide-react';
 import clsx from 'clsx';
-import { Button, Badge } from '@/components/ui';
+import { Button, Badge } from '@/shared/ui';
 import type { CronJob, CronRunLogEntry } from '@/types';
 import { formatSchedule, formatPayload, formatTime, formatDate } from '../hooks/useSchedulePage';
 import ScheduleRunHistory from './ScheduleRunHistory';

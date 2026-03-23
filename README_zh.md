@@ -6,7 +6,7 @@
 
 TeamClaw 是一个开源的人机协作平台，让 AI Agent 像真正的团队成员一样参与项目管理——接任务、写文档、提交交付、汇报进度。
 
-> 当前版本：v1.0.0
+> 当前版本：v1.0.1
 
 ---
 
@@ -206,12 +206,13 @@ OPENCLAW_WORKSPACE_SYNC_INTERVAL=120
 ```
 teamclaw/
 ├── app/                  # Next.js 页面 + API 路由
-├── components/           # UI 组件（30+）
-├── core/mcp/             # MCP 指令解析与执行
-├── db/                   # SQLite Schema + 连接
-├── lib/                  # 核心库（Gateway 客户端、数据服务、事件总线等）
-├── store/                # Zustand Store（18 个，v3.0 新增 auth.store）
-├── hooks/                # 自定义 Hooks
+├── src/
+│   ├── core/            # 核心模块（db, gateway, mcp）
+│   ├── domains/         # 领域模块（16 个领域，含 store + api + mcp）
+│   ├── features/        # 功能模块（10 个功能）
+│   ├── shared/          # 共享模块（lib, components, hooks, ui, layout, editor）
+│   └── server/          # 服务端模块
+├── db/                   # SQLite Schema + 连接（软链接到 src/core/db）
 ├── skills/               # AI Skill 文档与模板
 ├── docs/                 # 项目文档
 └── scripts/              # 部署与工具脚本

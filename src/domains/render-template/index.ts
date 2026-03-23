@@ -5,5 +5,5 @@
 // Store
 export { useRenderTemplateStore } from './store';
 
-// 类型从 db/schema 导出
+// 类型
 export type { RenderTemplate, NewRenderTemplate } from '@/db/schema';

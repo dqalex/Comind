@@ -3,12 +3,12 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useGatewayStore } from '@/core/gateway/store';
-import AppShell from '@/components/AppShell';
-import Header from '@/components/Header';
-import GatewayRequired from '@/components/GatewayRequired';
-import { Button, Input, Badge } from '@/components/ui';
+import AppShell from '@/shared/layout/AppShell';
+import Header from '@/shared/layout/Header';
+import GatewayRequired from '@/shared/layout/GatewayRequired';
+import { Button, Input, Badge } from '@/shared/ui';
 import type { Skill } from '@/types';
-import { useFilteredList } from '@/hooks/useFilteredList';
+import { useFilteredList } from '@/shared/hooks/useFilteredList';
 import {
   Zap, ToggleLeft, ToggleRight, Search, Download, AlertTriangle,
   CheckCircle2, XCircle, Wifi, ChevronDown, ChevronRight, RefreshCw,

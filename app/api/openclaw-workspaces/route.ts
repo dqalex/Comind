@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // 标记为动态路由，避免静态生成错误
 export const dynamic = 'force-dynamic';
 
-import { openclawWorkspaces, tasks, documents } from '@/db/schema';
+import { openclawWorkspaces } from '@/db/schema';
 import { generateId } from '@/lib/id';
 import { eq } from 'drizzle-orm';
 import { writeFile, mkdir, readFile } from 'fs/promises';
@@ -17,7 +17,7 @@ import { withAuth, withAdminAuth } from '@/lib/with-auth';
 /**
  * GET /api/openclaw-workspaces
  * 获取所有 workspace 列表
- * v3.0: 需要登录才能访问（只读）
+ * v0.9.8: 需要登录才能访问（只读）
  */
 export const GET = withAuth(async (request: NextRequest) => {
   try {
@@ -44,7 +44,7 @@ export const GET = withAuth(async (request: NextRequest) => {
 /**
  * POST /api/openclaw-workspaces
  * 创建新的 workspace
- * v3.0: Admin Only - 只有管理员可以创建 Workspace
+ * v0.9.8: Admin Only - 只有管理员可以创建 Workspace
  */
 export const POST = withAdminAuth(async (request: NextRequest) => {
   try {

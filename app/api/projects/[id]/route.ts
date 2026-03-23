@@ -25,7 +25,7 @@ async function findProject(id: string) {
 }
 
 // GET /api/projects/[id] - 获取单个项目
-// v3.0: 项目权限校验 - 只能访问有权限的项目
+// v0.9.8: 项目权限校验 - 只能访问有权限的项目
 export const GET = withAuth(async (
   request: NextRequest,
   auth: AuthResult,
@@ -45,13 +45,13 @@ export const GET = withAuth(async (
     }
 
     return NextResponse.json(project);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch project' }, { status: 500 });
   }
 });
 
 // PUT /api/projects/[id] - 更新项目
-// v3.0: 项目权限校验 - 只有 owner/admin/member 可编辑
+// v0.9.8: 项目权限校验 - 只有 owner/admin/member 可编辑
 export const PUT = withAuth(async (
   request: NextRequest,
   auth: AuthResult,
@@ -100,13 +100,13 @@ export const PUT = withAuth(async (
     // 项目更新后通知前端刷新
     eventBus.emit({ type: 'project_update', resourceId: resolvedId });
     return NextResponse.json(updated);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to update project' }, { status: 500 });
   }
 });
 
 // DELETE /api/projects/[id] - 删除项目（级联清理关联数据）
-// v3.0: 项目权限校验 - 只有 owner/admin 可删除
+// v0.9.8: 项目权限校验 - 只有 owner/admin 可删除
 export const DELETE = withAuth(async (
   request: NextRequest,
   auth: AuthResult,
@@ -212,8 +212,8 @@ export const DELETE = withAuth(async (
     eventBus.emit({ type: 'project_update', resourceId: resolvedId });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('[DELETE /api/projects]', error);
+  } catch (err) {
+    console.error('[DELETE /api/projects]', err);
     return NextResponse.json({ error: 'Failed to delete project' }, { status: 500 });
   }
 });

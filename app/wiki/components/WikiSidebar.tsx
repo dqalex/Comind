@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import { Button, Input } from '@/components/ui';
+import { Button, Input } from '@/shared/ui';
 import {
   FileText, Plus, Search, ExternalLink, Globe,
   ChevronDown, ChevronRight,

@@ -21,7 +21,7 @@ import {
 } from '@/lib/api-route-factory';
 
 // GET /api/tasks - 获取所有任务（支持 source 过滤 + 分页）
-// v3.0: 需要登录才能访问，任务权限继承项目权限
+// v0.9.8: 需要登录才能访问，任务权限继承项目权限
 export const GET = withAuth(async (request: NextRequest, auth: AuthResult) => {
   const searchParams = request.nextUrl.searchParams;
   const projectId = searchParams.get('projectId');
@@ -38,7 +38,7 @@ export const GET = withAuth(async (request: NextRequest, auth: AuthResult) => {
     // 构建查询条件
     const conditions = [];
     
-    // v3.0: 如果指定了 projectId，需要检查权限
+    // v0.9.8: 如果指定了 projectId，需要检查权限
     if (projectId) {
       // 校验 projectId 格式
       if (!isValidId(projectId)) {
@@ -110,7 +110,7 @@ export const GET = withAuth(async (request: NextRequest, auth: AuthResult) => {
 });
 
 // POST /api/tasks - 创建任务
-// v3.0: 需要登录才能创建，如果指定项目需要有编辑权限
+// v0.9.8: 需要登录才能创建，如果指定项目需要有编辑权限
 export const POST = withAuth(async (request: NextRequest, auth: AuthResult) => {
   const requestId = request.headers.get('x-request-id') || generateId();
   
@@ -125,7 +125,7 @@ export const POST = withAuth(async (request: NextRequest, auth: AuthResult) => {
     }
     const validatedData = validationResult.data;
 
-    // v3.0: 如果指定了 projectId，检查用户是否有编辑权限
+    // v0.9.8: 如果指定了 projectId，检查用户是否有编辑权限
     if (validatedData.projectId) {
       if (!isValidId(validatedData.projectId)) {
         return errorResponse(ApiErrors.badRequest('Invalid projectId format'), requestId);

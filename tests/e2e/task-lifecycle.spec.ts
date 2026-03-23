@@ -25,6 +25,10 @@ test.describe('任务生命周期', () => {
     const page = await context.newPage();
     const auth = new AuthHelper(page);
 
+    // 先导航到首页，确保 window.location.origin 有效
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
     const loginSuccess = await auth.login(TEST_USER.email, TEST_USER.password);
     if (!loginSuccess) {
       await auth.register(TEST_USER.email, TEST_USER.password, TEST_USER.name);
@@ -241,8 +245,8 @@ test.describe('任务生命周期', () => {
     const context = await browser.newContext();
     const { page } = await setupUser(context);
 
-    // 创建不同优先级的任务
-    const priorities = ['low', 'medium', 'high', 'urgent'];
+    // 创建不同优先级的任务（API 只接受 low/medium/high）
+    const priorities = ['low', 'medium', 'high'];
     const tasks = [];
 
     for (const priority of priorities) {
@@ -252,8 +256,8 @@ test.describe('任务生命周期', () => {
     }
 
     // 验证可以更新优先级
-    const updated = await updateTask(page, tasks[0].id, { priority: 'urgent' });
-    expect(updated.priority).toBe('urgent');
+    const updated = await updateTask(page, tasks[0].id, { priority: 'high' });
+    expect(updated.priority).toBe('high');
 
     // 清理
     for (const task of tasks) {

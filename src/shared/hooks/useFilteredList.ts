@@ -66,7 +66,7 @@ export interface UseFilteredListReturn<T> {
 // Hook 实现
 // ============================================================
 
-export function useFilteredList<T extends Record<string, unknown>>(
+export function useFilteredList<T extends object>(
   options: UseFilteredListOptions<T>
 ): UseFilteredListReturn<T> {
   const { items, config = {}, predicate } = options;

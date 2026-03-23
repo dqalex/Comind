@@ -1,8 +1,8 @@
 'use client';
 
-import { Button, Input } from '@/components/ui';
+import { Button, Input } from '@/shared/ui';
 import { Shield } from 'lucide-react';
-import { useSecurityCode } from '@/hooks/useSecurityCode';
+import { useSecurityCode } from '@/shared/hooks/useSecurityCode';
 
 interface SecurityCodeDialogProps {
   isOpen: boolean;

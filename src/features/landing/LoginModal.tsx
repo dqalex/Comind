@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { X, Loader2, Eye, EyeOff } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { TeamClawLogo } from '@/components/Logo';
+import { Button } from '@/shared/ui/button';
+import { Input } from '@/shared/ui/input';
+import { TeamClawLogo } from '@/shared/layout/Logo';
 import { useAuthStore } from '@/domains';
 import { useRouter } from 'next/navigation';
 

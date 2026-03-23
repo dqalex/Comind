@@ -1,12 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useCallback } from 'react';
-import { useDataInitializer } from '@/domains';
+import { useDataInitializer } from '@/shared/hooks';
 import {
-  useOpenClawStatusStore,
   useTaskStore,
   useDeliveryStore,
-  useScheduledTaskStore,
   useDocumentStore,
   useMemberStore,
   useProjectStore,
@@ -16,13 +14,16 @@ import {
   useSkillStore,
   useCommentStore,
 } from '@/domains';
-import { useGatewayStore } from '@/core/gateway/store';
+import { useScheduledTaskStore } from '@/domains/schedule';
+import { useGatewayStore, useOpenClawStatusStore } from '@/core/gateway/store';
 import { useChatStore } from '@/domains/chat';
-import { sseHandlerRegistry, dataLogger } from '@/lib';
+import { sseHandlerRegistry } from '@/shared/lib/sse-events';
+import { storeEvents } from '@/shared/lib/store-events';
+import { dataLogger } from '@/shared/lib/logger';
 import type { ChatEventPayload } from '@/types';
-import { useSSEConnection } from '@/hooks/useSSEConnection';
-import { useGatewaySync } from '@/hooks/useGatewaySync';
-import { useStaleStatusCheck } from '@/hooks/useStaleStatusCheck';
+import { useSSEConnection } from '@/shared/hooks/useSSEConnection';
+import { useGatewaySync } from '@/shared/hooks/useGatewaySync';
+import { useStaleStatusCheck } from '@/shared/hooks/useStaleStatusCheck';
 
 /**
  * 数据初始化 Provider
@@ -34,18 +35,30 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const { initialize, hydrated } = useDataInitializer();
   const initialized = useRef(false);
   const lastSyncAt = useRef(0);
+  const lastVisibilityChange = useRef(0);
+
+  // 同步频率限制：30 秒内避免重复全量同步
+  const SYNC_THROTTLE_MS = 30 * 1000;
+  // visibility change 节流：5 秒内避免重复触发
+  const VISIBILITY_THROTTLE_MS = 5 * 1000;
 
   // 使用提取的 hooks
-  const { connect: connectSSE, disconnect: disconnectSSE } = useSSEConnection();
+  const { connect: connectSSE, disconnect: disconnectSSE, isConnected } = useSSEConnection();
   const { syncGateway } = useGatewaySync();
   useStaleStatusCheck({ enabled: hydrated });
 
   const fetchOpenClawStatus = useOpenClawStatusStore((s) => s.fetchStatus);
   const fetchTasks = useTaskStore((s) => s.fetchTasks);
+  const updateTask = useTaskStore((s) => s.updateTask);
+  const deleteTask = useTaskStore((s) => s.deleteTask);
   const fetchCommentsByTask = useCommentStore((s) => s.fetchCommentsByTask);
   const fetchDeliveries = useDeliveryStore((s) => s.fetchDeliveries);
+  const updateDelivery = useDeliveryStore((s) => s.updateDelivery);
+  const deleteDelivery = useDeliveryStore((s) => s.deleteDelivery);
   const fetchScheduledTasks = useScheduledTaskStore((s) => s.fetchTasks);
   const fetchDocuments = useDocumentStore((s) => s.fetchDocuments);
+  const updateDocument = useDocumentStore((s) => s.updateDocument);
+  const deleteDocument = useDocumentStore((s) => s.deleteDocument);
   const fetchMembers = useMemberStore((s) => s.fetchMembers);
   const fetchChatSessions = useChatStore((s) => s.fetchSessions);
   const fetchProjects = useProjectStore((s) => s.fetchProjects);
@@ -122,30 +135,113 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       sop_confirm_request: () => { fetchTasks(); },
       skill_update: () => fetchSkills(),
       
-      // v3.0: 增量更新事件（触发全量刷新作为兜底，后续优化为增量合并）
+      // v3.0: 增量更新事件（优先使用增量合并，失败时回退到全量刷新）
       'task:incremental': (data?: unknown) => {
-        // TODO: 实现增量合并到 Store
-        // 当前：触发全量刷新作为兜底
-        fetchTasks();
-        dataLogger.debug('DataProvider', 'task:incremental', data);
+        const update = data as { id?: string; changes?: Record<string, unknown>; operation?: string } | undefined;
+        if (update?.id && update.changes) {
+          // 增量更新：只更新变更的字段
+          updateTask(update.id, update.changes);
+          dataLogger.debug('DataProvider', 'task:incremental (merged)', data);
+        } else if (update?.operation === 'delete' && update.id) {
+          // 删除操作
+          deleteTask(update.id);
+          dataLogger.debug('DataProvider', 'task:incremental (deleted)', data);
+        } else {
+          // 回退到全量刷新
+          fetchTasks();
+          dataLogger.debug('DataProvider', 'task:incremental (full refresh)', data);
+        }
       },
       'document:incremental': (data?: unknown) => {
-        fetchDocuments();
-        dataLogger.debug('DataProvider', 'document:incremental', data);
+        const update = data as { id?: string; changes?: Record<string, unknown>; operation?: string } | undefined;
+        if (update?.id && update.changes) {
+          updateDocument(update.id, update.changes);
+          dataLogger.debug('DataProvider', 'document:incremental (merged)', data);
+        } else if (update?.operation === 'delete' && update.id) {
+          deleteDocument(update.id);
+          dataLogger.debug('DataProvider', 'document:incremental (deleted)', data);
+        } else {
+          fetchDocuments();
+          dataLogger.debug('DataProvider', 'document:incremental (full refresh)', data);
+        }
       },
       'delivery:incremental': (data?: unknown) => {
-        fetchDeliveries();
-        dataLogger.debug('DataProvider', 'delivery:incremental', data);
+        const update = data as { id?: string; changes?: Record<string, unknown>; operation?: string } | undefined;
+        if (update?.id && update.changes) {
+          updateDelivery(update.id, update.changes);
+          dataLogger.debug('DataProvider', 'delivery:incremental (merged)', data);
+        } else if (update?.operation === 'delete' && update.id) {
+          deleteDelivery(update.id);
+          dataLogger.debug('DataProvider', 'delivery:incremental (deleted)', data);
+        } else {
+          fetchDeliveries();
+          dataLogger.debug('DataProvider', 'delivery:incremental (full refresh)', data);
+        }
       },
     });
 
     return () => sseHandlerRegistry.clear();
-  }, [fetchOpenClawStatus, fetchTasks, fetchProjects, fetchDeliveries, fetchScheduledTasks, fetchDocuments, fetchMembers, fetchMilestones, fetchChatSessions, refreshAgents, refreshSessions, refreshCronJobs, refreshSkills, refreshHealth, loadConfig, syncServerProxyStatus, dispatchChatEvent, fetchSOPTemplates, fetchRenderTemplates, fetchSkills, fetchCommentsByTask]);
+  }, [fetchOpenClawStatus, fetchTasks, updateTask, deleteTask, fetchProjects, fetchDeliveries, updateDelivery, deleteDelivery, fetchScheduledTasks, fetchDocuments, updateDocument, deleteDocument, fetchMembers, fetchMilestones, fetchChatSessions, refreshAgents, refreshSessions, refreshCronJobs, refreshSkills, refreshHealth, loadConfig, syncServerProxyStatus, dispatchChatEvent, fetchSOPTemplates, fetchRenderTemplates, fetchSkills, fetchCommentsByTask]);
+
+  // 注册 Store 事件处理器（用于跨 Store 解耦通信）
+  useEffect(() => {
+    const unsubscribers: Array<() => void> = [];
+
+    // data:refresh 事件处理 - 响应式数据刷新请求
+    unsubscribers.push(
+      storeEvents.on('data:refresh', (payload) => {
+        const { type, reason } = payload;
+        dataLogger.debug('DataProvider', `storeEvents data:refresh (${type})`, { reason });
+        switch (type) {
+          case 'tasks':
+            fetchTasks();
+            break;
+          case 'documents':
+            fetchDocuments();
+            break;
+          case 'members':
+            fetchMembers();
+            break;
+          case 'projects':
+            fetchProjects();
+            break;
+          case 'deliveries':
+            fetchDeliveries();
+            break;
+          case 'milestones':
+            fetchMilestones();
+            break;
+          case 'sopTemplates':
+            fetchSOPTemplates();
+            break;
+          case 'renderTemplates':
+            fetchRenderTemplates();
+            break;
+          case 'scheduledTasks':
+            fetchScheduledTasks();
+            break;
+          case 'status':
+            fetchOpenClawStatus();
+            break;
+          case 'chatSessions':
+            fetchChatSessions();
+            break;
+          default:
+            console.warn(`[DataProvider] Unknown data:refresh type: ${type}`);
+        }
+      })
+    );
+
+    return () => {
+      unsubscribers.forEach((unsub) => unsub());
+    };
+  }, [fetchTasks, fetchDocuments, fetchMembers, fetchProjects, fetchDeliveries, fetchMilestones, fetchSOPTemplates, fetchRenderTemplates, fetchScheduledTasks, fetchOpenClawStatus, fetchChatSessions]);
 
   const sync = useCallback(() => {
     const now = Date.now();
-    if (now - lastSyncAt.current < 3000) return;
+    if (now - lastSyncAt.current < SYNC_THROTTLE_MS) return;
     lastSyncAt.current = now;
+    dataLogger.debug('DataProvider', 'sync triggered (throttled)', { lastSync: lastSyncAt.current });
     initialize();
   }, [initialize]);
 
@@ -173,13 +269,29 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && initialized.current) {
+        const now = Date.now();
+        // 节流：避免频繁触发
+        if (now - lastVisibilityChange.current < VISIBILITY_THROTTLE_MS) {
+          dataLogger.debug('DataProvider', 'visibility change throttled');
+          return;
+        }
+        lastVisibilityChange.current = now;
         sync();
-        connectSSE();
+        // 仅在未连接时尝试重连，避免重复连接开销
+        if (!isConnected()) {
+          dataLogger.debug('DataProvider', 'SSE reconnecting after visibility change');
+          connectSSE();
+        }
       }
     };
 
     const handleFocus = () => {
       if (initialized.current) {
+        const now = Date.now();
+        if (now - lastSyncAt.current < SYNC_THROTTLE_MS) {
+          dataLogger.debug('DataProvider', 'focus sync throttled');
+          return;
+        }
         sync();
       }
     };
@@ -204,3 +316,5 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   return <>{children}</>;
 }
+
+export default DataProvider;

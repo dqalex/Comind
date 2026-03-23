@@ -8,11 +8,11 @@ export * from './ui';
 // Hooks
 export * from './hooks';
 
-// 工具库
+// 工具库（排除与 services 重复的类型）
 export * from './lib';
 
-// 服务
-export * from './services';
+// 服务（暂时不导出，避免与 lib 中的类型重复）
+// export * from './services';
 
 // 类型
 export * from './types';

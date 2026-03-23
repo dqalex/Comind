@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { Search, FileText, CheckSquare, Folder, User, Calendar, Milestone, ArrowRight } from 'lucide-react';
 import clsx from 'clsx';
-import { Input } from '@/components/ui';
+import { Input } from '@/shared/ui';
 import { useTaskStore, useProjectStore, useDocumentStore, useMemberStore, useMilestoneStore, useScheduledTaskStore } from '@/domains';
-import { useClickOutside } from '@/hooks/useClickOutside';
+import { useClickOutside } from '@/shared/hooks/useClickOutside';
 
 interface SearchResult {
   type: 'task' | 'project' | 'document' | 'member' | 'milestone' | 'scheduledTask';

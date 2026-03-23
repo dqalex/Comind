@@ -120,7 +120,7 @@ export async function POST(request: Request) {
     // 返回用户信息（不包含敏感字段）
     // ============================================================
     
-    const { passwordHash, lockedUntil, ...safeUser } = user;
+    const { passwordHash: _passwordHash, lockedUntil: _lockedUntil, ...safeUser } = user;
     
     return NextResponse.json({
       message: 'Login successful',

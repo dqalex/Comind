@@ -8,7 +8,22 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { AuthHelper } from '@/tests/helpers/auth-helper';
 import { TestDataFactory } from '@/tests/helpers/test-fixture';
-import { apiPost, getBaseUrl } from '@/tests/helpers/api-client';
+import { apiPost, getBaseUrl, ApiResponse } from '@/tests/helpers/api-client';
+
+// MCP 响应类型
+interface McpResponse<T = unknown> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
+// 任务数据类型
+interface TaskData {
+  id: string;
+  title: string;
+  status: string;
+  description?: string;
+}
 
 describe('REQ-012: 渐进式上下文设计', () => {
   const BASE_URL = getBaseUrl();
@@ -43,7 +58,7 @@ describe('REQ-012: 渐进式上下文设计', () => {
 
   describe('MCP get_task 分层参数', () => {
     it('无 detail 参数时应返回 L1 索引（精简数据）', async () => {
-      const res = await apiPost('/api/mcp', {
+      const res = await apiPost<McpResponse<TaskData>>('/api/mcp', {
         tool: 'get_task',
         parameters: { task_id: testTaskId }
       }, { headers: auth.getAuthHeaders() });
@@ -53,7 +68,7 @@ describe('REQ-012: 渐进式上下文设计', () => {
       expect(data.success).toBe(true);
       
       // L1 索引应仅包含核心字段
-      const task = data.data;
+      const task = data.data as TaskData;
       expect(task).toHaveProperty('id');
       expect(task).toHaveProperty('title');
       expect(task).toHaveProperty('status');
@@ -62,7 +77,7 @@ describe('REQ-012: 渐进式上下文设计', () => {
     });
 
     it('detail=true 时应返回 L2 完整详情', async () => {
-      const res = await apiPost('/api/mcp', {
+      const res = await apiPost<McpResponse<TaskData>>('/api/mcp', {
         tool: 'get_task',
         parameters: { task_id: testTaskId, detail: true }
       }, { headers: auth.getAuthHeaders() });
@@ -72,7 +87,7 @@ describe('REQ-012: 渐进式上下文设计', () => {
       expect(data.success).toBe(true);
       
       // L2 详情应包含完整字段
-      const task = data.data;
+      const task = data.data as TaskData;
       expect(task).toHaveProperty('id');
       expect(task).toHaveProperty('title');
       expect(task).toHaveProperty('description');
@@ -82,7 +97,7 @@ describe('REQ-012: 渐进式上下文设计', () => {
 
   describe('MCP list_my_tasks 分层参数', () => {
     it('无 detail 参数时应返回 L1 索引列表', async () => {
-      const res = await apiPost('/api/mcp', {
+      const res = await apiPost<McpResponse<TaskData[]>>('/api/mcp', {
         tool: 'list_my_tasks',
         parameters: { status: 'all', limit: 5 }
       }, { headers: auth.getAuthHeaders() });
@@ -93,7 +108,7 @@ describe('REQ-012: 渐进式上下文设计', () => {
       
       // L1 列表每个任务应仅包含核心字段
       if (data.data && data.data.length > 0) {
-        const task = data.data[0];
+        const task = data.data[0] as TaskData;
         expect(task).toHaveProperty('id');
         expect(task).toHaveProperty('title');
         expect(task).toHaveProperty('status');
@@ -103,7 +118,7 @@ describe('REQ-012: 渐进式上下文设计', () => {
     });
 
     it('detail=true 时应返回 L2 完整列表', async () => {
-      const res = await apiPost('/api/mcp', {
+      const res = await apiPost<McpResponse<TaskData[]>>('/api/mcp', {
         tool: 'list_my_tasks',
         parameters: { status: 'all', limit: 5, detail: true }
       }, { headers: auth.getAuthHeaders() });
@@ -114,7 +129,7 @@ describe('REQ-012: 渐进式上下文设计', () => {
       
       // L2 列表每个任务应包含完整字段
       if (data.data && data.data.length > 0) {
-        const task = data.data[0];
+        const task = data.data[0] as TaskData;
         expect(task).toHaveProperty('id');
         expect(task).toHaveProperty('title');
         expect(task).toHaveProperty('description');
@@ -127,7 +142,7 @@ describe('REQ-012: 渐进式上下文设计', () => {
 
   describe('对话信道 L1 推送格式', () => {
     it('任务推送应包含可用上下文列表', async () => {
-      const res = await apiPost('/api/task-push', {
+      const res = await apiPost<McpResponse<{ message?: string }>>('/api/task-push', {
         taskId: testTaskId,
         sessionKey: 'test-session-' + Date.now()
       }, { headers: auth.getAuthHeaders() });
@@ -170,7 +185,7 @@ describe('REQ-012: 渐进式上下文设计', () => {
 
   describe('MCP get_document 分层参数', () => {
     it('无 detail 参数时应返回 L1 索引', async () => {
-      const res = await apiPost('/api/mcp', {
+      const res = await apiPost<McpResponse<{ id: string; title: string; content?: string }>>('/api/mcp', {
         tool: 'get_document',
         parameters: { document_id: testDocId }
       }, { headers: auth.getAuthHeaders() });
@@ -178,7 +193,7 @@ describe('REQ-012: 渐进式上下文设计', () => {
       expect(res.ok).toBe(true);
       const data = res.data;
       
-      if (data.success) {
+      if (data.success && data.data) {
         // L1 索引应仅包含元信息
         const doc = data.data;
         expect(doc).toHaveProperty('id');
@@ -189,7 +204,7 @@ describe('REQ-012: 渐进式上下文设计', () => {
     });
 
     it('detail=true 时应返回 L2 完整内容', async () => {
-      const res = await apiPost('/api/mcp', {
+      const res = await apiPost<McpResponse<{ id: string; title: string; content?: string }>>('/api/mcp', {
         tool: 'get_document',
         parameters: { document_id: testDocId, detail: true }
       }, { headers: auth.getAuthHeaders() });
@@ -197,7 +212,7 @@ describe('REQ-012: 渐进式上下文设计', () => {
       expect(res.ok).toBe(true);
       const data = res.data;
       
-      if (data.success) {
+      if (data.success && data.data) {
         const doc = data.data;
         expect(doc).toHaveProperty('id');
         expect(doc).toHaveProperty('title');

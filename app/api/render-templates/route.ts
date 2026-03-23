@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/render-templates - 创建新渲染模板
-// v3.0: 需要登录才能创建
+// v0.9.8: 需要登录才能创建
 export const POST = withAuth(async (request: NextRequest) => {
   try {
     const body = await request.json();

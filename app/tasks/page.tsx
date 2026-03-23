@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import {
@@ -10,12 +11,14 @@ import {
   Home,
   FolderSync,
 } from 'lucide-react';
-import { Button, Input, Select } from '@/components/ui';
-import ConfirmDialog from '@/components/ConfirmDialog';
-import AppShell from '@/components/AppShell';
-import Header from '@/components/Header';
-import TaskDrawer from '@/components/TaskDrawer';
-import MilestoneManager from '@/components/MilestoneManager';
+import { Button, Input, Select } from '@/shared/ui';
+import ConfirmDialog from '@/shared/layout/ConfirmDialog';
+import AppShell from '@/shared/layout/AppShell';
+import Header from '@/shared/layout/Header';
+import MilestoneManager from '@/features/milestone-tracker/MilestoneManager';
+
+// 懒加载大型抽屉组件（仅在打开任务详情时加载）
+const TaskDrawer = dynamic(() => import('@/features/task-board/TaskDrawer'), { ssr: false });
 import TaskCard from './components/TaskCard';
 import TaskBoardView from './components/TaskBoardView';
 import TaskListView from './components/TaskListView';

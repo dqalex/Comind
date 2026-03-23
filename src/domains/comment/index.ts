@@ -5,5 +5,5 @@
 // Store
 export { useCommentStore } from './store';
 
-// 类型从 db/schema 导出
+// 类型
 export type { Comment, NewComment } from '@/db/schema';

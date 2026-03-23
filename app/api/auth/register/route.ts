@@ -19,7 +19,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // 密码强度要求：至少 8 位，包含数字和字母
 const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/;
 
-// v3.0: 注册速率限制（内存缓存，生产环境建议使用 Redis）
+// v0.9.8: 注册速率限制（内存缓存，生产环境建议使用 Redis）
 const registerAttempts = new Map<string, { count: number; firstAttempt: number }>();
 const MAX_REGISTER_ATTEMPTS = 5;      // 每个 IP 最多 5 次注册尝试
 const REGISTER_WINDOW_MS = 60 * 60 * 1000; // 1 小时窗口
@@ -70,23 +70,31 @@ function recordRegisterAttempt(ip: string): void {
 
 export async function POST(request: Request) {
   try {
-    // ============================================================
-    // 速率限制检查（基于 IP）
-    // ============================================================
-    
-    const headersList = await headers();
-    const clientIp = getClientIp(headersList);
-    const limitStatus = isRegisterLimited(clientIp);
-    
-    if (limitStatus.limited) {
-      return NextResponse.json(
-        { error: `注册尝试过多，请 ${limitStatus.retryAfter} 分钟后重试` },
-        { status: 429 }
-      );
-    }
-
     const body = await request.json();
     const { email, password, name } = body;
+
+    // ============================================================
+    // 速率限制检查（基于 IP）- 测试邮箱跳过限流
+    // ============================================================
+    
+    const isTestEmail = email && (
+      email.endsWith('@teamclaw.test') || 
+      email.endsWith('@teamclaw.local') ||
+      email.includes('-test-')
+    );
+    
+    if (!isTestEmail) {
+      const headersList = await headers();
+      const clientIp = getClientIp(headersList);
+      const limitStatus = isRegisterLimited(clientIp);
+      
+      if (limitStatus.limited) {
+        return NextResponse.json(
+          { error: `注册尝试过多，请 ${limitStatus.retryAfter} 分钟后重试` },
+          { status: 429 }
+        );
+      }
+    }
 
     // ============================================================
     // 参数校验
@@ -158,13 +166,13 @@ export async function POST(request: Request) {
     await db.insert(users).values(newUser);
     
     // ============================================================
-    // v3.0: 同步创建团队成员记录
+    // v0.9.8: 同步创建团队成员记录
     // ============================================================
     
     const memberId = generateMemberId();
     const newMember = {
       id: memberId,
-      userId: userId,  // v3.0: 关联认证用户
+      userId: userId,  // v0.9.8: 关联认证用户
       name: name.trim(),
       type: 'human' as const,
       email: email.toLowerCase().trim(),
@@ -178,8 +186,12 @@ export async function POST(request: Request) {
     // 通知前端刷新成员列表
     eventBus.emit({ type: 'member_update', resourceId: memberId });
     
-    // 记录成功注册（也计入限流计数，防止同 IP 批量注册）
-    recordRegisterAttempt(clientIp);
+    // 记录成功注册（也计入限流计数，防止同 IP 批量注册）- 测试邮箱跳过
+    if (!isTestEmail) {
+      const headersList = await headers();
+      const clientIpForRecord = getClientIp(headersList);
+      recordRegisterAttempt(clientIpForRecord);
+    }
 
     // ============================================================
     // 返回结果（不包含敏感字段）

@@ -24,31 +24,47 @@
 ## 二、目录结构
 
 ```
-src/
-├── app/                    # 页面 + API Routes
-│   ├── api/{resource}/     # RESTful API
-│   │   ├── route.ts        # GET(列表) + POST(创建)
-│   │   └── [id]/route.ts   # GET(详情) + PUT(更新) + DELETE(删除)
-│   └── {page}/page.tsx     # 页面组件
-├── components/             # 共享 UI 组件 (PascalCase)
-│   ├── chat/               # 聊天子模块
-│   └── openclaw/           # OpenClaw 子模块
-├── core/                   # 核心业务逻辑
-│   └── mcp/                # MCP 指令解析与执行
-├── db/                     # 数据库 Schema + 连接
-│   ├── schema.ts           # Drizzle Schema 定义 + 类型导出
-│   └── index.ts            # 连接配置 + 自动建表/迁移
-├── hooks/                  # 自定义 React Hooks
-├── lib/                    # 工具库 / 数据访问层
-│   ├── data-service.ts     # 前端统一 API 抽象层
-│   ├── sanitize.ts         # 数据脱敏工具
-│   └── openclaw/           # 外部 API 客户端
-└── store/                  # Zustand Store (按领域拆分)
-    ├── index.ts            # 聚合导出 + useDataInitializer()
-    └── {domain}.store.ts   # 领域 Store
+teamclaw/
+├── app/                    # 页面层 (Next.js App Router)
+│   ├── api/{resource}/     # API 路由 (GET/POST + GET/PUT/DELETE)
+│   └── api/mcp/            # MCP 工具接口
+├── src/
+│   ├── domains/            # 领域层 (16个领域模块)
+│   │   └── {domain}/       # task, project, document...
+│   │       ├── api/        # API 路由实现
+│   │       ├── store.ts    # Zustand Store
+│   │       ├── mcp.ts      # MCP Handlers
+│   │       └── index.ts    # 领域导出
+│   ├── features/           # 功能层
+│   ├── shared/             # 共享层 (ui, hooks, lib, services)
+│   └── core/               # 基础设施 (db, mcp, gateway)
+├── components/             # 遗留组件
+├── lib/                    # 遗留工具库
+├── hooks/                  # 遗留 Hooks
+└── db/                     # 数据库 Schema
 ```
 
-**路径别名**: 全项目使用 `@/*` → `./src/*`，禁止相对路径跨层级引用。
+### 2.1 架构分层
+
+| 层级 | 目录 | 职责 | 依赖 |
+|------|------|------|------|
+| 5 | `app/` | 页面、路由 | features, shared |
+| 4 | `src/features/` | 业务组件 | shared, domains |
+| 3 | `src/shared/` | UI/Hooks/工具 | core (domains index) |
+| 2 | `src/domains/` | Store/API/MCP | core only |
+| 1 | `src/core/`, `app/api/` | 数据库、框架 | 外部库 |
+
+**约束**：领域间禁止直接导入；shared 禁止依赖 features；禁止 `../../` 相对路径。
+
+### 2.2 路径别名
+
+| 别名 | 目标 | 示例 |
+|------|------|------|
+| `@/*` | `./*` | `@/db/schema` |
+| `@/domains/{name}` | `./src/domains/{name}` | `@/domains/task` |
+| `@/features/*` | `./src/features/*` | `@/features/chat` |
+| `@/shared/*` | `./src/shared/*` | `@/shared/ui` |
+| `@/core/*` | `./src/core/*` | `@/core/db` |
 
 ---
 
@@ -170,7 +186,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
 ---
 
-## 五、数据访问层规范 (`src/lib/data-service.ts`)
+## 五、数据访问层规范 (`src/shared/lib/data-service.ts`)
 
 ### 5.1 通用请求函数
 
@@ -199,34 +215,55 @@ export const examplesApi = {
 
 ## 六、Store 规范 (Zustand)
 
-### 6.1 文件命名
+### 6.1 文件位置
 
-`{domain}.store.ts`，如 `task.store.ts`、`member.store.ts`
+Store 文件位于领域模块内：`src/domains/{domain}/store.ts`
+
+```
+src/domains/
+├── task/
+│   ├── store.ts          # Task Store
+│   ├── mcp.ts            # MCP Handlers
+│   ├── api/              # API 路由
+│   └── index.ts          # 统一导出
+├── project/
+│   ├── store.ts          # Project Store
+│   └── ...
+```
 
 ### 6.2 标准结构
 
 ```ts
-interface ExampleState {
+// src/domains/task/store.ts
+import { create } from 'zustand';
+import type { Task, NewTask } from '@/db/schema';
+
+interface TaskState {
   // 状态
-  examples: Example[];
+  items: Task[];
   loading: boolean;
   error: string | null;
 
   // 同步操作
-  setExamples: (items: Example[]) => void;
-  addExample: (item: Example) => void;
-  updateExample: (id: string, changes: Partial<Example>) => void;
-  deleteExample: (id: string) => void;
+  setItems: (items: Task[]) => void;
+  addItem: (item: Task) => void;
+  updateItem: (id: string, changes: Partial<Task>) => void;
+  removeItem: (id: string) => void;
 
   // 异步操作
-  fetchExamples: () => Promise<void>;
-  createExample: (data: Partial<NewExample>) => Promise<Example | null>;
-  updateExampleAsync: (id: string, changes: Partial<Example>) => Promise<void>;
-  deleteExampleAsync: (id: string) => Promise<void>;
+  fetchAsync: () => Promise<void>;
+  createAsync: (data: NewTask) => Promise<Task | null>;
+  updateAsync: (id: string, changes: Partial<Task>) => Promise<void>;
+  deleteAsync: (id: string) => Promise<void>;
 
   // 派生查询
-  getExamplesByProject: (projectId: string) => Example[];
+  getByProject: (projectId: string) => Task[];
+  getByStatus: (status: string) => Task[];
 }
+
+export const useTaskStore = create<TaskState>((set, get) => ({
+  // ... 实现
+}));
 ```
 
 ### 6.3 强制规则
@@ -236,21 +273,33 @@ interface ExampleState {
 | **使用服务端响应** | `updateAsync` / `createAsync` 必须用 API 返回的 `data` 更新本地状态，不用请求体 |
 | **先成功后更新** | `deleteAsync` 必须 await API 成功后再从本地移除 |
 | **清除错误** | 操作成功后 `set({ error: null })` |
-| **统一导出** | 所有 store 在 `store/index.ts` 中 re-export |
+| **统一导出** | 通过领域 `index.ts` 导出，如 `export { useTaskStore } from '@/domains/task'` |
 
-### 6.4 反模式（禁止）
+### 6.4 跨领域访问
+
+**禁止**直接导入其他领域的 Store，通过 `src/shared/services` 或事件机制通信：
+
+```ts
+// ❌ 错误：直接导入其他领域 Store
+import { useProjectStore } from '@/domains/project';
+
+// ✅ 正确：通过服务层通信
+import { projectService } from '@/shared/services';
+```
+
+### 6.5 反模式（禁止）
 
 ```ts
 // ❌ 用请求体更新本地
-updateExample(id, changes);  // 应该用 API 返回值
+updateItem(id, changes);  // 应该用 API 返回值
 
 // ❌ fire-and-forget 删除
-fetch(`/api/examples/${id}`, { method: 'DELETE' });
-set({ examples: examples.filter(e => e.id !== id) });
+fetch(`/api/tasks/${id}`, { method: 'DELETE' });
+set({ items: items.filter(t => t.id !== id) });
 
 // ✅ 正确做法
-const { data } = await examplesApi.update(id, changes);
-if (data) updateExample(id, data);
+const { data } = await tasksApi.update(id, changes);
+if (data) updateItem(id, data);
 ```
 
 ---
@@ -374,10 +423,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 
 ### 8.2 数据脱敏
 
-任何包含 `openclawApiToken` 或类似敏感字段的 API 响应，必须经过 `@/lib/sanitize` 处理：
+任何包含 `openclawApiToken` 或类似敏感字段的 API 响应，必须经过 `@/shared/lib/sanitize` 处理：
 
 ```ts
-import { sanitizeMember } from '@/lib/sanitize';
+import { sanitizeMember } from '@/shared/lib/sanitize';
 
 // 响应前调用
 return NextResponse.json(sanitizeMember(member));
@@ -395,139 +444,94 @@ return NextResponse.json(sanitizeMember(member));
 
 ## 九、MCP 模块规范
 
-### 9.1 新增工具
+MCP 系统采用简化结构：
+- `app/api/mcp/handlers/` - API 路由入口
+- `src/core/mcp/` - 核心框架 (definitions, executor, types)
+- `src/domains/{domain}/mcp.ts` - 各领域 MCP 实现
 
-1. 在 `definitions.ts` 注册工具定义（名称、描述、参数 schema）
-2. 在 `executor.ts` 的 switch-case 添加执行逻辑
-3. 在 `teamclaw-mcp.json` 中添加对应的 MCP 工具声明
-
-### 9.2 executor 调用规范
-
-```ts
-// callMcpTool 必须检查响应状态
-const res = await fetch('/api/mcp', { method: 'POST', body: JSON.stringify({ tool, parameters }) });
-if (!res.ok) {
-  throw new Error(`MCP call failed: ${res.status} ${await res.text()}`);
-}
-```
+新增工具步骤：
+1. 在 `src/core/mcp/definitions.ts` 注册工具定义
+2. 在 `src/core/mcp/executor.ts` 添加执行逻辑
+3. 在对应领域的 `mcp.ts` 实现业务逻辑
 
 ---
 
-## 十、Factory 模式使用规范
+## 十、架构验证规范
 
-### 10.1 核心原则
-
-**Factory 模式用于消除重复代码，不是用于增加抽象层。**
-
-| 原则 | 说明 |
-|------|------|
-| **代码应减少，不应增加** | 如果引入 Factory 后总代码量增加，说明使用方式有问题 |
-| **简单优先** | 小型模块（<100 行）不需要 Factory 包装 |
-| **避免双层架构** | 禁止同时保留原代码 + 兼容层，必须二选一 |
-
-### 10.2 适用场景
-
-| 场景 | 是否使用 Factory | 原因 |
-|------|------------------|------|
-| 新建模块 | ✅ 推荐 | 从一开始就用统一模式 |
-| 大型重复模块（>200 行，重复 3+ 处） | ✅ 推荐 | 消除重复，提升一致性 |
-| 小型模块（<100 行） | ❌ 禁止 | 增加复杂度无收益 |
-| 已稳定的遗留代码 | ❌ 禁止 | 不修改正常运行的代码 |
-
-### 10.3 现有 Factory 文件使用指南
-
-#### api-route-factory.ts - API 响应工厂
-
-**推荐使用**：所有 API Route 的错误响应统一格式
-
-```typescript
-// ✅ 推荐：使用工厂函数统一错误格式
-import { errorResponse, ApiErrors } from '@/lib/api-route-factory';
-return errorResponse(ApiErrors.notFound('Task'), requestId);
-
-// ✅ 也可以：直接返回 NextResponse（简单场景）
-return NextResponse.json({ error: 'Not found' }, { status: 404 });
-```
-
-#### handler-base.ts - MCP Handler 基类
-
-**谨慎使用**：仅用于复杂 Handler（>150 行）
-
-```typescript
-// ✅ 适合：复杂 Handler 继承基类
-class SOPHandler extends McpHandlerBase<Task> { ... }  // 原 832 行 → 515 行
-
-// ❌ 不适合：简单 Handler 不要用类包装
-// project.handler.ts 原本 24 行，不应该变成 90 行的类
-```
-
-#### store-factory.ts - Store 工厂
-
-**当前状态**：已有 Store 兼容层是**临时方案**
-
-```typescript
-// ⚠️ 兼容层是过渡方案，不要再新增
-export const taskStoreApi = { ... };  // 这是为未来迁移准备的
-
-// ✅ 新建 Store 可以考虑使用 createCrudStore
-// ❌ 已有 Store 不要再添加兼容层
-```
-
-#### rpc-methods.ts - RPC 方法常量
-
-**强制使用**：Gateway 调用必须使用常量
-
-```typescript
-// ✅ 正确：使用常量，避免拼写错误
-await request(RPC_METHODS.CRON_LIST);
-
-// ❌ 错误：字符串字面量容易拼错
-await request('cron.list');
-```
-
-### 10.4 反模式（禁止）
-
-```typescript
-// ❌ 反模式 1：简单代码套 Factory
-// 24 行的简单函数不需要变成 90 行的类
-
-// ❌ 反模式 2：原代码 + 兼容层双层架构
-// 要么完全迁移到 Factory，要么保留原代码
-
-// ❌ 反模式 3：为了"统一"而强制所有代码用 Factory
-// 统一性不是目标，可维护性才是目标
-
-// ❌ 反模式 4：Factory 中包含业务逻辑
-// Factory 只做结构生成，业务逻辑在具体实现中
-```
-
-### 10.5 代码量变化检查
-
-**每次使用 Factory 前后，必须检查代码量变化：**
+### 10.1 依赖规则
 
 ```bash
-# 改造前记录行数
-wc -l path/to/file.ts
-
-# 改造后对比
-wc -l path/to/file.ts
-
-# 如果行数增加超过 20%，需要重新评估是否适合使用 Factory
+npx dependency-cruiser --no-progress .
 ```
 
-### 10.6 Checklist（使用 Factory 前自查）
+提交前必须确保 **0 违规**。
 
-- [ ] 目标模块是否有大量重复代码（>3 处相似代码块）？
-- [ ] 目标模块是否足够复杂（>150 行）？
-- [ ] 使用 Factory 后代码量是否减少？
-- [ ] 是否避免了双层架构（原代码 + 兼容层）？
-- [ ] 新增的 Factory 是否解决了实际问题而非增加抽象？
+| 规则 | 说明 |
+|------|------|
+| `no-feature-imports-domain-internal` | features 只能通过领域 index 导入 |
+| `no-domain-cross-import` | 领域之间禁止直接导入 |
+| `no-shared-imports-features` | shared 层不能依赖 features 层 |
+| `no-circular` | 禁止循环依赖 |
+
+### 10.2 领域模块规范
+
+```
+src/domains/{domain}/
+├── api/                    # API 路由
+├── store.ts                # Zustand Store
+├── mcp.ts                  # MCP Handlers
+└── index.ts                # 统一导出
+```
+
+### 10.3 导入规范
+
+**✅ 正确方式**：
+```typescript
+// 从领域 index.ts 导入
+import { useTaskStore } from '@/domains/task';
+import { useProjectStore } from '@/domains/project';
+
+// 从共享层导入
+import { Button } from '@/shared/ui';
+import { useToast } from '@/shared/hooks';
+
+// 从核心层导入
+import { db } from '@/core/db';
+```
+
+**❌ 禁止方式**：
+```typescript
+// 禁止访问领域内部文件
+import { taskStoreApi } from '@/domains/task/store';
+
+// 禁止相对路径跨层级
+import { something } from '@/shared/lib/utils';
+
+// 禁止领域之间直接导入
+import { useProjectStore } from '@/domains/project/store';  // 在 task 领域中
+```
+
+## 十一、Factory 模式使用规范
+
+**核心原则**：Factory 用于消除重复代码，不是增加抽象层。
+
+| 场景 | 建议 |
+|------|------|
+| 大型重复模块 (>200行, 重复3+处) | ✅ 使用 Factory |
+| 小型模块 (<100行) | ❌ 直接使用简单实现 |
+| 稳定运行的遗留代码 | ❌ 不修改 |
+
+**检查标准**：使用后代码量应减少，否则重新评估。
+
+**可用 Factory**：
+- `api-route-factory.ts` - API 错误响应格式
+- `rpc-methods.ts` - Gateway 调用常量（强制使用）
 
 ---
 
-## 十一、样式与设计系统
+## 十二、样式与设计系统
 
-### 11.1 主题色
+### 12.1 主题色
 
 - 品牌色: `primary-50` ~ `primary-950` (深靛蓝系)
 - AI 标识色: `cyan` 系
@@ -535,7 +539,7 @@ wc -l path/to/file.ts
 - 成功色: `emerald` / `green` 系
 - 警告色: `amber` / `yellow` 系
 
-### 11.2 CSS 变量
+### 12.2 CSS 变量
 
 ```css
 --background, --surface, --surface-hover
@@ -544,21 +548,21 @@ wc -l path/to/file.ts
 --ai, --ai-light
 ```
 
-### 11.3 暗色模式
+### 12.3 暗色模式
 
 - `darkMode: 'class'`，通过 `ThemeProvider` 切换
 - 所有新组件必须同时支持明/暗两种模式
 - 使用 `dark:` 前缀或 CSS 变量保证适配
 
-### 11.4 阴影层级
+### 12.4 阴影层级
 
 `shadow-card` < `shadow-card-hover` < `shadow-float` < `shadow-glow-ai`
 
 ---
 
-## 十二、Git 与代码同步
+## 十三、Git 与代码同步
 
-### 12.1 双目录同步
+### 13.1 双目录同步
 
 `teamclaw/` 为开发目录，`teamclaw-release/` 为发布目录。每次修改后通过 rsync 同步：
 
@@ -566,11 +570,11 @@ wc -l path/to/file.ts
 rsync -av --delete --exclude='node_modules' --exclude='.next' --exclude='.env*' teamclaw/ teamclaw-release/
 ```
 
-### 12.2 注释语言
+### 13.2 注释语言
 
 代码注释使用**中文**。
 
-### 12.3 版本号同步
+### 13.3 版本号同步
 
 软件版本更新时，必须同步更新以下文档中的版本号：
 
@@ -588,13 +592,13 @@ grep -r "v2\.[0-9]" --include="*.md" .
 
 ---
 
-## 十三、国际化规范 (i18n)
+## 十四、国际化规范 (i18n)
 
-### 13.1 基本原则
+### 14.1 基本原则
 
 **所有用户可见文本必须使用 i18n**，禁止在页面组件中硬编码中文或英文字符串。
 
-### 13.2 技术方案
+### 14.2 技术方案
 
 使用 `react-i18next`，通过 `useTranslation` hook + `t()` 函数实现：
 
@@ -608,9 +612,9 @@ export default function MyPage() {
 }
 ```
 
-### 13.3 翻译文件组织
+### 14.3 翻译文件组织
 
-翻译定义在 `lib/i18n.ts`，按功能模块划分命名空间：
+翻译定义在 `src/shared/lib/i18n.ts`，按功能模块划分命名空间：
 
 ```ts
 export const resources = {
@@ -628,7 +632,7 @@ export const resources = {
 };
 ```
 
-### 13.4 强制规则
+### 14.4 强制规则
 
 | 规则 | 说明 |
 |------|------|
@@ -637,7 +641,7 @@ export const resources = {
 | **动态值用插值** | `t('itemsCount', { count: 5 })` → "5 items" / "5 个项目" |
 | **常量移入组件** | 需要翻译的常量（如选项列表）定义在组件内部，在 `useTranslation` 之后 |
 
-### 13.5 代码示例
+### 14.5 代码示例
 
 **正确做法**：
 
@@ -673,7 +677,7 @@ const TABS = ['概览', '文件'];  // 移入组件内
 const { t } = useTranslation();  // 应指定命名空间
 ```
 
-### 13.6 复数与动态值
+### 14.6 复数与动态值
 
 ```ts
 // 翻译文件
@@ -686,9 +690,9 @@ t('itemsCount', { count: items.length })
 
 ---
 
-## 十四、文档维护规范
+## 十五、文档维护规范
 
-### 14.1 强制文档更新
+### 15.1 强制文档更新
 
 **所有新模块或原有模块增加功能，必须更新对应文档：**
 
@@ -699,7 +703,7 @@ t('itemsCount', { count: items.length })
 | 新增/修改 API | `docs/technical/API.md` | 添加/更新接口文档 |
 | 发现技术债 | `docs/process/TECH_DEBT.md` | 记录问题和优先级 |
 
-### 14.2 文档格式
+### 15.2 文档格式
 
 **COMPONENTS.md 格式**：
 
@@ -714,7 +718,7 @@ t('itemsCount', { count: items.length })
 - `components/xxx.tsx` - 在 xxx 场景调用
 
 **下游依赖**：
-- `lib/yyy.ts` - 数据处理
+- `src/shared/lib/yyy.ts` - 数据处理
 
 **示例**：
 ```typescript
@@ -742,7 +746,7 @@ t('itemsCount', { count: items.length })
 ```
 ```
 
-### 14.3 例外情况
+### 15.3 例外情况
 
 - **Bug 诊断/修复**：不需要更新文档
 - **配置调整**：不需要更新文档
@@ -750,22 +754,21 @@ t('itemsCount', { count: items.length })
 
 ---
 
-## 十五、部署规范（强制）
+## 十六、部署规范（强制）
 
-### 15.1 必须使用部署脚本
+### 16.1 必须使用部署脚本
 
 **所有部署到生产服务器必须通过 `./.codebuddy/skills/teamclaw/SKILL.md` skill执行，禁止手动 rsync 或其他方式。**
 
-
-
-### 15.2 违规后果
+### 16.2 违规后果
 
 **手动 rsync 或跳过脚本可能导致数据库被覆盖，造成数据丢失！**
 
 ---
 
-## 十六、Checklist（提交前自查）
+## 十七、Checklist（提交前自查）
 
+### 基础规范
 - [ ] 新 API Route 是否有 try-catch + 错误响应？
 - [ ] PUT/DELETE 是否校验了资源存在性？
 - [ ] 含敏感字段的响应是否经过脱敏？
@@ -778,8 +781,14 @@ t('itemsCount', { count: items.length })
 - [ ] 新组件是否支持暗色模式？
 - [ ] 所有用户可见文本是否使用 i18n（无硬编码中英文）？
 - [ ] UI 组件是否使用 shadcn/ui（禁止自行实现已有组件）？
+
+### 架构规范
+- [ ] **新代码是否遵循分层架构？**（domains → shared → features → app）
+- [ ] **是否避免了领域之间直接导入？**
+- [ ] **是否运行了 `npx dependency-cruiser --no-progress .` 且 0 违规？**
+- [ ] **Store 是否位于对应领域模块内？**（`src/domains/{domain}/store.ts`）
+- [ ] **路径别名是否符合规范？**（禁止 `../../`）
+
+### 部署与同步
 - [ ] 是否同步到了 teamclaw-release？
-- [ ] 版本号更新时是否同步更新了所有文档？
 - [ ] **部署是否通过 `./.codebuddy/skills/teamclaw/SKILL.md` 脚本执行？**
-- [ ] **Factory 模式使用后代码量是否减少？（如增加则需重新评估）**
-- [ ] **是否避免了双层架构（原代码 + 兼容层）？**

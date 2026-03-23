@@ -16,9 +16,9 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
-import AppShell from '@/components/AppShell';
-import Header from '@/components/Header';
-import { Button, Input, Card, CardContent, CardHeader, CardTitle, Label, Badge, Select } from '@/components/ui';
+import AppShell from '@/shared/layout/AppShell';
+import Header from '@/shared/layout/Header';
+import { Button, Input, Card, CardContent, CardHeader, CardTitle, Label, Badge, Select } from '@/shared/ui';
 import { useAuthStore } from '@/domains';
 import {
   ArrowLeft, Settings, Globe, Shield, Zap, Save, AlertTriangle,

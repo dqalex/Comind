@@ -10,8 +10,8 @@ import {
   X, ChevronLeft, Maximize2, Minimize2,
 } from 'lucide-react';
 import { type ThinkingLevel, getActiveGwClient, normalizeContent, normalizeHistoryMessages } from './chat-utils';
-import { subscribeChatStream } from '@/hooks/useChatStream';
-import { useAutoScroll } from '@/hooks/useAutoScroll';
+import { subscribeChatStream } from '@/shared/hooks/useChatStream';
+import { useAutoScroll } from '@/shared/hooks/useAutoScroll';
 import ChatInputArea from './ChatInputArea';
 import ChatMessageList from './ChatMessageList';
 import ChatSessionList from './ChatSessionList';

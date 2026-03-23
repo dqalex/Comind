@@ -1,14 +1,14 @@
 ---
 name: teamclaw
 description: TeamClaw 人机协作平台 AI 成员操作手册。定义任务执行、Markdown 同步、对话协作、状态面板、SOP 引擎、Content Studio 等全部工作流程。当 AI 成员接收到 TeamClaw 平台的任务推送、对话请求、定时调度或巡检指令时，应使用此 Skill 执行标准化操作。
-teamclaw_version: "1.0.0"
+teamclaw_version: "3.0.3"
 metadata: { "openclaw": { "always": true, "emoji": "🧠", "homepage": "https://github.com/teamclaw", "requires": { "env": ["TEAMCLAW_BASE_URL", "TEAMCLAW_API_TOKEN"] } } }
 ---
 
 # TeamClaw AI 成员操作手册
 
-> **版本**: v1.0.0
-> **项目地址**: https://github.com/teamclaw
+> **版本**: v1.0.1
+> **项目地址**: https://github.com/dqalex/teamclaw
 > **核心特性**: 多用户认证、SOP 引擎、Content Studio、渐进式上下文、Agent Token 管理
 
 
@@ -34,7 +34,7 @@ metadata: { "openclaw": { "always": true, "emoji": "🧠", "homepage": "https://
 | 层级 | 说明 | 典型工具 |
 |------|------|---------|
 | **L1 索引** | 轻量级，默认返回 | `get_task`, `list_my_tasks` |
-| **L2 详情** | 完整上下文，按需获取 | `get_task_detail`, `get_sop_previous_output` |
+| **L2 详情** | 完整上下文，按需获取 | `get_task` + `detail=true`, `get_sop_context` |
 
 **使用原则**：列表用 L1，详情用 L2。详见 `references/tools.md`。
 
@@ -175,14 +175,13 @@ metadata: { "openclaw": { "always": true, "emoji": "🧠", "homepage": "https://
 | `list_my_tasks` | - | 获取我的任务列表 |
 | `get_document` | document_id 或 title | 获取 Wiki 文档内容 |
 | `search_documents` | query | 搜索 Wiki 文档 |
-| `get_template` | template_name | 获取渲染后的模板内容 |
-| `list_templates` | - | 列出所有可用模板 |
+| `get_message_template` | template_name | 获取消息模板内容（v1.0.1+）|
+| `list_message_templates` | - | 列出所有消息模板（v1.0.1+）|
 | `list_schedules` | - | 列出定时任务 |
 | `list_milestones` | project_id | 列出项目里程碑 |
 | `list_render_templates` | - | 列出渲染模板 |
 | `get_render_template` | template_id | 获取渲染模板详情 |
-| `get_sop_previous_output` | task_id | 获取 SOP 前序阶段产出 |
-| `get_sop_knowledge_layer` | task_id | 获取 SOP 知识层（L1-L4）|
+| `get_sop_context` | task_id | 获取 SOP 执行上下文（含前序产出+知识层，v1.0.1+）|
 
 **写入类：**
 
@@ -295,8 +294,8 @@ metadata: { "openclaw": { "always": true, "emoji": "🧠", "homepage": "https://
 // 完成阶段
 {"tool": "advance_sop_stage", "parameters": {"task_id": "xxx", "stage_output": "..."}}
 
-// 获取前序产出
-{"tool": "get_sop_previous_output", "parameters": {"task_id": "xxx"}}
+// 获取 SOP 执行上下文（包含前序产出和知识层）
+{"tool": "get_sop_context", "parameters": {"task_id": "xxx"}}
 ```
 
 ---

@@ -656,7 +656,7 @@ export const sopTemplates = sqliteTable('sop_templates', {
   icon: text('icon').default('clipboard-list'),
   status: text('status', { enum: ['draft', 'active', 'archived'] }).notNull().default('active'),
   
-  // 版本控制（v3.0.1 新增）
+  // 版本控制（v0.9.9 新增）
   version: text('version').notNull().default('1.0.0'),
   
   // 流程定义
@@ -1003,6 +1003,7 @@ export const landingPages = sqliteTable('landing_pages', {
   locale: text('locale', { enum: ['en', 'zh'] }).notNull(),
   title: text('title').notNull(),
   content: text('content'),                       // MD 内容（含 @slot 标记）
+  renderedHtml: text('rendered_html'),            // 预渲染的 HTML（缓存）
   renderTemplateId: text('render_template_id'),   // 关联渲染模板
   // SEO 元数据（预留）
   metaTitle: text('meta_title'),

@@ -4,15 +4,15 @@ import { useState, useMemo, useCallback } from 'react';
 import { useDeliveryStore, useMemberStore, useDocumentStore, useTaskStore, useProjectStore, useChatStore } from '@/domains';
 import { useGatewayStore } from '@/core/gateway/store';
 import { useAuthStore } from '@/domains/auth';
-import AppShell from '@/components/AppShell';
-import Header from '@/components/Header';
-import { Button, Textarea, Badge } from '@/components/ui';
-import ConfirmDialog from '@/components/ConfirmDialog';
-import { useConfirmAction } from '@/hooks/useConfirmAction';
+import AppShell from '@/shared/layout/AppShell';
+import Header from '@/shared/layout/Header';
+import { Button, Textarea, Badge } from '@/shared/ui';
+import ConfirmDialog from '@/shared/layout/ConfirmDialog';
+import { useConfirmAction } from '@/shared/hooks/useConfirmAction';
 import type { Delivery } from '@/db/schema';
 import { useTranslation } from 'react-i18next';
-import { useEscapeKey } from '@/hooks/useEscapeKey';
-import { useFilteredList } from '@/hooks/useFilteredList';
+import { useEscapeKey } from '@/shared/hooks/useEscapeKey';
+import { useFilteredList } from '@/shared/hooks/useFilteredList';
 import {
   FileText,
   Clock,
@@ -30,7 +30,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import clsx from 'clsx';
-import { formatRelativeTime } from '@/hooks/useRelativeTime';
+import { formatRelativeTime } from '@/shared/hooks/useRelativeTime';
 
 export default function DeliveriesPage() {
   const { t, i18n } = useTranslation();
@@ -78,8 +78,8 @@ export default function DeliveriesPage() {
   const authUser = useAuthStore((s) => s.user);
   const getUserSessionKey = useGatewayStore((s) => s.getUserSessionKey);
   
-  const aiMembers = useMemo(() => getAIMembers(), [members]);
-  const humanMembers = useMemo(() => getHumanMembers(), [members]);
+  const aiMembers = useMemo(() => getAIMembers(), [getAIMembers, members]);
+  const humanMembers = useMemo(() => getHumanMembers(), [getHumanMembers, members]);
 
   const [selectedDelivery, setSelectedDelivery] = useState<Delivery | null>(null);
   const [reviewComment, setReviewComment] = useState('');

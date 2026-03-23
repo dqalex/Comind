@@ -1,38 +1,20 @@
 'use client';
 
-import { useEffect, useState, useMemo, Suspense, useRef } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
-import { Navbar } from '@/components/landing/Navbar';
-import { syncMdToHtml, SlotDef } from '@/lib/slot-sync';
-import { 
-  CheckSquare, FileText, Wrench, ClipboardList, Users, Bot, 
-  Send, Clock, MessageSquare, LayoutDashboard 
-} from 'lucide-react';
-import { renderToString } from 'react-dom/server';
+import { Navbar } from '@/features/landing/Navbar';
 
 interface LandingData {
   document: { id: string; content: string };
-  template: { 
-    id: string; 
-    htmlTemplate: string; 
+  template: {
+    id: string;
+    htmlTemplate: string;
     cssTemplate: string | null;
-    slots: Record<string, SlotDef>;
+    slots: Record<string, unknown>;
   };
+  // 预渲染的 HTML（服务端直接返回，客户端只需显示）
+  renderedHtml?: string;
 }
-
-// Lucide 图标名称到组件的映射
-const iconMap: Record<string, React.ComponentType<any>> = {
-  'check-square': CheckSquare,
-  'file-text': FileText,
-  'wrench': Wrench,
-  'clipboard-list': ClipboardList,
-  'users': Users,
-  'bot': Bot,
-  'send': Send,
-  'clock': Clock,
-  'message-square': MessageSquare,
-  'layout-dashboard': LayoutDashboard,
-};
 
 export default function HomePage() {
   const router = useRouter();
@@ -40,25 +22,6 @@ export default function HomePage() {
   const [landingData, setLandingData] = useState<LandingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [initChecked, setInitChecked] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null);
-
-  // 渲染 Lucide 图标
-  const renderLucideIcons = () => {
-    if (!contentRef.current) return;
-    
-    const iconElements = contentRef.current.querySelectorAll('[data-lucide]');
-    iconElements.forEach((el) => {
-      const iconName = el.getAttribute('data-lucide');
-      const IconComponent = iconMap[iconName || ''];
-      if (IconComponent) {
-        // 创建 SVG 字符串
-        const svgString = renderToString(
-          <IconComponent size={22} strokeWidth={2} color="#0056ff" />
-        );
-        el.innerHTML = svgString;
-      }
-    });
-  };
 
   // 检查是否需要初始化
   useEffect(() => {
@@ -66,7 +29,6 @@ export default function HomePage() {
       .then(res => res.json())
       .then(data => {
         if (data.needed) {
-          // 需要初始化，跳转到初始化页面
           router.push('/init');
         } else {
           setInitChecked(true);
@@ -104,32 +66,12 @@ export default function HomePage() {
     setLocale(newLocale);
     localStorage.setItem('teamclaw-language', newLocale);
     window.dispatchEvent(new CustomEvent('language-change', { detail: { locale: newLocale } }));
-    // 重新获取对应语言的内容
     setLoading(true);
     fetchLandingData(newLocale);
   };
 
-  // 使用模板渲染 HTML
-  const renderedHtml = useMemo(() => {
-    if (!landingData?.document?.content || !landingData?.template) return '';
-    
-    const { html } = syncMdToHtml(
-      landingData.document.content,
-      landingData.template.htmlTemplate || '',
-      landingData.template.slots || {},
-      landingData.template.cssTemplate || undefined
-    );
-    return html;
-  }, [landingData]);
-
-  // 渲染图标
-  useEffect(() => {
-    if (!loading && renderedHtml) {
-      // 延迟渲染图标，确保 DOM 已更新
-      const timer = setTimeout(renderLucideIcons, 50);
-      return () => clearTimeout(timer);
-    }
-  }, [loading, renderedHtml]);
+  // 使用服务端预渲染的 HTML（服务端已调用 syncMdToHtml 渲染）
+  const renderedHtml = landingData?.renderedHtml || '';
 
   // 初始化检查中，显示加载状态
   if (!initChecked) {
@@ -146,11 +88,10 @@ export default function HomePage() {
       <Suspense fallback={<div className="h-20" />}>
         <Navbar locale={locale} onLocaleChange={handleLocaleChange} />
       </Suspense>
-      
-      {/* 主内容区：使用模板渲染 */}
+
+      {/* 主内容区：使用预渲染的 HTML */}
       <main>
         {loading ? (
-          // 加载中显示骨架屏
           <div className="pt-32 pb-20 text-center">
             <div className="animate-pulse">
               <div className="h-8 bg-slate-800 rounded w-64 mx-auto mb-4"></div>
@@ -158,13 +99,11 @@ export default function HomePage() {
             </div>
           </div>
         ) : renderedHtml ? (
-          <div 
-            ref={contentRef}
+          <div
             className="landing-content"
             dangerouslySetInnerHTML={{ __html: renderedHtml }}
           />
         ) : (
-          // 无内容时显示提示
           <div className="pt-32 pb-20 text-center text-slate-500">
             <p>Landing page content not available.</p>
           </div>

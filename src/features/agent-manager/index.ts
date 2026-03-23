@@ -2,11 +2,11 @@
  * Agent Manager 功能模块
  */
 
-export { OverviewPanel } from './OverviewPanel';
-export { SessionsPanel } from './SessionsPanel';
-export { ChannelsPanel } from './ChannelsPanel';
-export { CronPanel } from './CronPanel';
-export { FilesPanel } from './FilesPanel';
-export { SkillsPanel } from './SkillsPanel';
-export { ToolsPanel } from './ToolsPanel';
-export { CreateAgentDialog } from './CreateAgentDialog';
+export { default as OverviewPanel } from './OverviewPanel';
+export { default as SessionsPanel } from './SessionsPanel';
+export { default as ChannelsPanel } from './ChannelsPanel';
+export { default as CronPanel } from './CronPanel';
+export { default as FilesPanel } from './FilesPanel';
+export { default as SkillsPanel } from './SkillsPanel';
+export { default as ToolsPanel } from './ToolsPanel';
+export { default as CreateAgentDialog } from './CreateAgentDialog';

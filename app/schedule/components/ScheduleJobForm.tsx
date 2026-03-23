@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import { Button, Input, Select, Textarea } from '@/components/ui';
+import { Button, Input, Select, Textarea } from '@/shared/ui';
 import { FileText } from 'lucide-react';
 import type { GatewayAgentRow } from '@/types';
 import type { ScheduleFormData, ScheduleKind, PayloadKind, DeliveryMode } from '../hooks/useSchedulePage';

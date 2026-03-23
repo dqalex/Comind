@@ -1,7 +1,7 @@
 'use client';
 
 import { Plus } from 'lucide-react';
-import { Button, Input, Select, Card } from '@/components/ui';
+import { Button, Input, Select, Card } from '@/shared/ui';
 import type { Project, Member, Milestone } from '@/db/schema';
 
 interface NewTaskForm {

@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Input, Textarea, Select, Card } from '@/components/ui';
+import { Button, Input, Textarea, Select, Card } from '@/shared/ui';
+import { useConfirmAction } from '@/shared/hooks/useConfirmAction';
+import ConfirmDialog from '@/shared/layout/ConfirmDialog';
 import { X, Save, Users, Settings, Crown, Shield, User, Eye, Plus, Trash2, BookOpen } from 'lucide-react';
 import { useDocumentStore } from '@/domains';
 import type { KnowledgeConfig } from '@/db/schema';
@@ -61,6 +63,9 @@ export function ProjectEditDialog({
   const [selectedRole, setSelectedRole] = useState<'admin' | 'member' | 'viewer'>('member');
   const [addingMember, setAddingMember] = useState(false);
   const [loadingMembers, setLoadingMembers] = useState(false);
+
+  // 移除成员确认
+  const removeMemberConfirm = useConfirmAction<string>();
 
   // v3.1: 知识库配置状态
   const documents = useDocumentStore((s) => s.documents);
@@ -156,13 +161,15 @@ export function ProjectEditDialog({
     }
   };
 
-  const handleRemoveMember = async (memberId: string, role: string) => {
+  const handleRemoveMember = (memberId: string, role: string) => {
     if (role === 'owner') {
       alert('Cannot remove project owner');
       return;
     }
-    if (!confirm(t('projects.removeMemberConfirm'))) return;
-    
+    removeMemberConfirm.requestConfirm(memberId);
+  };
+
+  const doRemoveMember = async (memberId: string) => {
     try {
       const res = await fetch(`/api/projects/${projectId}/members/${memberId}`, {
         method: 'DELETE',
@@ -471,6 +478,18 @@ export function ProjectEditDialog({
           </Button>
         </div>
       </Card>
+
+      {/* 移除成员确认对话框 */}
+      <ConfirmDialog
+        isOpen={removeMemberConfirm.isOpen}
+        onClose={removeMemberConfirm.cancel}
+        onConfirm={() => removeMemberConfirm.confirm(async (memberId) => { await doRemoveMember(memberId); })}
+        title={t('common.confirm')}
+        message={t('projects.removeMemberConfirm')}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
+        isLoading={removeMemberConfirm.isLoading}
+      />
     </div>
   );
 }

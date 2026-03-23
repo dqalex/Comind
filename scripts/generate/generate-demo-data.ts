@@ -16,7 +16,7 @@
 
 import { db } from '../../db';
 import { projects, members, tasks, milestones, documents, deliveries, sopTemplates, users } from '../../db/schema';
-import { generateId } from '../../lib/id';
+import { generateId } from '../../src/shared/lib/id';
 
 // 演示数据 ID 前缀
 const PREFIX = {

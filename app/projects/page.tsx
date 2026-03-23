@@ -3,23 +3,23 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useEscapeKey } from '@/hooks/useEscapeKey';
-import { useConfirmAction } from '@/hooks/useConfirmAction';
-import ConfirmDialog from '@/components/ConfirmDialog';
-import { ProjectEditDialog } from '@/components/projects/ProjectEditDialog';
-import { useInlineEdit } from '@/hooks/useInlineEdit';
+import { useEscapeKey } from '@/shared/hooks/useEscapeKey';
+import { useConfirmAction } from '@/shared/hooks/useConfirmAction';
+import ConfirmDialog from '@/shared/layout/ConfirmDialog';
+import { ProjectEditDialog } from '@/features/task-board/ProjectEditDialog';
+import { useInlineEdit } from '@/shared/hooks/useInlineEdit';
 import { useProjectStore, useTaskStore, useDocumentStore } from '@/domains';
 import type { KnowledgeConfig } from '@/db/schema';
 import { useGatewayStore } from '@/core/gateway/store';
-import AppShell from '@/components/AppShell';
-import Header from '@/components/Header';
+import AppShell from '@/shared/layout/AppShell';
+import Header from '@/shared/layout/Header';
 import {
   Folder, Plus, CheckSquare, FileText, Trash2, Edit2, X, Save,
   Bot, Clock, FolderSync, Home,
   Lock, Globe, Building2,
 } from 'lucide-react';
 import clsx from 'clsx';
-import { Button, Input, Textarea, Select, Card } from '@/components/ui';
+import { Button, Input, Textarea, Select, Card } from '@/shared/ui';
 
 const PATROL_CRON_PREFIX = 'teamclaw-patrol:';
 
@@ -115,7 +115,7 @@ export default function ProjectsPage() {
 
   // Escape key support for dialogs
   useEscapeKey(showNew, useCallback(() => setShowNew(false), []));
-  useEscapeKey(!!patrolConfigId, useCallback(() => setPatrolConfigId(null), []));
+  useEscapeKey(!!patrolConfigId, useCallback(() => setPatrolConfigId(null), [setPatrolConfigId]));
 
   // 将 cronJobs 中属于巡检的 job 按项目 ID 映射
   const patrolJobMap = useMemo(() => {
@@ -210,7 +210,7 @@ export default function ProjectsPage() {
       setPatrolInterval(2 * 60 * 60 * 1000);
       setPatrolAgentId('');
     }
-  }, [patrolJobMap, toggleCronJob]);
+  }, [patrolJobMap, toggleCronJob, setPatrolConfigId, setPatrolInterval, setPatrolAgentId]);
 
   const handleCreatePatrol = async () => {
     if (!patrolConfigId) return;

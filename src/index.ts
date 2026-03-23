@@ -11,12 +11,14 @@
 // 核心层
 export * from './core/db';
 export * from './core/mcp/types';
-export * from './core/gateway/gateway-types';
+export type { ConnectionStatus, GatewayMessage, GatewayEventHandler } from '@/shared/lib/gateway-types';
+export type { AgentListEntry } from '@/shared/lib/gateway-types';
 
 // 共享层
 export * from './shared/ui';
 export * from './shared/hooks';
-export * from './shared/lib';
-export * from './shared/services';
-export * from './shared/types';
+// Note: lib/services 内容通过 @/lib 路径访问，不从此处导出以避免命名冲突
+// export * from './shared/services';
+// Note: types 从根目录 types/index.ts 直接导入，避免与 db schema 类型冲突
+// export * from './shared/types';
 export * from './shared/layout';

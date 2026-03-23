@@ -2,9 +2,9 @@
  * SOP Engine 功能模块
  */
 
-export { SOPProgressBar } from './SOPProgressBar';
-export { SOPTemplateEditor } from './SOPTemplateEditor';
-export { ReferenceEditorModal } from './ReferenceEditorModal';
-export { ReferencesPanel } from './ReferencesPanel';
-export { ScriptEditorModal } from './ScriptEditorModal';
-export { ScriptsPanel } from './ScriptsPanel';
+export { default as SOPProgressBar } from './SOPProgressBar';
+export { default as SOPTemplateEditor } from './SOPTemplateEditor';
+export { default as ReferenceEditorModal } from './ReferenceEditorModal';
+export { default as ReferencesPanel } from './ReferencesPanel';
+export { default as ScriptEditorModal } from './ScriptEditorModal';
+export { default as ScriptsPanel } from './ScriptsPanel';

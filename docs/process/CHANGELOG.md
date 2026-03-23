@@ -4,6 +4,45 @@
 
 ---
 
+## [v1.0.1] - 2026-03-23
+
+### Added
+- **src/ 层级架构**：全新目录结构，按领域/功能划分代码
+  - `src/core/` - 核心模块（MCP 执行器、Gateway 客户端、Event Bus）
+  - `src/domains/` - 领域模块（task、project、document、member 等领域 store）
+  - `src/features/` - 功能模块（聊天面板、文档编辑器、SOP 引擎）
+  - `src/shared/` - 共享模块（UI 组件、Hooks、工具函数、类型定义）
+  - `src/server/` - 服务端模块（API 路由、服务层）
+
+### Changed
+- **路径别名更新**：
+  - `@/store/*` → `@/domains/*/store` (14 个 store 迁移)
+  - `@/lib/*` → `@/shared/lib/*` (12 处)
+  - `@/components/chat/*` → `@/features/chat-panel/*`
+  - `@/components/studio/*` → `@/features/document-editor/*`
+  - `@/components/sop/*` → `@/features/sop-engine/*`
+- **共享服务提取**：
+  - 提取 `approval-service.ts` - 统一审批服务
+  - 提取 `sync-service.ts` - 统一同步服务
+
+### Deprecated
+- **废弃组件移除**：
+  - 删除 `components/` 目录下的 55 个旧组件
+  - 删除 `hooks/` 目录下的 14 个旧 hooks
+  - 删除 `lib/` 目录下的旧 lib 文件
+
+### Technical
+- **导入路径标准化**：所有内部模块通过 @/ 别名导入
+- **客户端/服务端分离**：`@/shared/lib/index.ts` 仅导出客户端可用模块
+- **构建修复**：修复 MarkdownEditor 客户端组件错误导入服务端模块问题
+
+### Documentation
+- 新增 `docs/optimization/ATOMIC_CAPABILITY_REVIEW_v1.0.0.md` - 原子化能力完整 Review
+- 新增 `docs/optimization/INTERACTION_REVIEW_v1.0.0.md` - 业务流程与 Agent 交互点 Review
+- 更新 `docs/tech-debt/` - 建立技术债跟踪机制
+
+---
+
 ## [v3.0.3] - 2026-03-12
 
 ### Added
@@ -165,7 +204,7 @@
 
 ---
 
-## [v2.5.1] - 2026-03-04
+## [v0.4.6] - 2026-03-04
 
 ### Fixed (Code Review Round 2)
 - **P0 严重问题修复**：
@@ -185,7 +224,7 @@
 
 ---
 
-## [v2.5.0] - 2026-03-03
+## [v0.4.6] - 2026-03-03
 
 ### Added
 - **SOP 引擎**：新增完整的标准化操作流程（SOP）引擎，支持 7 种阶段类型（input/ai_auto/ai_with_confirm/manual/render/export/review），7 种阶段状态，自动推进与人工确认混合工作流
@@ -227,7 +266,7 @@
 
 ---
 
-## [v2.4.0] - 2026-02-28
+## [v0.3.9] - 2026-02-28
 
 ### Added
 - **UI 设计系统 v3**：全面视觉升级，字体切换到 Plus Jakarta Sans + JetBrains Mono，品牌色改为 indigo #4f46e5，新增毛玻璃/渐变/glow 动效等 Design Token，圆角升级 rounded-2xl，阴影改为 CSS 变量分级体系
@@ -244,7 +283,7 @@
 
 ---
 
-## [v2.3.5] - 2026-02-26
+## [v0.3.5] - 2026-02-26
 
 ### Added
 - **里程碑功能**：新增 milestones DB 表、milestone.store.ts（第 14 个 Store）、4 个 MCP 工具（create_milestone/list_milestones/update_milestone/delete_milestone）、完整 API Routes、SSE 事件推送、MilestoneManager 管理 UI
@@ -283,7 +322,7 @@
 
 ---
 
-## [v2.3.0] - 2026-02-25
+## [v0.3.1] - 2026-02-25
 
 ### Added
 - **Watcher 实时监听 teamclaw:* 类型**：syncSingleFile 检测到 teamclaw:tasks 等类型时自动创建/更新 documents 并调用 syncMarkdownToDatabase
@@ -299,12 +338,12 @@
 - **task_list 类型文档任务解析失败**（BUG-022）：detectComindType 添加别名，parseFrontmatter 接受 task_list
 - **反向同步清空文档**（BUG-024）：syncDatabaseToMarkdown 序列化结果无实际内容时跳过覆盖
 - **CLAUDE.md 模板硬编码**：改为从 docs/openclaw/CLAUDE.md 动态读取
-- **v2.4.0 部署后 milestone_id 缺失**（BUG-034）：db/index.ts 迁移逻辑补充 tasks.milestone_id 列和 milestones 表
+- **v0.3.9 部署后 milestone_id 缺失**（BUG-034）：db/index.ts 迁移逻辑补充 tasks.milestone_id 列和 milestones 表
 - **DB 新增 4 个缺失索引**：deliveries(document_id, reviewer_id), members(type, openclaw_endpoint)
 
 ---
 
-## [v2.2.5] - 2026-02-25
+## [v0.2.7] - 2026-02-25
 
 ### Fixed
 - **Store 防御性增强**：6 个 Store（project/delivery/schedule/openclaw/member/chat）的 `fetchXxx` 方法添加 `Array.isArray` 防御，防止 API 返回分页对象时 `.map()` 崩溃
@@ -315,7 +354,7 @@
 
 ---
 
-## [v2.2.4] - 2026-02-24
+## [v0.2.6] - 2026-02-24
 
 ### Added
 - **三种交互通道架构文档**：对话信道、MCP API、文档同步的能力边界分析
@@ -333,7 +372,7 @@
 
 ---
 
-## [v2.2.3] - 2026-02-22
+## [v0.2.5] - 2026-02-22
 
 ### Changed
 - 文档架构重组：按读者角色分类到 `docs/product/`、`docs/technical/`、`docs/process/`、`docs/openclaw/`
@@ -354,7 +393,7 @@
 
 ---
 
-## [v2.2.0] - 2026-02-21
+## [v0.2.3] - 2026-02-21
 
 ### Added
 - Gateway 双模式：`server_proxy`（服务端代理）/ `browser_direct`（浏览器直连）
@@ -371,7 +410,7 @@
 
 ---
 
-## [v2.1.0] - 2026-02-20
+## [v0.1.5] - 2026-02-20
 
 ### Added
 - OpenClaw Workspace 双向同步 + 冲突解决
@@ -385,7 +424,7 @@
 
 ---
 
-## [v2.0.1] - 2026-02-19
+## [v0.1.0] - 2026-02-19
 
 ### Added
 - 全平台国际化（i18n）支持（中文 + 英文）
@@ -394,7 +433,7 @@
 
 ---
 
-## [v2.0.0] - 2026-02-18
+## [v0.0.0] - 2026-02-18
 
 ### Added
 - 全新架构：Next.js 14 App Router + TypeScript strict mode

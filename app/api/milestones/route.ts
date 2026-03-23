@@ -8,7 +8,7 @@ import { milestones, type NewMilestone, type Milestone } from '@/db/schema';
 import { eq, sql, desc } from 'drizzle-orm';
 import { generateMilestoneId, generateId } from '@/lib/id';
 import { eventBus } from '@/lib/event-bus';
-import { validateEnumWithDefault, VALID_MILESTONE_STATUS } from '@/lib/validators';
+// VALID_MILESTONE_STATUS removed - not used
 import { isValidId } from '@/lib/security';
 import { withAuth } from '@/lib/with-auth';
 import { errorResponse, createdResponse, ApiErrors } from '@/lib/api-route-factory';
@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/milestones - 创建里程碑
-// v3.0: 需要登录才能创建
+// v0.9.8: 需要登录才能创建
 export const POST = withAuth(async (request: NextRequest) => {
   const requestId = request.headers.get('x-request-id') || generateId();
   

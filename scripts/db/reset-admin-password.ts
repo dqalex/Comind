@@ -83,14 +83,12 @@ async function main() {
     console.log('');
     console.error('═══════════════════════════════════════');
     console.error('📧 邮箱:', user[0].email);
-    console.error('🔑 新密码:', newPassword);
+    console.error('🔑 新密码: [已设置，请检查命令行参数或重新运行]');
     console.error('═══════════════════════════════════════');
     console.error('');
     console.error('⚠️  安全提示：');
-    console.error('   1. 请确保周围无人查看屏幕');
-    console.error('   2. 此输出使用 stderr，不会被重定向到文件');
-    console.error('   3. 建议执行后清理终端历史（history -c）');
-    console.error('   4. 登录后立即修改密码');
+    console.error('   1. 如果使用了随机密码，请重新运行并指定密码');
+    console.error('   2. 建议登录后立即修改密码');
 
   } catch (error) {
     console.error('❌ 重置失败:', error);

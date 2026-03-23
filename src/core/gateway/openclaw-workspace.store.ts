@@ -7,7 +7,7 @@
 import { create } from 'zustand';
 import type { OpenClawWorkspace, OpenClawFile } from '@/db/schema';
 import { openclawWorkspacesApi, openclawFilesApi } from '@/lib/data-service';
-import { useDocumentStore } from '@/domains/document';
+import { storeEvents } from '@/shared/lib/store-events';
 
 interface WorkspaceState {
   workspaces: OpenClawWorkspace[];
@@ -166,8 +166,8 @@ export const useOpenClawWorkspaceStore = create<WorkspaceState>((set, get) => ({
       set({ syncing: false, error: null });
     }
     
-    // 同步完成后刷新文档 Store
-    useDocumentStore.getState().fetchDocuments();
+    // 同步完成后通过 storeEvents 通知刷新文档 Store（解耦）
+    storeEvents.emit('data:refresh', { type: 'documents', reason: 'workspace-synced' });
     
     return response.data || null;
   },

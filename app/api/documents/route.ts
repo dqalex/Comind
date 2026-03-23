@@ -6,14 +6,13 @@ import { eq, and, sql, or, isNull, inArray } from 'drizzle-orm';
 // 标记为动态路由，避免静态生成错误
 export const dynamic = 'force-dynamic';
 import { generateDocId, generateId } from '@/lib/id';
-import { validateEnum, validateEnumWithDefault, VALID_DOC_SOURCE, VALID_DOC_TYPE, VALID_EXTERNAL_PLATFORM, VALID_SYNC_MODE } from '@/lib/validators';
+import { validateEnum, VALID_DOC_SOURCE, VALID_EXTERNAL_PLATFORM, VALID_SYNC_MODE } from '@/lib/validators';
 import { eventBus } from '@/lib/event-bus';
 import { syncMarkdownToDatabase } from '@/lib/markdown-sync';
 import { withAuth } from '@/lib/with-auth';
 import type { AuthResult } from '@/lib/api-auth';
 import { getAccessibleProjectIds, checkProjectAccess } from '@/lib/project-access';
 import {
-  successResponse,
   createdResponse,
   errorResponse,
   ApiErrors,
@@ -21,7 +20,7 @@ import {
 import { createDocumentSchema, validate } from '@/lib/validation';
 
 // GET /api/documents - 获取所有文档（列表模式不返回 content，支持分页）
-// v3.0: 文档权限 - 继承项目权限，projectId=null 的文档为系统公开
+// v0.9.8: 文档权限 - 继承项目权限，projectId=null 的文档为系统公开
 export const GET = withAuth(async (request: NextRequest, auth: AuthResult) => {
   const searchParams = request.nextUrl.searchParams;
   const projectId = searchParams.get('projectId');
@@ -125,13 +124,13 @@ export const GET = withAuth(async (request: NextRequest, auth: AuthResult) => {
     }
 
     return NextResponse.json(result);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch documents' }, { status: 500 });
   }
 });
 
 // POST /api/documents - 创建新文档
-// v3.0: 如果指定了 projectId，需要校验项目权限
+// v0.9.8: 如果指定了 projectId，需要校验项目权限
 export const POST = withAuth(async (request: NextRequest, auth: AuthResult) => {
   const requestId = request.headers.get('x-request-id') || generateId();
   

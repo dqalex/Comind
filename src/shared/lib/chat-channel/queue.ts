@@ -13,6 +13,7 @@
 import type { Action } from './types';
 import { executeActions } from './executor';
 import { getLogger, generateRequestId } from './logger';
+import { eventBus } from '@/lib/event-bus';
 
 const logger = getLogger();
 
@@ -54,6 +55,14 @@ export interface QueueStats {
   processing: number;
   completed: number;
   failed: number;
+  deadLetter: number; // 死信队列中的任务数
+}
+
+/** 死信队列任务 */
+export interface DeadLetterJob extends QueueJob {
+  failedAt: number;
+  error?: string;
+  finalAttempt: number;
 }
 
 /**
@@ -64,6 +73,7 @@ class MemoryQueue {
   private processing = new Set<string>();
   private completed = 0;
   private failed = 0;
+  private deadLetterJobs: DeadLetterJob[] = []; // 死信队列
   private processor?: (job: QueueJob) => Promise<void>;
   private isRunning = false;
 
@@ -107,7 +117,56 @@ class MemoryQueue {
       processing: this.processing.size,
       completed: this.completed,
       failed: this.failed,
+      deadLetter: this.deadLetterJobs.length,
     };
+  }
+
+  /**
+   * 将任务移至死信队列
+   */
+  moveToDeadLetter(job: QueueJob, error?: string): void {
+    const deadLetterJob: DeadLetterJob = {
+      ...job,
+      failedAt: Date.now(),
+      error,
+      finalAttempt: job.attempt,
+    };
+    this.deadLetterJobs.push(deadLetterJob);
+    logger.warn(generateRequestId(), `Job moved to dead letter queue: ${job.id}`, {
+      data: { attempts: job.attempt, error },
+    });
+  }
+
+  /**
+   * 获取死信队列中的任务
+   */
+  getDeadLetterJobs(): DeadLetterJob[] {
+    return [...this.deadLetterJobs];
+  }
+
+  /**
+   * 重新处理死信队列中的任务
+   */
+  async retryDeadLetter(jobId: string): Promise<boolean> {
+    const index = this.deadLetterJobs.findIndex(j => j.id === jobId);
+    if (index === -1) return false;
+
+    const job = this.deadLetterJobs[index];
+    // 重置尝试次数并重新入队
+    const retryJob: QueueJob = {
+      id: job.id,
+      sessionKey: job.sessionKey,
+      actions: job.actions,
+      memberId: job.memberId,
+      attempt: 0,
+      createdAt: Date.now(),
+    };
+
+    this.deadLetterJobs.splice(index, 1);
+    await this.add(retryJob);
+
+    logger.info(generateRequestId(), `Dead letter job retried: ${jobId}`);
+    return true;
   }
 
   stop(): void {
@@ -157,11 +216,17 @@ export class ChatActionQueue {
 
   /**
    * 初始化 Redis 连接
+   *
+   * 注意：当前版本使用内存队列作为完整的实现方案。
+   * Redis 连接为预留接口，用于未来需要持久化队列、多实例部署时的扩展。
+   * 当需要 Redis 支持时，需要：
+   * 1. 添加 redis 依赖 (如 ioredis 或 @redis/client)
+   * 2. 实现基于 Redis 的队列存储
+   * 3. 添加 Redis 连接配置
    */
   private async initRedis(): Promise<void> {
-    // TODO: 实现 Redis 连接
-    // 当前版本使用内存队列作为降级方案
-    throw new Error('Redis not implemented');
+    // 当前版本：内存队列已满足需求，Redis 为未来扩展预留
+    throw new Error('Redis implementation reserved for future scaling');
   }
 
   /**
@@ -242,7 +307,11 @@ export class ChatActionQueue {
         await this.memoryQueue.add(job);
       } else {
         logger.error(generateRequestId(), `Job max retries exceeded: ${job.id}`);
-        // TODO: 发送到死信队列或通知
+        // 将任务移至死信队列，便于后续人工干预或分析
+        this.memoryQueue.moveToDeadLetter(job, err instanceof Error ? err.message : String(err));
+
+        // 发送任务失败事件，可用于通知管理员或记录监控
+        this.emitJobFailedEvent(job, err instanceof Error ? err.message : String(err));
       }
     }
   }
@@ -255,11 +324,47 @@ export class ChatActionQueue {
   }
 
   /**
+   * 获取死信队列中的任务列表
+   */
+  getDeadLetterJobs(): DeadLetterJob[] {
+    return this.memoryQueue.getDeadLetterJobs();
+  }
+
+  /**
+   * 重新处理死信队列中的任务
+   */
+  async retryDeadLetterJob(jobId: string): Promise<boolean> {
+    return this.memoryQueue.retryDeadLetter(jobId);
+  }
+
+  /**
    * 销毁队列
    */
   destroy(): void {
     this.memoryQueue.stop();
     logger.info(generateRequestId(), 'ChatActionQueue destroyed');
+  }
+
+  /**
+   * 发送任务失败事件
+   * 可用于通知管理员或记录到监控系统
+   */
+  private emitJobFailedEvent(job: QueueJob, error: string): void {
+    // 通过 eventBus 发送事件
+    try {
+      eventBus.emit({
+        type: 'chat:job_failed',
+        data: {
+          jobId: job.id,
+          sessionKey: job.sessionKey,
+          memberId: job.memberId,
+          error,
+        },
+      });
+    } catch {
+      // event-bus 不可用，仅记录日志
+      logger.warn(generateRequestId(), 'Failed to emit job failed event: event-bus not available');
+    }
   }
 }
 

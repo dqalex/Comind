@@ -14,7 +14,7 @@ import { ActionError, toActionError, missingParamError } from './errors';
 import { validateActionParams, ACTION_DEFINITIONS } from './actions';
 import { getLogger, generateRequestId } from './logger';
 
-// 导入 handlers（复用现有实现）
+// 导入 handlers（从领域模块 mcp 子模块导入 - 服务器端安全）
 import {
   handleGetTask,
   handleUpdateTaskStatus,
@@ -23,40 +23,40 @@ import {
   handleCompleteCheckItem,
   handleListMyTasks,
   handleCreateTask,
-} from '@/app/api/mcp/handlers/task.handler';
+} from '@/domains/task/mcp';
 import {
   handleGetDocument,
   handleCreateDocument,
   handleUpdateDocument,
   handleSearchDocuments,
-} from '@/app/api/mcp/handlers/document.handler';
+} from '@/domains/document/mcp';
 import {
   handleGetProject,
   handleGetProjectMembers,
-} from '@/app/api/mcp/handlers/project.handler';
+} from '@/domains/project/mcp';
 import {
   handleUpdateStatus,
   handleSetQueue,
   handleSetDoNotDisturb,
-} from '@/app/api/mcp/handlers/status.handler';
+} from '@/domains/approval/mcp';
 import {
   handleCreateSchedule,
   handleListSchedules,
   handleDeleteSchedule,
   handleUpdateSchedule,
-} from '@/app/api/mcp/handlers/schedule.handler';
+} from '@/domains/schedule/mcp';
 
 // delivery.handler 动态导入避免循环依赖
 // (delivery.handler -> server-gateway-client -> chat-channel/executor -> delivery.handler)
 async function getDeliveryHandlers() {
-  const { handleDeliverDocument, handleReviewDelivery, handleListMyDeliveries, handleGetDelivery } = await import('@/app/api/mcp/handlers/delivery.handler');
+  const { handleDeliverDocument, handleReviewDelivery, handleListMyDeliveries, handleGetDelivery } = await import('@/domains/delivery/mcp');
   return { handleDeliverDocument, handleReviewDelivery, handleListMyDeliveries, handleGetDelivery };
 }
-import { handleRegisterMember, handleGetMcpToken } from '@/app/api/mcp/handlers/member.handler';
+import { handleRegisterMember, handleGetMcpToken } from '@/domains/member/mcp';
 import {
   handleGetTemplate,
   handleListTemplates,
-} from '@/app/api/mcp/handlers/template.handler';
+} from '@/domains/render-template/mcp';
 import {
   handleAdvanceSopStage,
   handleRequestSopConfirm,
@@ -69,21 +69,21 @@ import {
   handleUpdateRenderTemplate,
   handleListRenderTemplates,
   handleGetRenderTemplate,
-} from '@/app/api/mcp/handlers/sop.handler';
+} from '@/domains/sop/mcp';
 import {
   handleCreateMilestone,
   handleListMilestones,
   handleUpdateMilestone,
   handleDeleteMilestone,
-} from '@/app/api/mcp/handlers/milestone.handler';
+} from '@/domains/milestone/mcp';
 import {
   handleGetSopPreviousOutput,
   handleGetSopKnowledgeLayer,
-} from '@/app/api/mcp/handlers/context.handler';
+} from '@/domains/context/mcp';
 import {
   handleInvokeSkill,
   handleListSkills,
-} from '@/app/api/mcp/handlers/skill.handler';
+} from '@/domains/skill/mcp';
 
 // 导入 Store 刷新
 import { useTaskStore } from '@/domains/task';
@@ -965,6 +965,15 @@ async function executeHandler(
 
 /**
  * 身份同步 Handler
+ *
+ * 说明：此功能用于将 AI 成员的身份信息同步到 Gateway（如 Agent 的 display name、avatar 等）。
+ * 当前实现为本地存储模式，不依赖 Gateway 支持。
+ *
+ * 如需与 Gateway 同步身份：
+ * 1. 确认 Gateway 支持身份更新 RPC 方法
+ * 2. 添加 RPC_METHODS.AGENTS_UPDATE_IDENTITY 方法
+ * 3. 调用 getServerGatewayClient().request() 进行同步
+ * 4. 处理同步失败时的降级逻辑
  */
 async function handleSyncIdentity(params: Record<string, unknown>): Promise<{
   success: boolean;
@@ -972,16 +981,38 @@ async function handleSyncIdentity(params: Record<string, unknown>): Promise<{
   error?: string;
   message?: string;
 }> {
-  // 这个功能需要 Gateway 支持，暂时返回成功
-  // TODO: 实现与 Gateway 的身份同步
-  
   const { name, creature, vibe, emoji, avatar } = params;
-  
-  return {
-    success: true,
-    data: { name, creature, vibe, emoji, avatar },
-    message: '身份信息已同步',
-  };
+
+  // 验证必要参数
+  if (!name || typeof name !== 'string') {
+    return {
+      success: false,
+      error: 'Missing required parameter: name',
+    };
+  }
+
+  try {
+    // 本地模式：验证并返回身份信息
+    // 如需 Gateway 同步，在此处添加 RPC 调用
+    const identity = {
+      name: name.trim(),
+      creature: creature as string | undefined,
+      vibe: vibe as string | undefined,
+      emoji: emoji as string | undefined,
+      avatar: avatar as string | undefined,
+    };
+
+    return {
+      success: true,
+      data: identity,
+      message: '身份信息已记录（本地模式）',
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Identity sync failed',
+    };
+  }
 }
 
 // ============================================================================

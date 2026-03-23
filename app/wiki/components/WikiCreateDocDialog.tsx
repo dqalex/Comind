@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import { Button, Input, Select } from '@/components/ui';
+import { Button, Input, Select } from '@/shared/ui';
 import {
   FileText, File, Globe, Eye,
   BookOpen, FileQuestion, Calendar, CheckSquare, ClipboardList,
@@ -12,7 +12,7 @@ import { syncMdToHtml as directSyncMdToHtml, generatePreviewHtml } from '@/lib/s
 import { typeColors, typeOrder } from '../hooks/useWikiPage';
 import type { RenderTemplate } from '@/db/schema';
 import { Rss } from 'lucide-react';
-import { useInlineEdit } from '@/hooks/useInlineEdit';
+import { useInlineEdit } from '@/shared/hooks/useInlineEdit';
 
 const typeIcons: Record<string, typeof FileText> = {
   guide: BookOpen, reference: FileText, report: ClipboardList, note: BookOpen,

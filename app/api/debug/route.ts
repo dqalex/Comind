@@ -7,8 +7,6 @@
  * 需要管理员权限
  */
 
-import { db } from '@/db';
-import { tasks, projects, members, documents, deliveries, milestones, comments } from '@/db/schema';
 import { NextResponse, NextRequest } from 'next/server';
 
 // 标记为动态路由，避免静态生成错误
@@ -447,7 +445,7 @@ const TABLE_COLUMNS: Record<string, [string, string][]> = {
   ],
 };
 
-export const GET = withAuth(async (request: NextRequest, auth: AuthResult) => {
+export const GET = withAuth(async (_request: NextRequest, _auth: AuthResult) => {
   try {
     const diagnostics: Record<string, any> = {};
 
@@ -632,7 +630,7 @@ export const GET = withAuth(async (request: NextRequest, auth: AuthResult) => {
  * 或: { action: 'repair_tables', tables: ['gateway_configs', 'audit_logs'] }
  * 或: { action: 'seed_default_member' }
  */
-export const POST = withAuth(async (request: NextRequest, auth: AuthResult) => {
+export const POST = withAuth(async (request: NextRequest, _auth: AuthResult) => {
   try {
     const body = await request.json();
     const { action } = body;
@@ -736,7 +734,7 @@ export const POST = withAuth(async (request: NextRequest, auth: AuthResult) => {
     }
 
     if (action === 'seed_default_member') {
-      // v3.0: 已废弃，多用户系统中用户通过注册创建
+      // v0.9.8: 已废弃，多用户系统中用户通过注册创建
       return NextResponse.json({
         status: 'deprecated',
         message: 'v3.0 多用户系统不再支持创建默认用户，请通过 /login 页面注册',

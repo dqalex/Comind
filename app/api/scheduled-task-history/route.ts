@@ -12,7 +12,7 @@ import { eventBus } from '@/lib/event-bus';
 import { withAuth } from '@/lib/with-auth';
 
 // GET /api/scheduled-task-history - 获取执行历史
-// v3.0: 需要登录才能访问
+// v0.9.8: 需要登录才能访问
 export const GET = withAuth(async (request: NextRequest) => {
   const searchParams = request.nextUrl.searchParams;
   const scheduledTaskId = searchParams.get('scheduledTaskId');
@@ -32,7 +32,7 @@ export const GET = withAuth(async (request: NextRequest) => {
         .limit(limit);
     }
     return NextResponse.json(result);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch execution history' }, { status: 500 });
   }
 });
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     // 问题 #20：创建历史后通知前端刷新
     eventBus.emit({ type: 'schedule_update', resourceId: scheduledTaskId });
     return NextResponse.json(newHistory, { status: 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to create execution history' }, { status: 500 });
   }
 }

@@ -5,9 +5,9 @@ import { useTranslation } from 'react-i18next';
 import { useProjectStore } from '@/domains';
 import { ChevronDown, Check, Folder, Bell } from 'lucide-react';
 import clsx from 'clsx';
-import { useClickOutside } from '@/hooks/useClickOutside';
-import UserMenu from '@/components/UserMenu';
-import GlobalSearch from '@/components/GlobalSearch';
+import { useClickOutside } from '@/shared/hooks/useClickOutside';
+import UserMenu from '@/shared/layout/UserMenu';
+import GlobalSearch from '@/shared/layout/GlobalSearch';
 
 interface HeaderProps {
   title?: string;

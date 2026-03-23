@@ -10,7 +10,7 @@ import type { AuthResult } from '@/lib/api-auth';
 export const dynamic = 'force-dynamic';
 
 // GET /api/chat-sessions/[id] - 获取单个会话（含所有消息）
-// v3.0: 严格用户隔离 - 只能访问自己的会话
+// v0.9.8: 严格用户隔离 - 只能访问自己的会话
 export const GET = withAuth(async (
   request: NextRequest,
   auth: AuthResult,
@@ -33,12 +33,13 @@ export const GET = withAuth(async (
 
     return NextResponse.json({ ...session, messages });
   } catch (error) {
+    console.error('[GET /api/chat-sessions]', error);
     return NextResponse.json({ error: 'Failed to fetch session' }, { status: 500 });
   }
 });
 
 // PUT /api/chat-sessions/[id] - 更新会话
-// v3.0: 严格用户隔离 - 只能更新自己的会话
+// v0.9.8: 严格用户隔离 - 只能更新自己的会话
 export const PUT = withAuth(async (
   request: NextRequest,
   auth: AuthResult,
@@ -70,12 +71,13 @@ export const PUT = withAuth(async (
 
     return NextResponse.json(updated);
   } catch (error) {
+    console.error('[PUT /api/chat-sessions]', error);
     return NextResponse.json({ error: 'Failed to update session' }, { status: 500 });
   }
 });
 
 // DELETE /api/chat-sessions/[id] - 删除会话（级联删除消息）
-// v3.0: 严格用户隔离 - 只能删除自己的会话
+// v0.9.8: 严格用户隔离 - 只能删除自己的会话
 export const DELETE = withAuth(async (
   request: NextRequest,
   auth: AuthResult,

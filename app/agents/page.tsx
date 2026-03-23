@@ -2,13 +2,13 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useEscapeKey } from '@/hooks/useEscapeKey';
-import { useConfirmAction } from '@/hooks/useConfirmAction';
-import ConfirmDialog from '@/components/ConfirmDialog';
-import AppShell from '@/components/AppShell';
-import Header from '@/components/Header';
-import GatewayRequired from '@/components/GatewayRequired';
-import { Button, Badge } from '@/components/ui';
+import { useEscapeKey } from '@/shared/hooks/useEscapeKey';
+import { useConfirmAction } from '@/shared/hooks/useConfirmAction';
+import ConfirmDialog from '@/shared/layout/ConfirmDialog';
+import AppShell from '@/shared/layout/AppShell';
+import Header from '@/shared/layout/Header';
+import GatewayRequired from '@/shared/layout/GatewayRequired';
+import { Button, Badge } from '@/shared/ui';
 import { useGatewayStore } from '@/core/gateway/store';
 import clsx from 'clsx';
 import {
@@ -24,7 +24,7 @@ import {
   FilesPanel,
   ToolsPanel,
   SessionsPanel,
-} from '@/components/agents';
+} from '@/features/agent-manager';
 
 type AgentsPanel = 'overview' | 'files' | 'tools' | 'skills' | 'channels' | 'cron' | 'sessions';
 

@@ -67,7 +67,7 @@ Built for OpenClaw Gateway — Compatible with Industry Leading Models
 - [GitHub](https://github.com/dqalex/teamclaw)
 
 <!-- @slot:footerCopyright -->
-© 2026 TeamClaw. All rights reserved. v1.0.0
+© 2026 TeamClaw. All rights reserved. v0.9.7
 `;
 
 const landingZhContent = `<!-- @slot:heroBadge -->
@@ -136,7 +136,7 @@ TeamClaw 是 AI Agent 协作管理平台。用看板追踪进度、用知识库�
 - [GitHub](https://github.com/dqalex/teamclaw)
 
 <!-- @slot:footerCopyright -->
-© 2026 TeamClaw. All rights reserved. v1.0.0
+© 2026 TeamClaw. All rights reserved. v0.9.7
 `;
 
 async function main() {

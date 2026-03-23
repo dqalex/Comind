@@ -43,7 +43,7 @@ export async function PUT(
     // 问题 #20：更新历史后通知前端刷新
     eventBus.emit({ type: 'schedule_update', resourceId: existing.scheduledTaskId });
     return NextResponse.json(updated);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to update execution history' }, { status: 500 });
   }
 }
@@ -63,7 +63,7 @@ export async function DELETE(
     // 问题 #20：删除历史后通知前端刷新
     eventBus.emit({ type: 'schedule_update', resourceId: existing.scheduledTaskId });
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to delete execution history' }, { status: 500 });
   }
 }

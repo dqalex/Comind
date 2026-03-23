@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { AuthHelper } from './pages/AuthHelper';
 
 /**
  * 投递管理 E2E 测试
@@ -9,7 +10,12 @@ import { test, expect } from '@playwright/test';
  * - 投递审核流程
  */
 test.describe('投递管理', () => {
+  let authHelper: AuthHelper;
+
   test.beforeEach(async ({ page }) => {
+    authHelper = new AuthHelper(page);
+    // 确保已登录
+    await authHelper.ensureLoggedIn('member');
     // 导航到投递页面
     await page.goto('/deliveries');
     await page.waitForLoadState('domcontentloaded');

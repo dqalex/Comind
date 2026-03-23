@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { openclawStatus } from '@/db/schema';
-import { eq, and, lt, inArray } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 import { eventBus } from '@/lib/event-bus';
 
 // 标记为动态路由，避免静态生成错误

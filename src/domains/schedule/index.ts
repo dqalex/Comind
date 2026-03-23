@@ -3,7 +3,7 @@
  */
 
 // Store
-export { useScheduleStore } from './store';
+export { useScheduledTaskStore } from './store';
 
-// 类型从 db/schema 导出
+// 类型
 export type { ScheduledTask, NewScheduledTask } from '@/db/schema';

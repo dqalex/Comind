@@ -161,10 +161,24 @@ export function mergeIncrementalUpdate<T extends Record<string, unknown>>(
 /**
  * 创建 Store 增量更新处理器
  *
- * @param storeName Store 名称
- * @param getState 获取 State 函数
- * @param setState 设置 State 函数
- * @returns 清理函数
+ * 用于在客户端订阅增量更新事件并合并到本地 Store。
+ * 通过 SSE 事件总线接收增量更新，避免全量刷新。
+ *
+ * @param storeName Store 名称（用于日志和事件匹配）
+ * @param getItems 获取当前 items 的函数
+ * @param setItems 设置 items 的函数
+ * @param onDelete 删除回调（可选）
+ * @returns 清理函数（用于取消订阅）
+ *
+ * @example
+ * ```typescript
+ * const cleanup = createIncrementalHandler<Task>(
+ *   'tasks',
+ *   () => useTaskStore.getState().tasks,
+ *   (items) => useTaskStore.getState().setTasks(items),
+ *   (id) => useTaskStore.getState().deleteTask(id)
+ * );
+ * ```
  */
 export function createIncrementalHandler<T extends { id: string }>(
   storeName: string,
@@ -172,9 +186,69 @@ export function createIncrementalHandler<T extends { id: string }>(
   setItems: (items: T[]) => void,
   onDelete?: (id: string) => void
 ): () => void {
-  // TODO: 暂时禁用增量更新处理，等待 eventBus 支持订阅功能后恢复
-  // 临时返回一个空函数
-  return () => {};
+  // 客户端环境检查
+  if (typeof window === 'undefined') {
+    logger.debug('', `Incremental handler for ${storeName} skipped: not in browser`);
+    return () => {};
+  }
+
+  // 处理器函数：接收增量更新事件
+  const handleIncrementalUpdate = (event: Event) => {
+    try {
+      const customEvent = event as CustomEvent<IncrementalUpdate<T>>;
+      const update = customEvent.detail;
+
+      if (!update || !update.id) {
+        logger.warn('', `Invalid incremental update for ${storeName}`, { data: update as unknown as Record<string, unknown> });
+        return;
+      }
+
+      const items = getItems();
+      const itemIndex = items.findIndex(item => item.id === update.id);
+      
+      if (itemIndex === -1 && update.operation !== 'create') {
+        logger.warn('', `Item not found for incremental update: ${update.id}`, { data: { storeName } });
+        return;
+      }
+
+      let newItems: T[];
+
+      if (update.operation === 'delete') {
+        // 删除操作
+        newItems = items.filter(item => item.id !== update.id);
+        onDelete?.(update.id);
+      } else if (update.operation === 'create') {
+        // 创建操作
+        newItems = [...items, { ...update.changes as unknown as T, id: update.id }];
+      } else {
+        // 更新操作：合并变更到指定项
+        newItems = items.map((item, index) => 
+          index === itemIndex ? { ...item, ...update.changes as unknown as Partial<T> } : item
+        );
+      }
+
+      setItems(newItems);
+      logger.debug('', `Incremental update applied for ${storeName}`, {
+        data: { id: update.id, operation: update.operation }
+      });
+    } catch (error) {
+      logger.error('', `Error handling incremental update for ${storeName}`, { error: error as Error });
+    }
+  };
+
+  // 构建事件名称
+  const eventName = `${storeName}:incremental`;
+
+  // 使用自定义事件机制（客户端）
+  window.addEventListener(eventName, handleIncrementalUpdate as EventListener);
+
+  logger.info('', `Incremental handler registered for ${storeName}`);
+
+  // 返回清理函数
+  return () => {
+    window.removeEventListener(eventName, handleIncrementalUpdate as EventListener);
+    logger.info('', `Incremental handler unregistered for ${storeName}`);
+  };
 }
 
 /**

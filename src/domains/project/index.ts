@@ -5,5 +5,5 @@
 // Store
 export { useProjectStore } from './store';
 
-// 类型从 db/schema 导出
+// 类型
 export type { Project, NewProject } from '@/db/schema';

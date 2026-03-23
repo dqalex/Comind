@@ -43,6 +43,12 @@ const ENV_CONFIGS: EnvVarConfig[] = [
     description: 'JWT 签名密钥（生产环境必须）',
     validate: (value) => value.length >= 32,
   },
+  {
+    name: 'MCP_TOKEN_KEY',
+    required: false,  // 开发环境可自动派生
+    description: 'MCP Token 加密密钥（生产环境必须，至少 32 字符。生成命令: openssl rand -hex 32）',
+    validate: (value) => value.length >= 32,
+  },
   
   // === CORS 配置 ===
   {
@@ -106,11 +112,15 @@ export function validateEnv(strict: boolean = false): {
     
     // 检查生产环境必需变量
     if (isProduction && !value && envVar.name === 'TEAMCLAW_API_TOKEN') {
-      warnings.push(`生产环境建议设置: ${envVar.name}`);
+      errors.push(`Production required: ${envVar.name} - ${envVar.description}`);
     }
     
     if (isProduction && !value && envVar.name === 'JWT_SECRET') {
-      warnings.push(`生产环境建议设置: ${envVar.name}`);
+      errors.push(`Production required: ${envVar.name} - ${envVar.description}`);
+    }
+    
+    if (isProduction && !value && envVar.name === 'MCP_TOKEN_KEY') {
+      errors.push(`Production required: ${envVar.name} - ${envVar.description}`);
     }
     
     // 验证格式

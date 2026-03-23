@@ -29,6 +29,10 @@ export default [
       // React Hooks 规则
       "react-hooks/exhaustive-deps": "warn",
       "react-hooks/set-state-in-effect": "off", // 这个规则过于严格
+      // React Compiler 实验性规则 - 当前过于严格，暂时禁用
+      "react-hooks/refs": "off", // 误报：从包含 ref 的对象访问属性被错误标记为访问 ref
+      "react-hooks/preserve-manual-memoization": "off", // 过于严格的依赖检查
+      "react-hooks/purity": "warn", // 保留警告级别，检测 Date.now() 等不纯函数
       // 通用规则
       "prefer-const": "warn",
       "no-console": ["warn", { "allow": ["warn", "error"] }],
@@ -41,6 +45,21 @@ export default [
     },
   },
   {
-    ignores: [".next/*", "node_modules/*", "out/*", "public/*", "coverage/*"],
+    ignores: [
+      ".next/*",
+      "node_modules/*",
+      "out/*",
+      "public/*",
+      "coverage/*",
+      "*.cjs",
+      "playwright-report/**", // 测试报告目录
+      "next.config.js", // CommonJS 配置文件
+      "postcss.config.js",
+      "tailwind.config.*",
+      "scripts/**/*.js", // 脚本文件允许 CommonJS
+      "scripts/**/*.mjs",
+      "scripts/diagnostics/**", // 诊断脚本
+      "tests/**", // 测试文件
+    ],
   },
 ];

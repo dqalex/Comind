@@ -6,11 +6,11 @@ import {
   useDocumentStore, useDeliveryStore, useScheduledTaskStore,
   useOpenClawStatusStore, useUIStore,
 } from '@/domains';
-import { useDataInitializer } from '@/domains';
+import { useDataInitializer } from '@/shared/hooks';
 import { useGatewayStore } from '@/core/gateway/store';
 import { useChatStore } from '@/domains/chat';
-import { Card } from '@/components/ui';
-import { Badge } from '@/components/ui/badge';
+import { Card } from '@/shared/ui';
+import { Badge } from '@/shared/ui/badge';
 import { Bug, ChevronDown, ChevronUp, Trash2, Play, RefreshCw, Wifi, Database, Server, Settings, AlertCircle, CheckCircle, XCircle, Wrench, ClipboardList } from 'lucide-react';
 
 interface DiagnosticsData {

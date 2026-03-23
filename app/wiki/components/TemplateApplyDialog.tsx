@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Select } from '@/components/ui';
+import DOMPurify from 'dompurify';
+import { Button, Select } from '@/shared/ui';
 import type { Document, RenderTemplate } from '@/db/schema';
 import { syncMdToHtml } from '@/lib/slot-sync';
 import { X, Loader2, FileText, Folder, Wand2 } from 'lucide-react';
@@ -44,7 +45,7 @@ export function TemplateApplyDialog({
     [availableTemplates, selectedTemplateId]
   );
   
-  // 生成预览
+  // 生成预览（DOMPurify 清洗防止 XSS）
   const handleTemplateChange = (templateId: string) => {
     setSelectedTemplateId(templateId);
     if (!templateId) {
@@ -61,7 +62,8 @@ export function TemplateApplyDialog({
         template.slots as Record<string, import('@/lib/slot-sync').SlotDef>,
         template.cssTemplate || ''
       );
-      setPreviewHtml(result.html);
+      // 清洗 HTML 防止 XSS 攻击
+      setPreviewHtml(DOMPurify.sanitize(result.html));
     }
   };
   

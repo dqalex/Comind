@@ -15,7 +15,7 @@ export async function register() {
     
     // 0. 验证环境变量（第一步执行）
     try {
-      const { validateEnvOnStartup } = await import('./lib/env-validator');
+      const { validateEnvOnStartup } = await import('./src/shared/lib/env-validator');
       validateEnvOnStartup();
     } catch (err) {
       console.error('[Instrumentation] Environment validation failed:', err);
@@ -24,7 +24,7 @@ export async function register() {
     
     // 1. 初始化 Gateway 连接
     try {
-      const { initServerGatewayClient } = await import('./lib/server-gateway-client');
+      const { initServerGatewayClient } = await import('./src/shared/lib/server-gateway-client');
       
       initServerGatewayClient()
         .then((client) => {
@@ -44,7 +44,7 @@ export async function register() {
     // 2. 延迟启动定时同步和心跳（等待服务完全就绪）
     setTimeout(async () => {
       try {
-        const { startAllAutoSync } = await import('./lib/openclaw/auto-sync-scheduler');
+        const { startAllAutoSync } = await import('./src/shared/lib/openclaw/auto-sync-scheduler');
         const count = await startAllAutoSync();
         console.log(`[Instrumentation] Auto-sync schedulers started: ${count} workspace(s)`);
       } catch (err) {
@@ -52,7 +52,7 @@ export async function register() {
       }
 
       try {
-        const { startAllHeartbeats } = await import('./lib/openclaw/index-manager');
+        const { startAllHeartbeats } = await import('./src/shared/lib/openclaw/index-manager');
         const count = await startAllHeartbeats();
         console.log(`[Instrumentation] Heartbeats started: ${count} workspace(s)`);
       } catch (err) {
@@ -61,7 +61,7 @@ export async function register() {
 
       // 3. 启动 Skill 快照定时任务（安全审计）
       try {
-        const { startSkillSnapshotScheduler } = await import('./lib/skill-snapshot-scheduler');
+        const { startSkillSnapshotScheduler } = await import('./src/shared/lib/skill-snapshot-scheduler');
         // 默认 6 小时间隔，可通过环境变量 SKILL_SNAPSHOT_INTERVAL_HOURS 配置
         const intervalHours = parseInt(process.env.SKILL_SNAPSHOT_INTERVAL_HOURS || '6', 10);
         startSkillSnapshotScheduler(intervalHours);

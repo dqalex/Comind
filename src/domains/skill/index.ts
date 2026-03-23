@@ -5,5 +5,5 @@
 // Store
 export { useSkillStore } from './store';
 
-// 类型从 db/schema 导出
+// 类型
 export type { Skill, NewSkill } from '@/db/schema';

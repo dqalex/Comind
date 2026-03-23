@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // 标记为动态路由，避免静态生成错误
 export const dynamic = 'force-dynamic';
 
-import { scheduledTasks, scheduledTaskHistory, tasks } from '@/db/schema';
+import { scheduledTasks, scheduledTaskHistory } from '@/db/schema';
 import { eq, desc, inArray } from 'drizzle-orm';
 import { generateScheduleId, generateId } from '@/lib/id';
 import { eventBus } from '@/lib/event-bus';
@@ -13,7 +13,7 @@ import { withAuth, withAdminAuth } from '@/lib/with-auth';
 import { errorResponse, createdResponse, ApiErrors } from '@/lib/api-route-factory';
 
 // GET - 获取所有定时任务
-// v3.0: 需要登录才能访问（只读）
+// v0.9.8: 需要登录才能访问（只读）
 export const GET = withAuth(async (request: NextRequest) => {
   try {
     const { searchParams } = new URL(request.url);
@@ -54,13 +54,13 @@ export const GET = withAuth(async (request: NextRequest) => {
     }
 
     return NextResponse.json(tasks);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch scheduled tasks' }, { status: 500 });
   }
 });
 
 // POST - 创建定时任务
-// v3.0: Admin Only - 只有管理员可以创建定时任务
+// v0.9.8: Admin Only - 只有管理员可以创建定时任务
 export const POST = withAdminAuth(async (request: NextRequest) => {
   const requestId = request.headers.get('x-request-id') || generateId();
   
@@ -99,8 +99,8 @@ export const POST = withAdminAuth(async (request: NextRequest) => {
 
     eventBus.emit({ type: 'schedule_update', resourceId: task.id });
     return createdResponse(task);
-  } catch (error) {
-    console.error(`[POST /api/scheduled-tasks] ${requestId}:`, error);
+  } catch (err) {
+    console.error(`[POST /api/scheduled-tasks] ${requestId}:`, err);
     return errorResponse(ApiErrors.internal('Failed to create scheduled task'), requestId);
   }
 });

@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Input } from '@/components/ui';
+import { Button, Input } from '@/shared/ui';
 import type { ReferenceFile } from '@/db/schema';
 import { Plus, Trash2, FileText, Edit2 } from 'lucide-react';
 import ReferenceEditorModal from './ReferenceEditorModal';

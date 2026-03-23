@@ -206,7 +206,7 @@ AI Agent 不是通过模拟点击来操作 TeamClaw，而是通过标准化的 M
 
 ## 项目状态
 
-- **当前版本**：v3.0.0
+- **当前版本**：v1.0.1
 - **技术栈**：Next.js 14 / TypeScript / SQLite / Zustand / Tailwind CSS / shadcn/ui
 - **底层依赖**：OpenClaw Gateway（WebSocket Protocol v3）
 - **代码规模**：19 个页面路由 / 92 组 API / 82 个组件 / 37 个 MCP 工具 / 33 张数据库表

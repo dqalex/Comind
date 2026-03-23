@@ -3,7 +3,7 @@
  */
 
 export { useAutoScroll } from './useAutoScroll';
-export { useChatStream } from './useChatStream';
+export { subscribeChatStream, usePersistentChatListener } from './useChatStream';
 export { useClickOutside } from './useClickOutside';
 export { useConfirmAction } from './useConfirmAction';
 export { useDataInitializer } from './useDataInitializer';
@@ -16,3 +16,4 @@ export { useSSEConnection } from './useSSEConnection';
 export { useSecurityCode } from './useSecurityCode';
 export { useStaleStatusCheck } from './useStaleStatusCheck';
 export { useTaskSOP } from './useTaskSOP';
+export { useRoutePrefetch, RoutePrefetchProvider } from './useRoutePrefetch';

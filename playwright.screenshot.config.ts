@@ -13,7 +13,7 @@ export default defineConfig({
   retries: 0,
   workers: 1, // 单线程，确保截图顺序
   reporter: [
-    ['html', { open: 'never', outputFolder: 'test-results/screenshots-report' }],
+    ['html', { open: 'never', outputFolder: 'tests/reports/screenshots' }],
     ['list'],
   ],
   use: {

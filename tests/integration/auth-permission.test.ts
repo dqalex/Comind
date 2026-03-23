@@ -22,19 +22,19 @@ import { apiGet, apiPost, apiPut, apiDelete, getBaseUrl, checkServiceHealth } fr
 
 const TEST_USERS = {
   admin: {
-    email: `test-admin-${Date.now()}@example.com`,
+    email: `test-admin-${Date.now()}@teamclaw.test`,
     password: 'TestPassword123!',
     name: '测试管理员',
     role: 'admin',
   },
   member: {
-    email: `test-member-${Date.now()}@example.com`,
+    email: `test-member-${Date.now()}@teamclaw.test`,
     password: 'TestPassword123!',
     name: '测试成员',
     role: 'member',
   },
   viewer: {
-    email: `test-viewer-${Date.now()}@example.com`,
+    email: `test-viewer-${Date.now()}@teamclaw.test`,
     password: 'TestPassword123!',
     name: '测试观察者',
     role: 'viewer',
@@ -210,10 +210,9 @@ describe('多用户权限集成测试', () => {
 
       console.log(`[当前用户]`, res.data);
 
-      if (res.ok) {
-        const user = res.data as { id: string; email: string; name: string; role: string };
-        expect(user.email).toBe(TEST_USERS.admin.email);
-      }
+      expect(res.ok).toBe(true);
+      const data = res.data as { user: { id: string; email: string; name: string; role: string } };
+      expect(data.user.email).toBe(TEST_USERS.admin.email);
     });
 
     it('1.6 错误密码应该登录失败', async () => {

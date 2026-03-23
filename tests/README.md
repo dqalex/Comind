@@ -1,4 +1,4 @@
-# TeamClaw 测试框架 v4.0
+# TeamClaw 测试框架 v1.0.1
 
 ## 框架选型
 
@@ -37,14 +37,18 @@ tests/
 │   ├── auth-permission.test.ts        # 认证权限（多用户角色）
 │   ├── task-api.test.ts               # 任务 CRUD + 状态流转
 │   ├── project-api.test.ts            # 项目 CRUD + 成员管理
-│   ├── document-api.test.ts           # 文档 CRUD + Wiki
+│   ├── document-api.test.ts            # 文档 CRUD + Wiki
 │   ├── sop-flow.test.ts               # SOP 模板 + 阶段推进
 │   ├── sop-skill-package.test.ts      # SOP Skill 安装包
 │   ├── skill-api-permission.test.ts   # Skill 权限混合模式
 │   ├── skillhub-api.test.ts           # SkillHub 注册/状态/信任
-│   ├── approval-api.test.ts           # 审批系统 CRUD + 权限
+│   ├── approval-api.test.ts            # 审批系统 CRUD + 权限
 │   ├── render-template-import-export.test.ts  # 渲染模板导入导出
-│   └── sop-template-import-export.test.ts     # SOP 模板导入导出
+│   ├── sop-template-import-export.test.ts     # SOP 模板导入导出
+│   ├── chat-stream.test.ts             # 聊天流式响应集成测试
+│   ├── task-push.test.ts              # 任务推送流程测试
+│   ├── service.test.ts                # 服务连接测试
+│   └── sse-receive.test.ts            # SSE 接收测试
 │
 ├── e2e/                               # E2E 浏览器测试 (Playwright)
 │   ├── pages/                         # Page Object 模式封装
@@ -54,6 +58,8 @@ tests/
 │   │   └── SkillHubPage.ts
 │   ├── auth.spec.ts                   # 认证流程
 │   ├── tasks.spec.ts                  # 任务管理
+│   ├── teamclaw-e2e.spec.ts          # 完整 E2E 流程测试
+│   ├── e2e-flow.spec.ts              # E2E 流程验证
 │   ├── projects.spec.ts               # 项目管理
 │   ├── wiki.spec.ts                   # Wiki 文档
 │   ├── members.spec.ts                # 成员管理
@@ -97,6 +103,9 @@ tests/
 ├── stress/                            # 压力测试 (Playwright)
 │   └── stress-test.spec.ts
 │
+├── performance/                       # 性能测试 (Vitest/Playwright)
+│   └── full-automation.test.ts       # 全流程自动化性能测试
+│
 ├── helpers/                           # 测试辅助工具（共享）
 │   ├── api-client.ts                  # HTTP 客户端（本地/远程切换）
 │   ├── api-helper.ts                  # E2E Playwright API 调用（Cookie 处理）
@@ -107,13 +116,19 @@ tests/
 │   └── e2e-report-generator.ts        # E2E 报告生成（Playwright JSON → MD）
 │
 ├── scripts/                           # 测试流程脚本
-│   └── run-all-tests.sh               # 标准测试流程编排
+│   ├── run-all-tests.sh               # 标准测试流程编排
+│   └── test-sse.sh                     # SSE 连接测试
 │
 ├── __mocks__/                         # Mock 文件
 │   └── server-only.ts                 # Mock server-only 模块
 │
 ├── .auth/                             # Playwright 认证状态存储
-└── screenshots/                       # E2E 截图输出
+├── screenshots/                       # E2E 截图输出
+├── reports/                           # 测试报告目录
+│   ├── e2e/                          # E2E 测试报告
+│   ├── performance/                  # 性能测试报告
+│   └── results/                      # 测试结果数据
+```
 ```
 
 ---

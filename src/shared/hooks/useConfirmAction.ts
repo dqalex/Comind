@@ -6,7 +6,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { useEscapeKey } from '@/hooks/useEscapeKey';
+import { useEscapeKey } from '@/shared/hooks/useEscapeKey';
 
 interface UseConfirmActionReturn<T> {
   /** 当前待确认目标（null 表示弹窗关闭） */

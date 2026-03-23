@@ -1,7 +1,7 @@
 /**
  * Gateway 配置 API
  * 
- * v3.0: Admin Only - 只有管理员可以管理 Gateway 配置
+ * v0.9.8: Admin Only - 只有管理员可以管理 Gateway 配置
  * 
  * GET  - 获取当前 Gateway 配置
  * POST - 保存新的 Gateway 配置
@@ -96,7 +96,7 @@ export const POST = withAdminAuth(async (req: NextRequest) => {
       );
     }
 
-    // v3.0: 仅支持 server_proxy 模式（多用户安全要求）
+    // v0.9.8: 仅支持 server_proxy 模式（多用户安全要求）
     const mode = body.mode || 'server_proxy';
     if (mode !== 'server_proxy') {
       return NextResponse.json(
@@ -140,7 +140,7 @@ export const POST = withAdminAuth(async (req: NextRequest) => {
         id,
         mode,
         url: body.url,
-        // v3.0: 不再返回 token 给前端（安全考量）
+        // v0.9.8: 不再返回 token 给前端（安全考量）
       },
       error: null,
     }, { status: 201 });

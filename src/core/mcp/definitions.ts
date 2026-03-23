@@ -370,9 +370,34 @@ export const TEAMCLAW_TOOLS = {
     },
   },
 
+  // ==================== 消息模板工具（v1.0.1 新增）====================
+
+  get_message_template: {
+    name: 'get_message_template',
+    description: '获取渲染后的消息模板内容，模板支持 Mustache 风格变量替换',
+    parameters: {
+      type: 'object',
+      properties: {
+        template_name: { type: 'string', description: '模板名称（如 system-info, task-push, task-board, task-push-unified）' },
+      },
+      required: ['template_name'],
+    },
+  },
+
+  list_message_templates: {
+    name: 'list_message_templates',
+    description: '列出所有可用的消息模板',
+    parameters: {
+      type: 'object',
+      properties: {},
+    },
+  },
+
+  // ==================== v1.0.1 Deprecated 工具（仍可用，但建议迁移）====================
+
   get_template: {
     name: 'get_template',
-    description: '获取渲染后的模板内容，模板支持 Mustache 风格变量替换',
+    description: '[DEPRECATED v1.0.1] 请使用 get_message_template',
     parameters: {
       type: 'object',
       properties: {
@@ -384,7 +409,7 @@ export const TEAMCLAW_TOOLS = {
 
   list_templates: {
     name: 'list_templates',
-    description: '列出所有可用的模板',
+    description: '[DEPRECATED v1.0.1] 请使用 list_message_templates',
     parameters: {
       type: 'object',
       properties: {},
@@ -701,9 +726,11 @@ export const TEAMCLAW_TOOLS = {
 
   // ==================== v3.0 Phase F: 上下文获取工具（渐进式） ====================
 
+  // ==================== v1.0.1 Deprecated 上下文工具（仍可用，但建议迁移）====================
+
   get_task_detail: {
     name: 'get_task_detail',
-    description: '获取任务完整详情（L2 上下文）。包含描述、评论、检查项、附件等完整信息。',
+    description: '[DEPRECATED v1.0.1] 请使用 get_task 并传 detail=true',
     parameters: {
       type: 'object',
       properties: {
@@ -720,7 +747,7 @@ export const TEAMCLAW_TOOLS = {
 
   get_project_detail: {
     name: 'get_project_detail',
-    description: '获取项目完整详情（L2 上下文）。包含成员、任务统计、文档列表等完整信息。',
+    description: '[DEPRECATED v1.0.1] 请使用 get_project 并传 detail=true',
     parameters: {
       type: 'object',
       properties: {
@@ -737,7 +764,7 @@ export const TEAMCLAW_TOOLS = {
 
   get_document_detail: {
     name: 'get_document_detail',
-    description: '获取文档完整内容（L2 上下文）。包含完整内容和元数据。',
+    description: '[DEPRECATED v1.0.1] 请使用 get_document 并传 detail=true',
     parameters: {
       type: 'object',
       properties: {
@@ -749,7 +776,7 @@ export const TEAMCLAW_TOOLS = {
 
   get_sop_previous_output: {
     name: 'get_sop_previous_output',
-    description: '获取 SOP 前序阶段产出（L2 上下文）。返回所有已完成阶段的产出内容。',
+    description: '[DEPRECATED v1.0.1] 请使用 get_sop_context',
     parameters: {
       type: 'object',
       properties: {
@@ -762,7 +789,7 @@ export const TEAMCLAW_TOOLS = {
 
   get_sop_knowledge_layer: {
     name: 'get_sop_knowledge_layer',
-    description: '获取 SOP 知识库层级内容（L2 上下文）。按层级返回知识库内容。',
+    description: '[DEPRECATED v1.0.1] 请使用 get_sop_context',
     parameters: {
       type: 'object',
       properties: {

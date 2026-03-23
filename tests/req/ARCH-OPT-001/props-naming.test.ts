@@ -7,16 +7,15 @@ import { describe, it, expect } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 
-// 需要检查的文件列表
+// 需要检查的文件列表（已迁移到 src/ 目录）
 const FILES_TO_CHECK = [
-  'components/projects/ProjectEditDialog.tsx',
-  'components/ErrorBoundary.tsx',
-  'components/projects/ProjectMemberDialog.tsx',
-  'components/TaskDrawer.tsx',
-  'components/chat/ChatPanel.tsx',
-  'components/chat/ChatMessageList.tsx',
-  'components/chat/ChatInputArea.tsx',
-  'components/chat/ChatSessionList.tsx',
+  'src/features/task-board/ProjectEditDialog.tsx',
+  'src/shared/layout/ErrorBoundary.tsx',
+  'src/features/task-board/TaskDrawer.tsx',
+  'src/features/chat-panel/ChatPanel.tsx',
+  'src/features/chat-panel/ChatMessageList.tsx',
+  'src/features/chat-panel/ChatInputArea.tsx',
+  'src/features/chat-panel/ChatSessionList.tsx',
 ];
 
 describe('ARCH-OPT-001: Props Naming Convention', () => {

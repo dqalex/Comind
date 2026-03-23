@@ -16,7 +16,7 @@ const ALLOWED_FIELDS = ['name', 'memberId', 'syncEnabled', 'watchEnabled', 'sync
 /**
  * GET /api/openclaw-workspaces/[id]
  * 获取单个 workspace 详情
- * v3.0: 需要登录才能访问（只读）
+ * v0.9.8: 需要登录才能访问（只读）
  */
 export const GET = withAuth(async (
   request: NextRequest,
@@ -45,7 +45,7 @@ export const GET = withAuth(async (
 /**
  * PUT /api/openclaw-workspaces/[id]
  * 更新 workspace 配置
- * v3.0: Admin Only - 只有管理员可以修改 Workspace
+ * v0.9.8: Admin Only - 只有管理员可以修改 Workspace
  */
 export const PUT = withAdminAuth(async (
   request: NextRequest,
@@ -98,7 +98,7 @@ export const PUT = withAdminAuth(async (
 /**
  * DELETE /api/openclaw-workspaces/[id]
  * 删除 workspace（不删除文件）
- * v3.0: Admin Only - 只有管理员可以删除 Workspace
+ * v0.9.8: Admin Only - 只有管理员可以删除 Workspace
  */
 export const DELETE = withAdminAuth(async (
   request: NextRequest,

@@ -3,7 +3,7 @@
 import { forwardRef, type InputHTMLAttributes } from 'react';
 import clsx from 'clsx';
 
-export interface SwitchProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {}
+export type SwitchProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'type'>;
 
 const Switch = forwardRef<HTMLInputElement, SwitchProps>(
   ({ className, checked, ...props }, ref) => {

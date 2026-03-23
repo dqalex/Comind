@@ -4,6 +4,7 @@
 
 // Store
 export { useTaskStore } from './store';
+export { useTaskLogStore } from './taskLog.store';
 
-// 类型从 db/schema 导出
-export type { Task, NewTask, TaskStatus } from '@/db/schema';
+// 类型
+export type { Task, NewTask, TaskLog, NewTaskLog } from '@/db/schema';

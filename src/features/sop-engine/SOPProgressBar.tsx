@@ -5,8 +5,8 @@ import { useTranslation } from 'react-i18next';
 import type { SOPStage, StageRecord, InputDef } from '@/db/schema';
 import clsx from 'clsx';
 import { Check, RotateCcw, SkipForward, Play, Palette, Send } from 'lucide-react';
-import { Input, Textarea } from '@/components/ui';
-import { SOP_STAGE_CONFIG, getStageConfig } from '@/lib';
+import { Input, Textarea } from '@/shared/ui';
+import { SOP_STAGE_CONFIG, getStageConfig } from '@/shared/lib/sop-config';
 
 /** SOP 阶段操作参数 */
 interface SOPStageAction {

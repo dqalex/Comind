@@ -7,6 +7,8 @@
  */
 
 import * as crypto from 'crypto';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // 向后兼容的 re-export（避免修改所有引用方）
 export { escapeHtml, sanitizeString } from './sanitize';
@@ -229,16 +231,8 @@ function getOrCreateEncryptionKey(): string {
     return _cachedKey;
   }
   
-  // 开发环境：使用默认密钥
-  if (process.env.NODE_ENV !== 'production') {
-    _cachedKey = 'teamclaw-dev-encryption-key-change-in-production';
-    return _cachedKey;
-  }
-  
-  // 生产环境：自动生成并保存
+  // 生产环境和开发环境统一处理：自动生成并保存
   try {
-    const fs = require('fs');
-    const path = require('path');
     const envPath = path.join(process.cwd(), '.env.local');
     
     // 生成 32 字节随机密钥
@@ -248,7 +242,12 @@ function getOrCreateEncryptionKey(): string {
     const envLine = `\n# Auto-generated token encryption key\nTOKEN_ENCRYPTION_KEY="${newKey}"\n`;
     fs.appendFileSync(envPath, envLine, 'utf8');
     
-    console.log('[Security] Auto-generated TOKEN_ENCRYPTION_KEY and saved to .env.local');
+    // 生产环境只记录警告级别日志（不泄露密钥信息）
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[Security] Generated TOKEN_ENCRYPTION_KEY for development (saved to .env.local)');
+    } else {
+      console.warn('[Security] Auto-generated TOKEN_ENCRYPTION_KEY (ensure it persists across restarts)');
+    }
     
     _cachedKey = newKey;
     return newKey;

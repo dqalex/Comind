@@ -6,110 +6,147 @@ import { eventBus } from '@/lib/event-bus';
 import { validateEnum, VALID_DELIVERY_STATUS, VALID_DELIVERY_PLATFORM } from '@/lib/validators';
 import { triggerMarkdownSync } from '@/lib/markdown-sync';
 import { renderTemplateWithContext } from '@/lib/template-engine';
+import { withAuth } from '@/lib/with-auth';
+import { checkProjectAccess } from '@/shared/lib/project-access';
+import type { AuthResult } from '@/lib/api-auth';
 
 // 标记为动态路由，避免静态生成错误
 export const dynamic = 'force-dynamic';
 
 // GET - 获取单个交付记录
-export async function GET(
+// v0.9.8: 添加权限校验
+export const GET = withAuth(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const [delivery] = await db
-      .select()
-      .from(deliveries)
-      .where(eq(deliveries.id, id));
+  auth: AuthResult,
+  context?: { params: Promise<{ id: string }> }
+) => {
+  return (async () => {
+    try {
+      const { id } = await context!.params;
+      const [delivery] = await db
+        .select()
+        .from(deliveries)
+        .where(eq(deliveries.id, id));
 
-    if (!delivery) {
-      return NextResponse.json({ error: 'Delivery not found' }, { status: 404 });
+      if (!delivery) {
+        return NextResponse.json({ error: 'Delivery not found' }, { status: 404 });
+      }
+
+      // 权限校验：检查项目访问权限（通过关联任务）
+      if (delivery.taskId) {
+        const [task] = await db.select().from(tasks).where(eq(tasks.id, delivery.taskId));
+        if (task?.projectId) {
+          const access = await checkProjectAccess(task.projectId, auth.userId!, auth.userRole!);
+          if (!access.hasAccess) {
+            return NextResponse.json({ error: 'Delivery not found' }, { status: 404 });
+          }
+        }
+      }
+
+      return NextResponse.json(delivery);
+    } catch {
+      return NextResponse.json({ error: 'Failed to fetch delivery' }, { status: 500 });
     }
-
-    return NextResponse.json(delivery);
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch delivery' }, { status: 500 });
-  }
-}
+  })();
+});
 
 // PUT - 更新交付记录（审核）
-export async function PUT(
+// v0.9.8: 添加权限校验
+export const PUT = withAuth(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const body = await request.json();
+  auth: AuthResult,
+  context?: { params: Promise<{ id: string }> }
+) => {
+  return (async () => {
+    try {
+      const { id } = await context!.params;
+      const body = await request.json();
 
-    const [existing] = await db.select().from(deliveries).where(eq(deliveries.id, id));
-    if (!existing) {
-      return NextResponse.json({ error: 'Delivery not found' }, { status: 404 });
-    }
+      const [existing] = await db.select().from(deliveries).where(eq(deliveries.id, id));
+      if (!existing) {
+        return NextResponse.json({ error: 'Delivery not found' }, { status: 404 });
+      }
 
-    const updateData: Record<string, unknown> = { updatedAt: new Date() };
-    const allowedFields = [
-      'title', 'description', 'platform', 'externalUrl', 'externalId', 'documentId',
-      'status', 'reviewerId', 'reviewedAt', 'reviewComment', 'version'
-    ];
-    for (const field of allowedFields) {
-      if (body[field] !== undefined) updateData[field] = body[field];
-    }
-
-    if (body.status && !validateEnum(body.status, VALID_DELIVERY_STATUS)) {
-      return NextResponse.json({ error: `status must be one of ${VALID_DELIVERY_STATUS.join('/')}` }, { status: 400 });
-    }
-    if (body.platform && !validateEnum(body.platform, VALID_DELIVERY_PLATFORM)) {
-      return NextResponse.json({ error: `platform must be one of ${VALID_DELIVERY_PLATFORM.join('/')}` }, { status: 400 });
-    }
-
-    if (updateData.reviewedAt && typeof updateData.reviewedAt === 'string') {
-      updateData.reviewedAt = new Date(updateData.reviewedAt);
-    }
-
-    const [delivery] = await db
-      .update(deliveries)
-      .set(updateData)
-      .where(eq(deliveries.id, id))
-      .returning();
-
-    eventBus.emit({ type: 'delivery_update', resourceId: delivery.id });
-    triggerMarkdownSync('teamclaw:deliveries');
-
-    // 审核状态变更时，同步关联任务状态 + 构建通知消息
-    const reviewStatus = body.status as string | undefined;
-    const gatewaySessionKey = body._gatewaySessionKey as string | undefined;
-    let notifyData: { sessionKey: string; message: string } | null = null;
-
-    if (reviewStatus) {
-      const reviewCtx: ReviewContext = {
-        deliveryId: delivery.id,
-        deliveryTitle: delivery.title,
-        deliveryDescription: existing.description,
-        memberId: existing.memberId,
-        documentId: existing.documentId,
-        reviewerId: body.reviewerId,
-        reviewComment: body.reviewComment,
-      };
-
-      let taskForNotify: { id: string; title: string; description: string | null; priority: string; status: string; deadline: Date | null; projectId: string | null; attachments: string[] | null } | null = null;
-
+      // 权限校验：检查项目编辑权限（通过关联任务）
       if (existing.taskId) {
-        // 有关联任务：同步任务状态
-        taskForNotify = await syncTaskStatusFromReview(existing.taskId, reviewStatus);
+        const [task] = await db.select().from(tasks).where(eq(tasks.id, existing.taskId));
+        if (task?.projectId) {
+          const access = await checkProjectAccess(task.projectId, auth.userId!, auth.userRole!);
+          if (!access.hasAccess) {
+            return NextResponse.json({ error: 'Delivery not found' }, { status: 404 });
+          }
+          if (!access.canEdit) {
+            return NextResponse.json({ error: 'No edit permission' }, { status: 403 });
+          }
+        }
       }
 
-      // 需要修改/退回时，构建通知消息返回给前端发送
-      if (reviewStatus === 'revision_needed' || reviewStatus === 'rejected') {
-        notifyData = await buildReviewNotification(reviewStatus, taskForNotify, reviewCtx, gatewaySessionKey);
+      const updateData: Record<string, unknown> = { updatedAt: new Date() };
+      const allowedFields = [
+        'title', 'description', 'platform', 'externalUrl', 'externalId', 'documentId',
+        'status', 'reviewerId', 'reviewedAt', 'reviewComment', 'version'
+      ];
+      for (const field of allowedFields) {
+        if (body[field] !== undefined) updateData[field] = body[field];
       }
+
+      if (body.status && !validateEnum(body.status, VALID_DELIVERY_STATUS)) {
+        return NextResponse.json({ error: `status must be one of ${VALID_DELIVERY_STATUS.join('/')}` }, { status: 400 });
+      }
+      if (body.platform && !validateEnum(body.platform, VALID_DELIVERY_PLATFORM)) {
+        return NextResponse.json({ error: `platform must be one of ${VALID_DELIVERY_PLATFORM.join('/')}` }, { status: 400 });
+      }
+
+      if (updateData.reviewedAt && typeof updateData.reviewedAt === 'string') {
+        updateData.reviewedAt = new Date(updateData.reviewedAt);
+      }
+
+      const [delivery] = await db
+        .update(deliveries)
+        .set(updateData)
+        .where(eq(deliveries.id, id))
+        .returning();
+
+      eventBus.emit({ type: 'delivery_update', resourceId: delivery.id });
+      triggerMarkdownSync('teamclaw:deliveries');
+
+      // 审核状态变更时，同步关联任务状态 + 构建通知消息
+      const reviewStatus = body.status as string | undefined;
+      const gatewaySessionKey = body._gatewaySessionKey as string | undefined;
+      let notifyData: { sessionKey: string; message: string } | null = null;
+
+      if (reviewStatus) {
+        const reviewCtx: ReviewContext = {
+          deliveryId: delivery.id,
+          deliveryTitle: delivery.title,
+          deliveryDescription: existing.description,
+          memberId: existing.memberId,
+          documentId: existing.documentId,
+          reviewerId: body.reviewerId,
+          reviewComment: body.reviewComment,
+        };
+
+        let taskForNotify: { id: string; title: string; description: string | null; priority: string; status: string; deadline: Date | null; projectId: string | null; attachments: string[] | null } | null = null;
+
+        if (existing.taskId) {
+          // 有关联任务：同步任务状态
+          taskForNotify = await syncTaskStatusFromReview(existing.taskId, reviewStatus);
+        }
+
+        // 需要修改/退回时，构建通知消息返回给前端发送
+        if (reviewStatus === 'revision_needed' || reviewStatus === 'rejected') {
+          notifyData = await buildReviewNotification(reviewStatus, taskForNotify, reviewCtx, gatewaySessionKey);
+        }
+      }
+
+      // 将通知数据附在响应中，前端负责通过 Gateway 发送
+      return NextResponse.json({ ...delivery, _notifyData: notifyData });
+    } catch (error) {
+      console.error('[PUT /api/deliveries]', error);
+      return NextResponse.json({ error: 'Failed to update delivery' }, { status: 500 });
     }
-
-    // 将通知数据附在响应中，前端负责通过 Gateway 发送
-    return NextResponse.json({ ...delivery, _notifyData: notifyData });
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to update delivery' }, { status: 500 });
-  }
-}
+  })();
+});
 
 /**
  * 审核状态 → 任务状态映射
@@ -309,23 +346,41 @@ async function findAiMemberForNotification(
 }
 
 // DELETE - 删除交付记录
-export async function DELETE(
+// v0.9.8: 添加权限校验
+export const DELETE = withAuth(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const [existingDel] = await db.select().from(deliveries).where(eq(deliveries.id, id));
-    if (!existingDel) {
-      return NextResponse.json({ error: 'Delivery not found' }, { status: 404 });
+  auth: AuthResult,
+  context?: { params: Promise<{ id: string }> }
+) => {
+  return (async () => {
+    try {
+      const { id } = await context!.params;
+      const [existingDel] = await db.select().from(deliveries).where(eq(deliveries.id, id));
+      if (!existingDel) {
+        return NextResponse.json({ error: 'Delivery not found' }, { status: 404 });
+      }
+
+      // 权限校验：检查项目删除权限（通过关联任务）
+      if (existingDel.taskId) {
+        const [task] = await db.select().from(tasks).where(eq(tasks.id, existingDel.taskId));
+        if (task?.projectId) {
+          const access = await checkProjectAccess(task.projectId, auth.userId!, auth.userRole!);
+          if (!access.hasAccess) {
+            return NextResponse.json({ error: 'Delivery not found' }, { status: 404 });
+          }
+          if (!access.canDelete) {
+            return NextResponse.json({ error: 'No delete permission' }, { status: 403 });
+          }
+        }
+      }
+
+      await db.delete(deliveries).where(eq(deliveries.id, id));
+
+      eventBus.emit({ type: 'delivery_update', resourceId: id });
+      triggerMarkdownSync('teamclaw:deliveries');
+      return NextResponse.json({ success: true });
+    } catch {
+      return NextResponse.json({ error: 'Failed to delete delivery' }, { status: 500 });
     }
-
-    await db.delete(deliveries).where(eq(deliveries.id, id));
-
-    eventBus.emit({ type: 'delivery_update', resourceId: id });
-    triggerMarkdownSync('teamclaw:deliveries');
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to delete delivery' }, { status: 500 });
-  }
-}
+  })();
+});

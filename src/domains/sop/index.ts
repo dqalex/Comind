@@ -3,7 +3,22 @@
  */
 
 // Store
-export { useSOPStore } from './store';
+export { useSOPTemplateStore } from './store';
 
-// 类型从 db/schema 导出
-export type { SOPTemplate, NewSOPTemplate } from '@/db/schema';
+// 类型
+export type { 
+  SOPTemplate, 
+  NewSOPTemplate, 
+  ReferenceFile, 
+  ReferenceType,
+  ScriptFile,
+  ScriptType,
+  SOPStage,
+  SOPCategory,
+  StageRecord,
+  StageType,
+  StageOutputType,
+  InputDef,
+  OutputConfig,
+  KnowledgeConfig,
+} from '@/db/schema';

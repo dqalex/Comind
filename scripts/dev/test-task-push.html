@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mock Gateway 测试工具</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 { color: #333; }
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .form-group {
+      margin: 15px 0;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #555;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    textarea { min-height: 100px; resize: vertical; }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    button:hover { background: #0056b3; }
+    button.secondary {
+      background: #6c757d;
+    }
+    button.secondary:hover {
+      background: #545b62;
+    }
+    button.success {
+      background: #28a745;
+    }
+    button.success:hover {
+      background: #218838;
+    }
+    .status {
+      padding: 10px;
+      border-radius: 4px;
+      margin: 10px 0;
+      display: none;
+    }
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+      display: block;
+    }
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+      display: block;
+    }
+    .status.info {
+      background: #d1ecf1;
+      color: #0c5460;
+      display: block;
+    }
+    .log {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      padding: 10px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+    .log-entry {
+      margin: 2px 0;
+      padding: 3px 5px;
+      border-radius: 3px;
+    }
+    .log-entry.sent { color: #28a745; background: #f0f9f4; }
+    .log-entry.received { color: #007bff; background: #f0f7ff; }
+    .log-entry.error { color: #dc3545; background: #fdf2f2; }
+    .log-entry.delta { color: #856404; background: #fff8e6; }
+    .log-entry.final { color: #155724; background: #e8f5e9; }
+    .connection-status {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 5px;
+    }
+    .connection-status.connected { background: #28a745; }
+    .connection-status.disconnected { background: #dc3545; }
+    .connection-status.connecting { background: #ffc107; }
+    .steps {
+      background: #e9ecef;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 15px 0;
+    }
+    .steps ol {
+      margin: 0;
+      padding-left: 20px;
+    }
+    .steps li {
+      margin: 8px 0;
+    }
+    code {
+      background: #f4f4f4;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: monospace;
+    }
+    .streaming-output {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 14px;
+      min-height: 100px;
+      max-height: 300px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      margin-top: 10px;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .section-title {
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 5px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 Mock Gateway 测试工具</h1>
+
+  <div class="card">
+    <h3>📋 测试步骤</h3>
+    <div class="steps">
+      <ol>
+        <li>启动 Mock Gateway: <code>npm run mock:gateway</code></li>
+        <li>启动 TeamClaw: <code>npm run dev</code></li>
+        <li>点击"连接 Mock Gateway"</li>
+        <li>点击"发送测试消息"或"模拟任务推送"</li>
+        <li>观察流式响应输出</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🔗 连接控制</h3>
+    <p>
+      <span id="connectionStatus" class="connection-status disconnected"></span>
+      <span id="connectionText">未连接</span>
+    </p>
+    <div class="controls">
+      <button onclick="connectGateway()">连接 Mock Gateway</button>
+      <button class="secondary" onclick="disconnectGateway()">断开连接</button>
+      <button class="success" onclick="runFullTest()">运行完整测试</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>💬 直接聊天测试 (agent.dm)</h3>
+    <div class="form-group">
+      <label>消息内容</label>
+      <input type="text" id="chatMessage" value="请帮我分析这个任务">
+    </div>
+    <div class="controls">
+      <button onclick="sendDM()">发送 DM 消息</button>
+      <button onclick="sendChat()">发送 Chat 消息</button>
+    </div>
+    <div id="chatStatus" class="status"></div>
+  </div>
+
+  <div class="card">
+    <h3>📊 流式响应输出</h3>
+    <div id="streamingOutput" class="streaming-output">等待消息...</div>
+    <button class="secondary" onclick="clearOutput()" style="margin-top: 10px;">清除输出</button>
+  </div>
+
+  <div class="card">
+    <h3>📝 事件日志</h3>
+    <div id="log" class="log">等待连接...</div>
+    <button class="secondary" onclick="clearLog()" style="margin-top: 10px;">清除日志</button>
+  </div>
+
+  <script>
+    let ws = null;
+    let messageId = 0;
+    let currentSessionKey = null;
+    const logEl = document.getElementById('log');
+    const outputEl = document.getElementById('streamingOutput');
+
+    function log(message, type = 'info') {
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logEl.appendChild(entry);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function appendOutput(text, isFinal = false) {
+      if (outputEl.textContent === '等待消息...') {
+        outputEl.textContent = '';
+      }
+      outputEl.textContent += text;
+      outputEl.scrollTop = outputEl.scrollHeight;
+      if (isFinal) {
+        outputEl.style.borderColor = '#28a745';
+      }
+    }
+
+    function clearOutput() {
+      outputEl.textContent = '等待消息...';
+      outputEl.style.borderColor = '#333';
+      currentSessionKey = null;
+    }
+
+    function updateConnectionStatus(status) {
+      const indicator = document.getElementById('connectionStatus');
+      const text = document.getElementById('connectionText');
+      indicator.className = `connection-status ${status}`;
+      text.textContent = status === 'connected' ? '已连接' :
+                         status === 'connecting' ? '连接中...' : '未连接';
+    }
+
+    function showStatus(elementId, message, type) {
+      const el = document.getElementById(elementId);
+      el.className = `status ${type}`;
+      el.textContent = message;
+      setTimeout(() => {
+        el.style.display = 'none';
+      }, 5000);
+    }
+
+    async function connectGateway() {
+      if (ws?.readyState === WebSocket.OPEN) {
+        log('Already connected', 'error');
+        return;
+      }
+
+      updateConnectionStatus('connecting');
+      log('Connecting to Mock Gateway (ws://localhost:18789)...');
+
+      try {
+        ws = new WebSocket('ws://localhost:18789');
+
+        ws.onopen = () => {
+          log('WebSocket connected', 'sent');
+          ws.send(JSON.stringify({ type: 'challenge' }));
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+
+            if (data.type === 'challenge') {
+              log('Challenge received, sending connect...', 'received');
+              ws.send(JSON.stringify({
+                type: 'connect',
+                clientId: 'test-client-' + Date.now(),
+                token: 'mock-token',
+                role: 'operator'
+              }));
+              return;
+            }
+
+            if (data.type === 'hello-ok') {
+              updateConnectionStatus('connected');
+              log('Authenticated! clientId: ' + data.clientId, 'sent');
+              return;
+            }
+
+            if (data.event === 'gateway_chat_event') {
+              const payload = data.payload?.payload || data.payload;
+              if (payload) {
+                currentSessionKey = payload.sessionKey;
+                if (payload.state === 'delta') {
+                  log(`[delta] "${payload.content.substring(0, 30)}..."`, 'delta');
+                  appendOutput(payload.content);
+                } else if (payload.state === 'final') {
+                  log(`[final] Complete response received`, 'final');
+                  appendOutput('', true);
+                }
+              }
+              return;
+            }
+
+            if (data.id) {
+              log(`Response for ${data.id}: ${JSON.stringify(data.result).substring(0, 100)}`, 'received');
+              if (data.result?.sessionKey) {
+                currentSessionKey = data.result.sessionKey;
+              }
+              return;
+            }
+
+            log('Received: ' + JSON.stringify(data).substring(0, 100), 'received');
+          } catch (err) {
+            log('Error parsing message: ' + err, 'error');
+          }
+        };
+
+        ws.onerror = (error) => {
+          log('WebSocket error', 'error');
+          updateConnectionStatus('disconnected');
+        };
+
+        ws.onclose = () => {
+          log('WebSocket closed');
+          updateConnectionStatus('disconnected');
+        };
+      } catch (err) {
+        log('Connection failed: ' + err, 'error');
+        updateConnectionStatus('disconnected');
+      }
+    }
+
+    function disconnectGateway() {
+      if (ws) {
+        ws.close();
+        ws = null;
+      }
+      updateConnectionStatus('disconnected');
+      log('Disconnected');
+    }
+
+    function sendDM() {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        alert('请先连接 Mock Gateway');
+        return;
+      }
+
+      const content = document.getElementById('chatMessage').value;
+      const id = 'req-dm-' + (++messageId);
+
+      clearOutput();
+      log('Sending agent.dm: ' + content.substring(0, 50), 'sent');
+
+      ws.send(JSON.stringify({
+        type: 'request',
+        id,
+        action: 'agent.dm',
+        params: { agentId: 'main', content }
+      }));
+
+      showStatus('chatStatus', 'DM 请求已发送', 'info');
+    }
+
+    function sendChat() {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        alert('请先连接 Mock Gateway');
+        return;
+      }
+
+      if (!currentSessionKey) {
+        alert('请先发送 DM 消息获取 sessionKey');
+        return;
+      }
+
+      const content = document.getElementById('chatMessage').value;
+      const id = 'req-chat-' + (++messageId);
+
+      log('Sending agent.chat: ' + content.substring(0, 50), 'sent');
+
+      ws.send(JSON.stringify({
+        type: 'request',
+        id,
+        action: 'agent.chat',
+        params: { sessionKey: currentSessionKey, content }
+      }));
+
+      showStatus('chatStatus', 'Chat 请求已发送', 'info');
+    }
+
+    async function runFullTest() {
+      clearOutput();
+      clearLog();
+      log('Starting full test sequence...');
+
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        await connectGateway();
+        await new Promise(r => setTimeout(r, 1000));
+      }
+
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        log('Failed to connect', 'error');
+        return;
+      }
+
+      log('Step 1: Sending DM request...', 'info');
+      sendDM();
+
+      // Wait for completion
+      let attempts = 0;
+      const checkInterval = setInterval(() => {
+        attempts++;
+        if (outputEl.style.borderColor === 'rgb(40, 167, 69)' || attempts > 30) {
+          clearInterval(checkInterval);
+          if (attempts <= 30) {
+            log('✅ Test completed successfully!', 'final');
+          } else {
+            log('❌ Test timeout', 'error');
+          }
+        }
+      }, 1000);
+    }
+
+    function clearLog() {
+      logEl.innerHTML = '';
+      log('Log cleared');
+    }
+
+    window.onload = () => {
+      log('Ready. Click "连接 Mock Gateway" to start.');
+    };
+  </script>
+</body>
+</html>

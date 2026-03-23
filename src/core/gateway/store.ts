@@ -13,8 +13,8 @@
  */
 
 import { create } from 'zustand';
-import type { GatewayState } from './gateway/types';
-import { initialGatewayState } from './gateway/types';
+import type { GatewayState } from './store/types';
+import { initialGatewayState } from './store/types';
 import {
   createConnectionActions,
   createDataActions,
@@ -25,12 +25,15 @@ import {
   createSkillActions,
   createConfigActions,
   createTaskActions,
-} from './gateway';
+} from './store/index';
 
 // Tool policy 已提取到 lib/tool-policy.ts，保持向后兼容的 re-export
 export { TOOL_SECTIONS, PROFILE_OPTIONS, normalizeToolName, isAllowedByPolicy, resolveToolProfilePolicy } from '@/lib/tool-policy';
 
-export type { ChatEventHandler } from './gateway/types';
+export type { ChatEventHandler } from './store/types';
+
+// 从 openclaw.store.ts 重新导出
+export { useOpenClawStatusStore } from './openclaw.store';
 
 export const useGatewayStore = create<GatewayState>((set, get) => ({
   // 初始状态

@@ -7,8 +7,10 @@ import CodeMirror from '@uiw/react-codemirror';
 import { EditorView } from '@codemirror/view';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { languages } from '@codemirror/language-data';
-import { generateIframeScript, updateMdSlots, syncMdToHtml, MD_RICHTEXT_STYLES, htmlToSimpleMd, renderIconsInHtml } from '@/lib';
-import CollapsibleMarkdown from './CollapsibleMarkdown';
+import { generateIframeScript, updateMdSlots, syncMdToHtml, htmlToSimpleMd } from '@/lib/slot-sync';
+import { MD_RICHTEXT_STYLES } from '@/lib/services/sync-service';
+import { renderIconsInHtml } from '@/lib/icon-render';
+import MarkdownContent from './MarkdownContent';
 import MarkdownToolbar from './MarkdownToolbar';
 import HtmlPreview from './HtmlPreview';
 import type { MarkdownEditorProps, ViewMode, DeviceMode, EditorTextSelection } from './types';
@@ -454,7 +456,7 @@ export default function MarkdownEditor({
                     className="flex-1 min-h-0 overflow-y-auto p-6 prose prose-stone dark:prose-invert prose-sm max-w-none md-preview"
                   >
                     {value ? (
-                      <CollapsibleMarkdown content={value} />
+                      <MarkdownContent content={value} />
                     ) : (
                       <p className="text-slate-400 italic">暂无内容</p>
                     )}

@@ -2,10 +2,11 @@
 
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import AppShell from '@/components/AppShell';
-import Header from '@/components/Header';
+import AppShell from '@/shared/layout/AppShell';
+import Header from '@/shared/layout/Header';
 import { useProjectStore, useTaskStore, useMemberStore, useDocumentStore, useDeliveryStore, useOpenClawStatusStore } from '@/domains';
 import { useGatewayStore } from '@/core/gateway/store';
+import { RelativeTimeDisplay } from '@/shared/components/RelativeTimeDisplay';
 import Link from 'next/link';
 import clsx from 'clsx';
 import {
@@ -14,7 +15,7 @@ import {
   Zap, MessageSquare, Monitor, Shield, Radio, Heart, Database,
   RefreshCw, ChevronDown, CheckCircle, XCircle, ArrowUpRight, Settings,
 } from 'lucide-react';
-import { Button, Card, Badge } from '@/components/ui';
+import { Button, Card, Badge } from '@/shared/ui';
 
 export default function DashboardPage() {
   const { t } = useTranslation();
@@ -53,8 +54,8 @@ export default function DashboardPage() {
   const DEFAULT_GW_URL = process.env.NEXT_PUBLIC_GATEWAY_URL || 'ws://localhost:18789';
   const [showChannels, setShowChannels] = useState(false);
 
-  const aiMembers = useMemo(() => getAIMembers(), [members]);
-  const humanMembers = useMemo(() => getHumanMembers(), [members]);
+  const aiMembers = useMemo(() => getAIMembers(), [getAIMembers, members]);
+  const humanMembers = useMemo(() => getHumanMembers(), [getHumanMembers, members]);
 
   const stats = useMemo(() => {
     const inProgress = tasks.filter(t => t.status === 'in_progress').length;
@@ -96,21 +97,6 @@ export default function DashboardPage() {
     if (h > 0) return `${h}h ${m}m`;
     if (m > 0) return `${m}m ${s}s`;
     return `${s}s`;
-  };
-
-  const formatRelativeTime = (ts: number) => {
-    const diff = Date.now() - ts;
-    if (diff < 0) {
-      const absDiff = Math.abs(diff);
-      if (absDiff < 60_000) return t('dashboard.secondsLater', { count: Math.round(absDiff / 1000) });
-      if (absDiff < 3600_000) return t('dashboard.minutesLater', { count: Math.round(absDiff / 60_000) });
-      return t('dashboard.hoursLater', { count: Math.round(absDiff / 3600_000) });
-    }
-    if (diff < 10_000) return t('dashboard.justNow');
-    if (diff < 60_000) return t('dashboard.secondsAgo', { count: Math.round(diff / 1000) });
-    if (diff < 3600_000) return t('dashboard.minutesAgo', { count: Math.round(diff / 60_000) });
-    if (diff < 86400_000) return t('dashboard.hoursAgo', { count: Math.round(diff / 3600_000) });
-    return t('dashboard.daysAgo', { count: Math.round(diff / 86400_000) });
   };
 
   return (
@@ -253,7 +239,7 @@ export default function DashboardPage() {
                     <div>
                       <div className="text-[11px] font-medium" style={{ color: 'var(--text-tertiary)' }}>{t('dashboard.channelRefresh')}</div>
                       <div className="text-sm font-bold font-display" style={{ color: 'var(--text-primary)' }}>
-                        {lastChannelsRefresh ? formatRelativeTime(lastChannelsRefresh) : '--'}
+                        <RelativeTimeDisplay timestamp={lastChannelsRefresh} />
                       </div>
                     </div>
                   </div>
@@ -299,7 +285,7 @@ export default function DashboardPage() {
                           .filter(j => j.state?.nextRunAtMs)
                           .sort((a, b) => (a.state?.nextRunAtMs ?? 0) - (b.state?.nextRunAtMs ?? 0))[0];
                         if (nextJob?.state?.nextRunAtMs) {
-                          return t('dashboard.nextRun', { time: formatRelativeTime(nextJob.state.nextRunAtMs) });
+                          return <RelativeTimeDisplay timestamp={nextJob.state.nextRunAtMs} />;
                         }
                         return t('dashboard.enabledOfTotal', { enabled: enabledJobs.length, total: cronJobs.length });
                       })()}

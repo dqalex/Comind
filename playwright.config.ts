@@ -11,12 +11,13 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './tests/e2e',
+  testIgnore: ['teamclaw-e2e.spec.ts', 'e2e-flow.spec.ts'], // 排除非标准 Playwright 测试脚本
   fullyParallel: false, // 禁用完全并行，避免 rate limit
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 1, // 失败后重试
   workers: 2, // 限制并发数为 2，避免触发限流
   reporter: [
-    ['html', { open: 'never' }],
+    ['html', { open: 'never', outputFolder: 'tests/reports/e2e' }],
     ['list'],
   ],
   use: {

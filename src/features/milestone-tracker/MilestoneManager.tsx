@@ -2,11 +2,11 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useConfirmAction } from '@/hooks/useConfirmAction';
-import ConfirmDialog from '@/components/ConfirmDialog';
+import { useConfirmAction } from '@/shared/hooks/useConfirmAction';
+import ConfirmDialog from '@/shared/layout/ConfirmDialog';
 import { useMilestoneStore, useProjectStore, useTaskStore, useDocumentStore } from '@/domains';
-import { Button, Input, Select, Card } from '@/components/ui';
-import { useInlineEdit } from '@/hooks/useInlineEdit';
+import { Button, Input, Select, Card } from '@/shared/ui';
+import { useInlineEdit } from '@/shared/hooks/useInlineEdit';
 import {
   Plus, Trash2, Edit2, X, Calendar,
   Milestone as MilestoneIcon,

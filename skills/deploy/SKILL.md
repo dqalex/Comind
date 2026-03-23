@@ -6,7 +6,7 @@ description: This skill should be used when the user asks to deploy TeamClaw to 
 # TeamClaw Deployment Guide
 
 > 本 Skill 由 TeamClaw 自动生成，包含项目上下文加载能力
-> **项目地址**: https://github.com/teamclaw
+> **项目地址**: https://github.com/dqalex/teamclaw
 
 Deploy TeamClaw to local machine (OpenClaw Gateway) or remote production server.
 

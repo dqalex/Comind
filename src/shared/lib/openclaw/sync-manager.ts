@@ -128,12 +128,12 @@ export class SyncManager {
       eventBus.emit({ type: 'document_update' });
 
       // 检测 teamclaw:* 类型文件，触发 Markdown → 任务看板解析
-      const teamclawType = this.detectComindType(frontMatter?.type);
+      const teamclawType = this.detectTeamclawType(frontMatter?.type);
       if (teamclawType) {
-        await this.syncComindFile(workspace, relativePath, content, frontMatter, hash);
+        await this.syncTeamclawFile(workspace, relativePath, content, frontMatter, hash);
       } else {
         // 非 teamclaw:* 类型文件：同步更新关联的 documents 表内容
-        await this.syncNonComindDocument(workspace, relativePath, content, frontMatter);
+        await this.syncNonTeamclawDocument(workspace, relativePath, content, frontMatter);
       }
     }
 
@@ -144,7 +144,7 @@ export class SyncManager {
    * 处理 teamclaw:* 类型文件的同步
    * 创建/更新 documents 记录 + 调用 syncMarkdownToDatabase 解析任务
    */
-  private async syncComindFile(
+  private async syncTeamclawFile(
     workspace: typeof openclawWorkspaces.$inferSelect,
     relativePath: string,
     content: string,
@@ -156,8 +156,8 @@ export class SyncManager {
         ? frontMatter.title
         : relativePath.replace(/\.md$/, '').split('/').pop() || relativePath;
 
-      const teamclawType = this.detectComindType(frontMatter?.type);
-      const docType = this.mapComindTypeToDocType(teamclawType || 'note');
+      const teamclawType = this.detectTeamclawType(frontMatter?.type);
+      const docType = this.mapTeamclawTypeToDocType(teamclawType || 'note');
 
       // 提取项目信息
       // projects/ 目录下的文件允许自动创建项目，frontMatter.project 只做关联
@@ -233,7 +233,7 @@ export class SyncManager {
    * 非 teamclaw:* 类型文件变更时，同步更新关联的 documents 表内容
    * 同时检查 delivery_status 等 frontmatter 字段，触发交付自动识别
    */
-  private async syncNonComindDocument(
+  private async syncNonTeamclawDocument(
     workspace: typeof openclawWorkspaces.$inferSelect,
     relativePath: string,
     content: string,
@@ -266,7 +266,7 @@ export class SyncManager {
       }
 
       const fileType = this.detectFileType(relativePath);
-      const docType = this.mapComindTypeToDocType(fileType);
+      const docType = this.mapTeamclawTypeToDocType(fileType);
 
       let documentId: string | undefined;
 
@@ -322,7 +322,7 @@ export class SyncManager {
   /**
    * 检测 teamclaw:* frontmatter 类型
    */
-  private detectComindType(type: unknown): string | null {
+  private detectTeamclawType(type: unknown): string | null {
     if (typeof type !== 'string') return null;
     if (type.startsWith('teamclaw:')) return type;
     if (type === 'task_list') return 'teamclaw:tasks';
@@ -332,7 +332,7 @@ export class SyncManager {
   /**
    * teamclaw 类型映射到文档类型（与 schema enum 严格匹配）
    */
-  private mapComindTypeToDocType(teamclawType: string): 'guide' | 'reference' | 'report' | 'note' | 'decision' | 'scheduled_task' | 'task_list' | 'other' {
+  private mapTeamclawTypeToDocType(teamclawType: string): 'guide' | 'reference' | 'report' | 'note' | 'decision' | 'scheduled_task' | 'task_list' | 'other' {
     switch (teamclawType) {
       case 'teamclaw:tasks': return 'task_list';
       case 'teamclaw:schedules': return 'scheduled_task';

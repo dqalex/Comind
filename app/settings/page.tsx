@@ -2,18 +2,18 @@
 
 import { useUIStore } from '@/domains';
 import { useOpenClawWorkspaceStore } from '@/core/gateway/openclaw-workspace.store';
-import AppShell from '@/components/AppShell';
-import Header from '@/components/Header';
-import { Button, Switch } from '@/components/ui';
+import AppShell from '@/shared/layout/AppShell';
+import Header from '@/shared/layout/Header';
+import { Button, Switch } from '@/shared/ui';
 import { changeLanguage, initI18n } from '@/lib/i18n';
 import { useState, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useEscapeKey } from '@/hooks/useEscapeKey';
-import { useSecurityCode } from '@/hooks/useSecurityCode';
-import { SecurityCodeDialog } from '@/components/SecurityCodeDialog';
-import { GatewayConfigPanel } from '@/components/settings/GatewayConfigPanel';
-import { WorkspaceCard } from '@/components/openclaw/WorkspaceCard';
-import { WorkspaceForm } from '@/components/openclaw/WorkspaceForm';
+import { useEscapeKey } from '@/shared/hooks/useEscapeKey';
+import { useSecurityCode } from '@/shared/hooks/useSecurityCode';
+import { SecurityCodeDialog } from '@/shared/layout/SecurityCodeDialog';
+import { GatewayConfigPanel } from '@/features/settings/GatewayConfigPanel';
+import { WorkspaceCard } from '@/features/skill-manager/WorkspaceCard';
+import { WorkspaceForm } from '@/features/skill-manager/WorkspaceForm';
 import {
   Sun, Moon, Palette, Info, Zap, Globe, Database,
   Shield, ShieldAlert, AlertTriangle, FolderSync, Plus, Folder, Bug, Key, Layout, Lock,
@@ -21,13 +21,13 @@ import {
 import clsx from 'clsx';
 import dynamic from 'next/dynamic';
 
-const DebugPanel = dynamic(() => import('@/components/DebugPanel'), { ssr: false });
-const McpTokenPanel = dynamic(() => import('@/components/settings/McpTokenPanel'), { ssr: false });
-import { SecurityCodeSettings } from '@/components/settings/SecurityCodeSettings';
-import { SystemInitSettings } from '@/components/settings/SystemInitSettings';
-import { ChangePasswordDialog } from '@/components/settings/ChangePasswordDialog';
+const DebugPanel = dynamic(() => import('@/shared/layout/DebugPanel'), { ssr: false });
+const McpTokenPanel = dynamic(() => import('@/features/settings/McpTokenPanel'), { ssr: false });
+import { SecurityCodeSettings } from '@/features/settings/SecurityCodeSettings';
+import { SystemInitSettings } from '@/features/settings/SystemInitSettings';
+import { ChangePasswordDialog } from '@/features/settings/ChangePasswordDialog';
 const LandingContentEditor = dynamic(
-  () => import('@/components/landing/LandingContentEditor').then(mod => ({ default: mod.LandingContentEditor })),
+  () => import('@/features/landing/LandingContentEditor').then(mod => ({ default: mod.LandingContentEditor })),
   { ssr: false }
 );
 

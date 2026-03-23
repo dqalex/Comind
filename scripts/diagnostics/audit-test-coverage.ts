@@ -1030,7 +1030,7 @@ async function main() {
     console.log(JSON.stringify(report, null, 2));
   } else if (isMarkdown) {
     const md = formatMarkdown(report);
-    const outputPath = path.join(ROOT, 'docs', 'test-coverage-audit.md');
+    const outputPath = path.join(ROOT, 'docs', 'archive', 'historical-reports', 'test-coverage-audit.md');
     fs.mkdirSync(path.dirname(outputPath), { recursive: true });
     fs.writeFileSync(outputPath, md, 'utf-8');
     console.log(`\n✅ 报告已生成: ${outputPath}`);

@@ -1,14 +1,14 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui';
+import { Button } from '@/shared/ui';
 import {
   TOOL_SECTIONS,
   PROFILE_OPTIONS,
   normalizeToolName,
   isAllowedByPolicy,
   resolveToolProfilePolicy,
-} from '@/lib';
+} from '@/shared/lib/tool-policy';
 import { Loader2, RefreshCw, Save, ToggleLeft, ToggleRight } from 'lucide-react';
 
 interface ToolsPanelProps {

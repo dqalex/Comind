@@ -28,31 +28,31 @@ export interface ActionInstruction {
     | 'list_milestones'
     | 'update_milestone'
     | 'delete_milestone'
-    // SOP 引擎相关（v3.0 新增）
+    // SOP 引擎相关（v0.9.8 新增）
     | 'advance_sop_stage'
     | 'request_sop_confirm'
     | 'get_sop_context'
     | 'save_stage_output'
     | 'update_knowledge'
-    // AI 自主创作相关（v3.0 新增）
+    // AI 自主创作相关（v0.9.8 新增）
     | 'create_sop_template'
     | 'update_sop_template'
     | 'create_render_template'
     | 'update_render_template'
-    // 渲染模板查询（v3.0 新增）
+    // 渲染模板查询（v0.9.8 新增）
     | 'list_render_templates'
     | 'get_render_template'
-    // Agent MCP Token（v3.0 Phase F 新增）
+    // Agent MCP Token（v0.9.8 Phase F 新增）
     | 'get_agent_mcp_token'
     | 'list_agent_mcp_tokens'
     | 'revoke_agent_mcp_token'
-    // 上下文获取工具（v3.0 Phase F 新增）
+    // 上下文获取工具（v0.9.8 Phase F 新增）
     | 'get_task_detail'
     | 'get_project_detail'
     | 'get_document_detail'
     | 'get_sop_previous_output'
     | 'get_sop_knowledge_layer'
-    // Skill 工具（v3.0 SkillHub 集成）
+    // Skill 工具（v0.9.8 SkillHub 集成）
     | 'invoke_skill'
     | 'list_skills';
 
@@ -123,14 +123,14 @@ export interface ActionInstruction {
   sort_order?: number;
   due_date?: string;
 
-  // SOP 执行相关（v3.0 新增）
+  // SOP 执行相关（v0.9.8 新增）
   stage_output?: string;
   confirm_message?: string;
   output?: string;
   output_type?: 'text' | 'markdown' | 'html' | 'data' | 'file';
   layer?: string;  // Know-how 层级（L4）
 
-  // SOP 模板创建相关（v3.0 新增）
+  // SOP 模板创建相关（v0.9.8 新增）
   template_id?: string;
   category?: string;
   stages?: Array<{
@@ -145,7 +145,7 @@ export interface ActionInstruction {
   required_tools?: string[];
   quality_checklist?: string[];
 
-  // 渲染模板创建相关（v3.0 新增）
+  // 渲染模板创建相关（v0.9.8 新增）
   html_template?: string;
   css_template?: string;
   md_template?: string;
@@ -159,14 +159,14 @@ export interface ActionInstruction {
   };
   template_status?: 'draft' | 'active' | 'archived';
 
-  // Agent MCP Token 相关（v3.0 Phase F 新增）
+  // Agent MCP Token 相关（v0.9.8 Phase F 新增）
   token_id?: string;
 
-  // 上下文获取相关（v3.0 Phase F 新增）
+  // 上下文获取相关（v0.9.8 Phase F 新增）
   include?: string[];
   stage_id?: string;
 
-  // Skill 相关（v3.0 SkillHub 集成）
+  // Skill 相关（v0.9.8 SkillHub 集成）
   skill_key?: string;
   parameters?: Record<string, unknown>;
   context?: {

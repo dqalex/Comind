@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { format } from 'date-fns';
-import { Navbar } from '@/components/landing/Navbar';
+import { Navbar } from '@/features/landing/Navbar';
 import { Clock, ArrowLeft, BookOpen } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';

@@ -2,7 +2,7 @@
  * MarkdownEditor 类型定义
  */
 
-import type { SlotDef } from '@/lib';
+import type { SlotDef } from '@/shared/lib/slot-sync';
 
 // 元素选区类型（原从 @/components/studio/HtmlPreview 导入）
 interface ElementSelection {
@@ -58,10 +58,6 @@ export interface MarkdownContentProps {
 
 export interface FrontmatterBadgesProps {
   meta: Record<string, string>;
-}
-
-export interface CollapsibleMarkdownProps {
-  content: string;
 }
 
 // HTML 预览相关类型

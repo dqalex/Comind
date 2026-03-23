@@ -15,7 +15,7 @@ import { useRef, useEffect, useCallback, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Monitor, Smartphone, Edit3, Eye, ZoomIn, ZoomOut } from 'lucide-react';
 import clsx from 'clsx';
-import { generateIframeScript, renderIconsInHtml } from '@/lib';
+import { generateIframeScript, renderIconsInHtml } from '@/shared/lib';
 
 // ===== 类型定义 =====
 

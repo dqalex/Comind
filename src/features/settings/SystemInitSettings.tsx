@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from '@/shared/ui/button';
+import { Input } from '@/shared/ui/input';
 import { RotateCcw, AlertTriangle, Loader2, CheckCircle2, Database, Settings, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';

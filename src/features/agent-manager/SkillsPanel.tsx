@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Input } from '@/components/ui';
+import { Button, Input } from '@/shared/ui';
 import type { Skill } from '@/types';
 import clsx from 'clsx';
 import { Zap, Loader2, Download, ToggleLeft, ToggleRight } from 'lucide-react';

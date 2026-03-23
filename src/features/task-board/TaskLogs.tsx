@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTaskLogStore } from '@/domains';
 import { Clock } from 'lucide-react';
-import { formatRelativeTime } from '@/hooks/useRelativeTime';
+import { formatRelativeTime } from '@/shared/hooks/useRelativeTime';
 
 interface TaskLogsProps {
   taskId: string;

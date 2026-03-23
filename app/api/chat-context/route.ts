@@ -8,7 +8,7 @@
  * 
  * GET /api/chat-context?type=project&id=xxx  — 获取指定类型的聊天上下文
  * 
- * v3.0: 需要登录才能获取上下文（可能包含敏感业务数据）
+ * v0.9.8: 需要登录才能获取上下文（可能包含敏感业务数据）
  */
 import { NextRequest, NextResponse } from 'next/server';
 

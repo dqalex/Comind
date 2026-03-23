@@ -1,7 +1,7 @@
 /**
  * 项目成员管理 API
  * 
- * v3.0: 实现项目协作者的增删改查
+ * v0.9.8: 实现项目协作者的增删改查
  * 
  * 权限要求：
  * - GET: 项目可访问者（owner/admin/member/viewer/public）
@@ -10,9 +10,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db, projectMembers, users, projects, type ProjectRole } from '@/db';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { withAuth, type AuthResult } from '@/lib/with-auth';
-import { checkProjectAccess, addProjectMember, getProjectMembers } from '@/lib/project-access';
+import { checkProjectAccess, addProjectMember } from '@/lib/project-access';
 import { isValidId } from '@/lib/security';
 import { eventBus } from '@/lib/event-bus';
 

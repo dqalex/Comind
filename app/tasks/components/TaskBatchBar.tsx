@@ -9,7 +9,7 @@ import {
   ChevronDown,
   AlertCircle,
 } from 'lucide-react';
-import { Button } from '@/components/ui';
+import { Button } from '@/shared/ui';
 import type { StatusColumn } from '../hooks/useTasksPage';
 
 interface StatusColumnConfig {

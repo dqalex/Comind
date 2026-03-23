@@ -14,7 +14,7 @@ import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Download, X, Image, FileCode, Loader2 } from 'lucide-react';
 import clsx from 'clsx';
-import { cleanEditorAttributes } from '@/lib';
+import { cleanEditorAttributes } from '@/shared/lib/slot-sync';
 
 export type ExportFormat = 'jpg' | 'png' | 'html';
 

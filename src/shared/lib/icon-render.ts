@@ -36,8 +36,11 @@ import {
   Circle, Triangle, Hexagon, Octagon, Pentagon, Diamond,
   Badge, Award, Trophy, Crown, Medal, Ribbon, Stamp,
 } from 'lucide-react';
-import { renderToString } from 'react-dom/server';
 import React from 'react';
+
+// 动态导入 react-dom/server（避免 webpack 静态分析问题）
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const getRenderToString = () => require('react-dom/server').renderToString;
 
 /**
  * Lucide 图标名称到组件的映射
@@ -293,11 +296,12 @@ export function renderIconToSvg(
 ): string | null {
   const IconComponent = iconMap[iconName];
   if (!IconComponent) return null;
-  
+
   const { size, strokeWidth, color, inheritColor } = { ...DEFAULT_CONFIG, ...config };
-  
+
   try {
-    // 使用 lucide-react 的 renderToString 渲染 SVG
+    // 使用 require 动态获取 renderToString（避免 webpack 打包问题）
+    const renderToString = getRenderToString();
     const svgString = renderToString(
       React.createElement(IconComponent, {
         size,
@@ -315,7 +319,7 @@ export function renderIconToSvg(
 /**
  * 在 HTML 中渲染所有 Lucide 图标
  * 将 <i data-lucide="xxx"></i> 替换为实际的 SVG
- * 
+ *
  * @param html - 包含图标占位符的 HTML 字符串
  * @param config - 图标渲染配置
  * @returns 渲染后的 HTML 字符串
@@ -325,10 +329,10 @@ export function renderIconsInHtml(
   config: IconRenderConfig = {}
 ): string {
   if (!html) return html;
-  
+
   // 匹配 <i data-lucide="xxx"></i> 或 <i data-lucide="xxx" />
   const iconPattern = /<i\s+data-lucide="([a-z0-9-]+)"[^>]*><\/i>|<i\s+data-lucide="([a-z0-9-]+)"[^>]*\/>/gi;
-  
+
   return html.replace(iconPattern, (match, name1, name2) => {
     const iconName = name1 || name2;
     const svg = renderIconToSvg(iconName, config);

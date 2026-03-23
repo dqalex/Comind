@@ -1,14 +1,14 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import { Button, Input, Select } from '@/components/ui';
-import ConfirmDialog from '@/components/ConfirmDialog';
+import { Button, Input, Select } from '@/shared/ui';
+import ConfirmDialog from '@/shared/layout/ConfirmDialog';
 import { Share2, Copy, Check, Send } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import type { Document } from '@/db/schema';
 import type { RenderTemplate } from '@/db/schema';
 
-const ExportModal = dynamic(() => import('@/components/studio/ExportModal'), { ssr: false });
+const ExportModal = dynamic(() => import('@/features/document-editor/ExportModal'), { ssr: false });
 
 interface WikiDialogsProps {
   // 删除确认
@@ -144,7 +144,7 @@ export default function WikiDialogs({
           open={showExportModal}
           onClose={() => setShowExportModal(false)}
           htmlContent={studioHtmlContent}
-          exportConfig={currentRenderTemplate?.exportConfig as import('@/components/studio/ExportModal').ExportConfig | undefined}
+          exportConfig={currentRenderTemplate?.exportConfig as import('@/features/document-editor/ExportModal').ExportConfig | undefined}
           fileName={selectedDoc?.title || 'export'}
         />
       )}

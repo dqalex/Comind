@@ -37,6 +37,10 @@ test.describe('项目协作流程', () => {
     const page = await context.newPage();
     const auth = new AuthHelper(page);
 
+    // 先导航到首页，确保 window.location.origin 有效
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
     // 尝试登录
     const loginSuccess = await auth.login(user.email, user.password);
     if (!loginSuccess) {

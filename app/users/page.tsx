@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '@/domains';
-import AppShell from '@/components/AppShell';
-import Header from '@/components/Header';
-import { Button, Input, Badge, Dialog } from '@/components/ui';
+import AppShell from '@/shared/layout/AppShell';
+import Header from '@/shared/layout/Header';
+import { Button, Input, Badge, Dialog } from '@/shared/ui';
 import { useRouter } from 'next/navigation';
 import { 
   Users, Plus, Search, Trash2, Edit, Shield, 

@@ -22,7 +22,7 @@ const SYNC_THRESHOLD = 5;
 /**
  * POST /api/chat-actions
  * 执行 AI 回复中的 actions
- * v3.0: 需要登录才能执行（actions 可操作数据库）
+ * v0.9.8: 需要登录才能执行（actions 可操作数据库）
  */
 export const POST = withAuth(async (request: NextRequest) => {
   try {

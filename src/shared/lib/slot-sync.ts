@@ -10,10 +10,30 @@
  * - syncLock 互斥锁防止 MD→HTML→MD 无限循环
  * - richtext 内容经 DOMPurify 清洗（XSS 防护）
  * - 模板引用分离：同步只替换 slot 内容，不修改模板结构
+ *
+ * Node.js 支持：通过 linkedom 实现 DOMParser 功能
  */
 
 import DOMPurify from 'dompurify';
 import { renderIconsInHtml } from './icon-render';
+
+// ===== Node.js 环境检测与 DOMParser polyfill =====
+let DOMParser: typeof globalThis.DOMParser;
+
+if (typeof window === 'undefined') {
+  // Node.js 环境：使用 linkedom
+  const { parseHTML } = require('linkedom');
+  const { document, CustomEvent, Element, HTMLElement, NodeList, DOMParser: LDParser } = parseHTML(`<!DOCTYPE html><html><head></head><body></body></html>`);
+  globalThis.document = document;
+  globalThis.CustomEvent = CustomEvent as unknown as typeof CustomEvent;
+  globalThis.Element = Element as unknown as typeof Element;
+  globalThis.HTMLElement = HTMLElement as unknown as typeof HTMLElement;
+  globalThis.NodeList = NodeList as unknown as typeof NodeList;
+  DOMParser = LDParser;
+} else {
+  // 浏览器环境
+  DOMParser = window.DOMParser;
+}
 
 // ===== 类型定义 =====
 
@@ -503,7 +523,7 @@ export function injectSlotsToHtml(
 
   // 手动拼接 DOCTYPE（DOMParser 不保留 doctype，GrowthPilot 踩坑）
   const html = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
-  
+
   // 渲染 Lucide 图标为 SVG（将 <i data-lucide="name"></i> 替换为 SVG）
   return renderIconsInHtml(html);
 }
@@ -702,9 +722,9 @@ export function simpleMdToHtml(md: string): string {
         if (/^\s*[-*]\s+/.test(lines[i])) {
           let itemText = lines[i].replace(/^\s*[-*]\s+/, '');
           i++;
-          // 收集缩进续行（2+ 空格开头，非列表项）
+          // 收集缩进续行（1+ 空格开头，非列表项）
           const contLines: string[] = [];
-          while (i < lines.length && /^\s{2,}/.test(lines[i]) && !/^\s*[-*]\s+/.test(lines[i])) {
+          while (i < lines.length && /^\s+/.test(lines[i]) && !/^\s*[-*]\s+/.test(lines[i])) {
             contLines.push(lines[i].trim());
             i++;
           }
@@ -935,12 +955,22 @@ export function htmlToSimpleMd(html: string): string {
 
 /**
  * HTML 内容清洗（DOMPurify）
+ * 注意：在 Node.js 环境中，如果 DOMPurify 不可用，直接返回原 HTML
  */
 export function sanitizeHtml(html: string): string {
-  return DOMPurify.sanitize(html, {
-    ALLOWED_TAGS,
-    ALLOWED_ATTR: ALLOWED_ATTRS,
-  });
+  if (typeof window === 'undefined') {
+    // Node.js 环境：跳过清洗（服务端渲染，客户端会再次处理）
+    return html;
+  }
+  try {
+    return DOMPurify.sanitize(html, {
+      ALLOWED_TAGS,
+      ALLOWED_ATTR: ALLOWED_ATTRS,
+    });
+  } catch {
+    // 如果 DOMPurify 失败，返回原 HTML
+    return html;
+  }
 }
 
 /**

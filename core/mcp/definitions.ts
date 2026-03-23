@@ -142,7 +142,7 @@ export const TEAMCLAW_TOOLS = {
         content: { type: 'string', description: '文档内容（Markdown）' },
         doc_type: { type: 'string', enum: ['report', 'note', 'decision', 'scheduled_task', 'task_list', 'other'], description: '文档类型（默认 note）' },
         project_id: { type: 'string', description: '关联项目 ID（可选）' },
-        // v3.0 Content Studio 扩展
+        // v0.9.8 Content Studio 扩展
         render_mode: { type: 'string', enum: ['markdown', 'visual'], description: '渲染模式：markdown（纯文本）或 visual（可视化编辑）' },
         render_template_id: { type: 'string', description: '关联的渲染模板 ID（render_mode=visual 时使用）' },
       },
@@ -448,7 +448,7 @@ export const TEAMCLAW_TOOLS = {
     },
   },
 
-  // ========== SOP 引擎工具（v3.0 新增）==========
+  // ========== SOP 引擎工具（v0.9.8 新增）==========
 
   advance_sop_stage: {
     name: 'advance_sop_stage',
@@ -517,7 +517,7 @@ export const TEAMCLAW_TOOLS = {
     },
   },
 
-  // ========== AI 自主创作工具（v3.0 新增）==========
+  // ========== AI 自主创作工具（v0.9.8 新增）==========
 
   create_sop_template: {
     name: 'create_sop_template',
@@ -572,7 +572,7 @@ export const TEAMCLAW_TOOLS = {
     },
   },
 
-  // ==================== 渲染模板查询（v3.0 新增） ====================
+  // ==================== 渲染模板查询（v0.9.8 新增） ====================
 
   list_render_templates: {
     name: 'list_render_templates',
@@ -662,7 +662,7 @@ export const TEAMCLAW_TOOLS = {
     },
   },
 
-  // ==================== v3.0 Phase F: Agent MCP Token ====================
+  // ==================== v0.9.8 Phase F: Agent MCP Token ====================
 
   get_agent_mcp_token: {
     name: 'get_agent_mcp_token',
@@ -699,7 +699,7 @@ export const TEAMCLAW_TOOLS = {
     },
   },
 
-  // ==================== v3.0 Phase F: 上下文获取工具（渐进式） ====================
+  // ==================== v0.9.8 Phase F: 上下文获取工具（渐进式） ====================
 
   get_task_detail: {
     name: 'get_task_detail',

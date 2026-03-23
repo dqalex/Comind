@@ -2,20 +2,20 @@
  * 共享布局组件
  */
 
-export { AppShell } from './AppShell';
-export { Header } from './Header';
-export { Sidebar } from './Sidebar';
-export { Logo } from './Logo';
+export { default as AppShell } from './AppShell';
+export { default as Header } from './Header';
+export { default as Sidebar } from './Sidebar';
+export { TeamClawLogo as Logo } from './Logo';
 export { ThemeProvider } from './ThemeProvider';
-export { UserMenu } from './UserMenu';
-export { AuthGuard } from './AuthGuard';
-export { ConfirmDialog } from './ConfirmDialog';
-export { ErrorBoundary } from './ErrorBoundary';
-export { GatewayRequired } from './GatewayRequired';
-export { DataProvider } from './DataProvider';
-export { GlobalSearch } from './GlobalSearch';
-export { ChatOverlay } from './ChatOverlay';
+export { default as UserMenu } from './UserMenu';
+export { default as AuthGuard } from './AuthGuard';
+export { default as ConfirmDialog } from './ConfirmDialog';
+export { default as ErrorBoundary } from './ErrorBoundary';
+export { default as GatewayRequired } from './GatewayRequired';
+export { default as DataProvider } from './DataProvider';
+export { default as GlobalSearch } from './GlobalSearch';
+export { default as ChatOverlay } from './ChatOverlay';
 export { SecurityCodeDialog } from './SecurityCodeDialog';
-export { DocumentPicker } from './DocumentPicker';
-export { DebugPanel } from './DebugPanel';
+export { default as DocumentPicker } from './DocumentPicker';
+export { default as DebugPanel } from './DebugPanel';
 export { MarkdownEditor } from './MarkdownEditor';

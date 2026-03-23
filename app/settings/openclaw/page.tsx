@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { initI18n } from '@/lib/i18n';
 import { useOpenClawWorkspaceStore } from '@/core/gateway/openclaw-workspace.store';
-import { WorkspaceCard } from '@/components/openclaw/WorkspaceCard';
-import { WorkspaceForm } from '@/components/openclaw/WorkspaceForm';
-import { GatewayConfigPanel } from '@/components/settings/GatewayConfigPanel';
-import { Button } from '@/components/ui';
-import AppShell from '@/components/AppShell';
-import Header from '@/components/Header';
+import { WorkspaceCard } from '@/features/skill-manager/WorkspaceCard';
+import { WorkspaceForm } from '@/features/skill-manager/WorkspaceForm';
+import { GatewayConfigPanel } from '@/features/settings/GatewayConfigPanel';
+import { Button } from '@/shared/ui';
+import AppShell from '@/shared/layout/AppShell';
+import Header from '@/shared/layout/Header';
 import { Plus, RefreshCw, ArrowLeft, FolderSync } from 'lucide-react';
 import clsx from 'clsx';
 

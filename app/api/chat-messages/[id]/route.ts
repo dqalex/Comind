@@ -11,7 +11,7 @@ import type { AuthResult } from '@/lib/api-auth';
 export const dynamic = 'force-dynamic';
 
 // PUT /api/chat-messages/[id] - 更新消息（状态等）
-// v3.0: 严格用户隔离 - 只能更新自己会话中的消息
+// v0.9.8: 严格用户隔离 - 只能更新自己会话中的消息
 export const PUT = withAuth(async (
   request: NextRequest,
   auth: AuthResult,
@@ -59,6 +59,7 @@ export const PUT = withAuth(async (
 
     return NextResponse.json(updated);
   } catch (error) {
+    console.error('[PUT /api/chat-messages]', error);
     return NextResponse.json({ error: 'Failed to update message' }, { status: 500 });
   }
 });

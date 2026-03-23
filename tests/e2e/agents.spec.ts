@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { AuthHelper } from './pages/AuthHelper';
 
 /**
  * Agent 管理 E2E 测试
@@ -11,7 +12,12 @@ import { test, expect } from '@playwright/test';
  * 注意：Agent 管理需要 Gateway 连接
  */
 test.describe('Agent 管理', () => {
+  let authHelper: AuthHelper;
+
   test.beforeEach(async ({ page }) => {
+    authHelper = new AuthHelper(page);
+    // 确保已登录
+    await authHelper.ensureLoggedIn('member');
     // 导航到 Agent 页面
     await page.goto('/agents');
     await page.waitForLoadState('domcontentloaded');

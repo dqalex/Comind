@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button, Input } from '@/components/ui';
+import { Button, Input } from '@/shared/ui';
 import { Database, Shield, AlertTriangle, Loader2 } from 'lucide-react';
 
 // i18n 翻译

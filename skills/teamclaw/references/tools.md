@@ -20,11 +20,10 @@
 
 | 工具 | 必填参数 | 用途 | 使用场景 |
 |------|---------|------|---------|
-| `get_task_detail` | task_id | 获取任务完整详情（描述+评论+检查项+SOP历史） | 用户查看任务详情 |
-| `get_project_detail` | project_id | 获取项目完整详情（成员+任务+文档+里程碑） | 用户查看项目详情 |
-| `get_document_detail` | document_id 或 title | 获取文档完整内容 | 编辑文档时 |
-| `get_sop_previous_output` | task_id, stage_id (可选) | 获取 SOP 前序阶段产出 | SOP 执行需要参考 |
-| `get_sop_knowledge_layer` | task_id, layer | 获取 SOP 知识库层级内容 | SOP 执行需要知识库 |
+| `get_task` + `detail=true` | task_id | 获取任务完整详情（描述+评论+检查项+SOP历史） | 用户查看任务详情 |
+| `get_project` + `detail=true` | project_id | 获取项目完整详情（成员+任务+文档+里程碑） | 用户查看项目详情 |
+| `get_document` + `detail=true` | document_id 或 title | 获取文档完整内容 | 编辑文档时 |
+| `get_sop_context` | task_id | 获取 SOP 执行上下文（前序产出+知识层） | SOP 执行参考 |
 
 ## 写入工具（Actions / MCP API）
 
@@ -60,8 +59,7 @@
 | `list_milestones` | project_id | 列出项目里程碑 | 验证里程碑操作 |
 | `list_render_templates` | category (可选) | 列出渲染模板 | — |
 | `get_render_template` | template_id | 获取渲染模板详情 | — |
-| `get_sop_previous_output` | task_id | 获取 SOP 前序产出 | SOP 执行参考 |
-| `get_sop_knowledge_layer` | task_id, layer | 获取 SOP 知识层 | SOP 执行参考 |
+| `get_sop_context` | task_id | 获取 SOP 执行上下文 | SOP 执行参考 |
 | `list_skills` | category (可选) | 列出可用 Skill | Skill 发现 |
 | `list_my_deliveries` | status (可选) | 获取当前成员的交付物列表 | **验证交付创建** |
 | `get_delivery` | delivery_id | 获取交付物详情（含审核意见） | **验证交付状态** |
@@ -70,9 +68,11 @@
 
 | 工具 | 必填参数 | 用途 | 使用场景 |
 |------|---------|------|---------|
-| `get_task_detail` | task_id | 获取任务完整详情（描述+评论+检查项+SOP历史） | 用户查看任务详情 |
-| `get_project_detail` | project_id | 获取项目完整详情（成员+任务+文档+里程碑） | 用户查看项目详情 |
-| `get_document_detail` | document_id 或 title | 获取文档完整内容 | 编辑文档时 |
+| `get_task` + `detail=true` | task_id | 获取任务完整详情（描述+评论+检查项+SOP历史） | 用户查看任务详情 |
+| `get_project` + `detail=true` | project_id | 获取项目完整详情（成员+任务+文档+里程碑） | 用户查看项目详情 |
+| `get_document` + `detail=true` | document_id 或 title | 获取文档完整内容 | 编辑文档时 |
+
+> **v1.0.1 废弃**: `get_task_detail`, `get_project_detail`, `get_document_detail` 已标记为 DEPRECATED，请使用上述替代方案。
 
 ## 管理/配置工具（仅 MCP API）
 
@@ -124,8 +124,7 @@
 提交交付                       → list_my_deliveries + get_delivery
 定时任务                       → list_schedules
 里程碑                         → list_milestones
-SOP 执行需要前序产出            → get_sop_previous_output
-SOP 执行需要知识库              → get_sop_knowledge_layer
+SOP 执行需要上下文              → get_sop_context
 ```
 
 ## 对话信道 Actions 支持的操作
@@ -137,14 +136,13 @@ SOP 执行需要知识库              → get_sop_knowledge_layer
 - ✅ `get_project_members` — 获取项目成员
 - ✅ `get_document` — 获取文档内容
 - ✅ `search_documents` — 搜索文档
-- ✅ `get_template` — 获取渲染模板
-- ✅ `list_templates` — 列出模板
+- ✅ `get_message_template` — 获取消息模板（v1.0.1+，替代 get_template）
+- ✅ `list_message_templates` — 列出消息模板（v1.0.1+，替代 list_templates）
 - ✅ `list_schedules` — 列出定时任务
 - ✅ `list_milestones` — 列出里程碑
 - ✅ `list_render_templates` — 列出渲染模板
 - ✅ `get_render_template` — 获取渲染模板详情
-- ✅ `get_sop_previous_output` — 获取 SOP 前序产出
-- ✅ `get_sop_knowledge_layer` — 获取 SOP 知识层
+- ✅ `get_sop_context` — 获取 SOP 执行上下文（v1.0.1+，替代 get_sop_previous_output + get_sop_knowledge_layer）
 
 **写入类**：
 - ✅ `create_task` — 创建新任务
