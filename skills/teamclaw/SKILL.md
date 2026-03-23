@@ -136,6 +136,11 @@ metadata: { "openclaw": { "always": true, "emoji": "🧠", "homepage": "https://
 端点：`POST ${TEAMCLAW_BASE_URL}/api/mcp/external`
 鉴权：`Authorization: Bearer ${TEAMCLAW_API_TOKEN}`
 
+> **SSE 流式调用**（智能体友好）：`POST ${TEAMCLAW_BASE_URL}/api/mcp/external/stream`
+> - 支持实时进度反馈（`progress` / `result` / `error` / `done` 事件）
+> - 适用于长时间运行的工具调用
+> - 响应类型：`text/event-stream`
+
 ---
 
 ## 场景 E: 对话协作
