@@ -147,7 +147,7 @@ export async function POST(
       isSensitive: false,
       skillPath: skillDir,
       skillMd: skillMd,
-      createdBy: 'system',
+      createdBy: null, // 使用 null 而非 'system'，避免外键约束失败（users 表无 system 用户）
       createdAt: now,
       updatedAt: now,
     }).returning();
