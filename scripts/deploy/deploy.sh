@@ -113,55 +113,75 @@ fi
 
 # 5. 检测目标平台信息
 echo "[5/8] 检测目标平台并处理原生模块..."
-TARGET_INFO=$(ssh $SERVER "uname -s && uname -m && ldd --version 2>&1 | head -1")
-echo "目标平台: $TARGET_INFO"
+PLATFORM=$(ssh $SERVER "uname -s | tr '[:upper:]' '[:lower:]'")
+ARCH=$(ssh $SERVER "uname -m")
+LIBC=$(ssh $SERVER "ldd --version 2>&1 | head -1 | grep -qi 'musl' && echo 'musl' || echo 'glibc'")
+
+# 映射架构名称（兼容各种命名）
+case $ARCH in
+  x86_64) ARCH_MAP="x64" ;;
+  i386|i486|i586|i686) ARCH_MAP="x86" ;;
+  aarch64|arm64) ARCH_MAP="arm64" ;;
+  armv7l|armv7) ARCH_MAP="arm" ;;
+  armv8l|armv8) ARCH_MAP="arm64" ;;
+  *) ARCH_MAP="$ARCH" ;;
+esac
+
+echo "目标平台: $PLATFORM-$ARCH_MAP ($LIBC)"
 
 # 5.1 重建 better-sqlite3
 echo "[5.1/8] 重建 better-sqlite3..."
-ssh $SERVER "$NVM_INIT cd $REMOTE_PATH && npm rebuild better-sqlite3 2>&1 | tail -3"
-echo "✓ better-sqlite3 重建完成"
+REBUILD_RESULT=$(ssh $SERVER "$NVM_INIT cd $REMOTE_PATH && npm rebuild better-sqlite3 2>&1")
+if echo "$REBUILD_RESULT" | grep -qi "error\|failed"; then
+  echo "  ⚠️  better-sqlite3 编译输出: $(echo "$REBUILD_RESULT" | tail -2)"
+else
+  echo "  ✓ better-sqlite3 重建完成"
+fi
 
 # 5.2 处理 argon2 原生模块
 # argon2 需要 C 编译器（gcc）和 Python 2 进行 node-gyp 构建
 # 如果没有，先尝试安装；否则使用预编译版本
 echo "[5.2/8] 处理 argon2 原生模块..."
-ssh $SERVER "$NVM_INIT cd $REMOTE_PATH && npm rebuild argon2 2>&1" || {
+REBUILD_ARGON2=$(ssh $SERVER "$NVM_INIT cd $REMOTE_PATH && npm rebuild argon2 2>&1")
+if echo "$REBUILD_ARGON2" | grep -qi "error\|failed"; then
   echo "  argon2 编译失败，尝试使用预编译版本..."
   
   # 检测目标平台的预编译文件
-  # 格式: <platform>-<arch>.<libc>.node
-  PLATFORM=$(ssh $SERVER "uname -s | tr '[:upper:]' '[:lower:]'")
-  ARCH=$(ssh $SERVER "uname -m")
-  LIBC=$(ssh $SERVER "ldd --version 2>&1 | head -1 | grep -qi 'musl' && echo 'musl' || echo 'glibc'")
-  
-  # 映射架构名称
-  case $ARCH in
-    x86_64) ARCH="x64" ;;
-    aarch64|arm64) ARCH="arm64" ;;
-    armv7l) ARCH="arm" ;;
-  esac
-  
-  echo "  检测平台: $PLATFORM-$ARCH ($LIBC)"
+  echo "  查找预编译文件: ${PLATFORM}-${ARCH_MAP}"
   
   # 创建 standalone 的 argon2 目录结构
   ssh $SERVER "mkdir -p $REMOTE_PATH/.next/standalone/node_modules/argon2/build/Release"
   
-  # 尝试复制预编译文件
-  PREBUILD_PATH="$REMOTE_PATH/node_modules/argon2/prebuilds/${PLATFORM}-${ARCH}/${PLATFORM}.${ARCH}.${LIBC}.node"
-  ALT_PATH="$REMOTE_PATH/node_modules/argon2/prebuilds/${PLATFORM}-${ARCH}/argon2.${ARCH}.${LIBC}.node"
+  # 尝试多种可能的预编译文件路径
+  # argon2 预编译文件命名规则：<platform>-<arch>/argon2.<arch>.<libc>.node
+  PREBUILDS=(
+    "$REMOTE_PATH/node_modules/argon2/prebuilds/${PLATFORM}-${ARCH_MAP}/argon2.${ARCH_MAP}.${LIBC}.node"
+    "$REMOTE_PATH/node_modules/argon2/prebuilds/${PLATFORM}-x64/argon2.x64.${LIBC}.node"
+    "$REMOTE_PATH/node_modules/argon2/prebuilds/${PLATFORM}-${ARCH_MAP}/${PLATFORM}.${ARCH_MAP}.${LIBC}.node"
+  )
   
-  if ssh $SERVER "test -f $PREBUILD_PATH"; then
-    ssh $SERVER "cp $PREBUILD_PATH $REMOTE_PATH/.next/standalone/node_modules/argon2/build/Release/"
-    echo "  ✓ 已复制预编译文件: $PREBUILD_PATH"
-  elif ssh $SERVER "test -f $ALT_PATH"; then
-    ssh $SERVER "cp $ALT_PATH $REMOTE_PATH/.next/standalone/node_modules/argon2/build/Release/"
-    echo "  ✓ 已复制预编译文件: $ALT_PATH"
-  else
-    echo "  ⚠️  未找到预编译文件，尝试所有可用选项..."
-    # 列出可用预编译文件
-    ssh $SERVER "find $REMOTE_PATH/node_modules/argon2/prebuilds -name '*.node' 2>/dev/null | head -10"
+  COPIED=false
+  for PREBUILD in "${PREBUILDS[@]}"; do
+    if ssh $SERVER "test -f $PREBUILD"; then
+      ssh $SERVER "cp $PREBUILD $REMOTE_PATH/.next/standalone/node_modules/argon2/build/Release/argon2.node"
+      echo "  ✓ 已复制: $PREBUILD"
+      COPIED=true
+      break
+    fi
+  done
+  
+  if [ "$COPIED" = false ]; then
+    echo "  ⚠️  未找到 $PLATFORM-$ARCH_MAP ($LIBC) 的预编译文件"
+    echo "  可用的预编译平台:"
+    ssh $SERVER "find $REMOTE_PATH/node_modules/argon2/prebuilds -type d -maxdepth 1 | xargs -I {} basename {}"
+    echo "  "
+    echo "  解决方案:"
+    echo "  1. 安装编译工具链: yum install -y gcc python2 make"
+    echo "  2. 或升级到 64 位系统（推荐）"
   fi
-}
+else
+  echo "  ✓ argon2 编译成功"
+fi
 
 # 5.3 重建 standalone 目录的 better-sqlite3
 echo "[5.3/8] 重建 standalone 的 better-sqlite3..."
