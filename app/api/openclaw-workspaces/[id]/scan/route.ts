@@ -80,11 +80,9 @@ export async function POST(
     }
 
     return NextResponse.json({
-      data: {
-        total: files.length,
-        byType,
-        files: fileList,
-      },
+      total: files.length,
+      byType,
+      files: fileList,
     });
   } catch (error) {
     console.error('[API] POST /openclaw-workspaces/[id]/scan error:', error);

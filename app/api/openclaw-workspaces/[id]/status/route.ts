@@ -36,15 +36,13 @@ export async function GET(
     const [stat] = stats;
 
     return NextResponse.json({
-      data: {
-        status: workspace.syncStatus,
-        lastSyncAt: workspace.lastSyncAt,
-        lastError: workspace.lastError,
-        totalFiles: stat?.total || 0,
-        syncedFiles: stat?.synced || 0,
-        pendingFiles: stat?.pending || 0,
-        conflictFiles: stat?.conflict || 0,
-      },
+      status: workspace.syncStatus,
+      lastSyncAt: workspace.lastSyncAt,
+      lastError: workspace.lastError,
+      totalFiles: stat?.total || 0,
+      syncedFiles: stat?.synced || 0,
+      pendingFiles: stat?.pending || 0,
+      conflictFiles: stat?.conflict || 0,
     });
   } catch (error) {
     console.error('[API] GET /openclaw-workspaces/[id]/status error:', error);
